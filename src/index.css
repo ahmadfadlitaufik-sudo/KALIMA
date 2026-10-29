@@ -1,0 +1,433 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-bg-canvas: #f0f2f7;
+    --color-bg-card: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text-main: #0f172a;
+    --color-text-muted: #64748b;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--color-bg-canvas);
+    color: var(--color-text-main);
+  }
+
+  /* Force tabular numerals for data readability across all financial and inventory tables */
+  .tabular-nums, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ========================================================================= */
+/* SOFT-CARD NEUMORPHIC TECH THEME (INSPIRED BY REFERENCE DESIGN)            */
+/* ========================================================================= */
+
+/* General Canvas & Layout Backgrounds */
+body,
+#root,
+.bg-\[\#0a0d14\],
+.bg-\[\#0c0f14\],
+.bg-\[\#0b0f17\],
+.bg-\[\#0e1219\],
+.bg-\[\#0e1219\]\/90 {
+  background-color: #f0f2f7 !important;
+  color: #0f172a !important;
+}
+
+/* Standard Soft Cards: Crisp White, Rounded 24px-28px, Soft Diffuse Shadow */
+.bg-\[\#121620\],
+.bg-\[\#12161f\],
+.bg-\[\#141d30\],
+.bg-\[\#161c28\],
+aside.bg-\[\#12161f\] {
+  background-color: #ffffff !important;
+  border-color: rgba(226, 232, 240, 0.75) !important;
+  border-radius: 26px !important;
+  box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.04), 0 2px 8px -2px rgba(15, 23, 42, 0.02) !important;
+  color: #0f172a !important;
+}
+
+/* Secondary Panels & Inner Containers */
+.bg-slate-950,
+.bg-slate-900,
+.bg-slate-900\/90,
+.bg-slate-900\/80,
+.bg-slate-950\/70,
+.bg-slate-950\/80,
+.bg-slate-950\/60,
+.bg-slate-950\/40 {
+  background-color: #f8fafc !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
+  color: #1e293b !important;
+}
+
+/* Modal Backdrops & Dialogs */
+.bg-black\/80,
+.bg-black\/70,
+.bg-black\/60 {
+  background-color: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Modal Inner Boxes */
+.bg-\[\#121622\] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  border-radius: 28px !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important;
+  color: #0f172a !important;
+}
+
+/* Global Text Colors */
+.text-white {
+  color: #0f172a !important;
+}
+
+.text-slate-100,
+.text-slate-200,
+.text-slate-300 {
+  color: #1e293b !important;
+}
+
+.text-slate-400 {
+  color: #64748b !important;
+}
+
+.text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Borders */
+.border-slate-800,
+.border-slate-800\/80,
+.border-slate-800\/60,
+.border-slate-800\/90,
+.border-slate-850,
+.border-slate-750,
+.border-slate-700,
+.border-slate-700\/80 {
+  border-color: #e2e8f0 !important;
+}
+
+.divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+.divide-slate-850 > :not([hidden]) ~ :not([hidden]),
+.divide-slate-800\/80 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #f1f5f9 !important;
+}
+
+/* Table Headers & Alternating Row Hover */
+thead.bg-slate-900\/90,
+thead.bg-slate-950\/60,
+thead.bg-slate-900 {
+  background-color: #f8fafc !important;
+  color: #64748b !important;
+}
+
+tbody tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Form Controls (Inputs, Selects, Textareas) */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+input[type="search"],
+select,
+textarea {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-radius: 14px !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  background-color: #ffffff !important;
+  border-color: #0f172a !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Hover States for Buttons & Navigation */
+.hover\:bg-slate-800:hover,
+.hover\:bg-slate-850:hover,
+.hover\:bg-slate-900:hover,
+.group-hover\:bg-slate-800:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* ========================================================================= */
+/* FEATURE CARDS: EXACT REFERENCE MATCHES                                    */
+/* ========================================================================= */
+
+/* 1. Dark Tech Card (Reference: "Your Balance" card) */
+.card-dark-tech {
+  background-color: #121622 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 26px !important;
+  box-shadow: 0 16px 36px -6px rgba(18, 22, 34, 0.35) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  color: #ffffff !important;
+}
+
+.card-dark-tech,
+.card-dark-tech * {
+  color: #ffffff;
+}
+
+.card-dark-tech .text-white {
+  color: #ffffff !important;
+}
+
+.card-dark-tech .text-slate-100,
+.card-dark-tech .text-slate-200 {
+  color: #f1f5f9 !important;
+}
+
+.card-dark-tech .text-slate-300 {
+  color: #cbd5e1 !important;
+}
+
+.card-dark-tech .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+.card-dark-tech .text-slate-500 {
+  color: #64748b !important;
+}
+
+.card-dark-tech .text-emerald-300 {
+  color: #6ee7b7 !important;
+}
+
+.card-dark-tech .text-emerald-400 {
+  color: #34d399 !important;
+}
+
+.card-dark-tech .frosted-btn {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  border-radius: 16px !important;
+  transition: all 0.2s ease !important;
+}
+
+.card-dark-tech .frosted-btn,
+.card-dark-tech .frosted-btn span,
+.card-dark-tech .frosted-btn svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.card-dark-tech .frosted-btn:hover {
+  background-color: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 2. Vibrant Coral-to-Orange Gradient Card (Reference: "Retire on your terms") */
+.card-gradient-coral {
+  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 45%, #fb923c 100%) !important;
+  border: none !important;
+  border-radius: 26px !important;
+  box-shadow: 0 14px 32px -4px rgba(244, 63, 94, 0.3) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  color: #ffffff !important;
+}
+
+.card-gradient-coral .text-white {
+  color: #ffffff !important;
+}
+
+.card-gradient-coral h1,
+.card-gradient-coral h2,
+.card-gradient-coral h3,
+.card-gradient-coral span,
+.card-gradient-coral p {
+  color: #ffffff;
+}
+
+.card-gradient-coral p {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.card-gradient-coral p strong {
+  color: #ffffff !important;
+}
+
+.card-gradient-coral .text-rose-50\/90,
+.card-gradient-coral .text-rose-100 {
+  color: rgba(255, 241, 242, 0.95) !important;
+}
+
+.card-gradient-coral .btn-white-pill {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+}
+
+.card-gradient-coral .btn-white-pill,
+.card-gradient-coral .btn-white-pill *,
+.card-gradient-coral .btn-white-pill span,
+.card-gradient-coral .btn-white-pill svg {
+  color: #0f172a !important;
+  stroke: #0f172a !important;
+}
+
+.card-gradient-coral .btn-white-pill:hover {
+  background-color: #f8fafc !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 3. Soft Pastel Pink Card (Reference: "Net Growth Score") */
+.card-pastel-pink {
+  background-color: #fdf2f4 !important;
+  border: 1px solid rgba(251, 207, 216, 0.7) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.04) !important;
+  color: #0f172a !important;
+}
+
+/* 4. Soft Pastel Peach/Rose Banner (Reference: "You Invest in Last 30 Days") */
+.card-pastel-peach {
+  background: linear-gradient(135deg, #fce7f3 0%, #ffe4e6 50%, #fed7aa 100%) !important;
+  border: 1px solid rgba(254, 215, 226, 0.8) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 6px 20px rgba(251, 113, 133, 0.06) !important;
+  color: #1e293b !important;
+}
+
+/* ========================================================================= */
+/* PILL BADGES & SEGMENTED CONTROLS                                          */
+/* ========================================================================= */
+
+/* Segmented Pill Tabs Container */
+.segmented-pill-bar {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-radius: 9999px !important;
+  padding: 4px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Active Segmented Pill */
+.segmented-pill-active {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12) !important;
+}
+
+/* Circular Icon Action Button */
+.btn-circle-action {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 9999px !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #334155 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-circle-action:hover {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Status Pills (Reference style: Soft pastel background, clear text) */
+.badge-status-success {
+  background-color: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid rgba(167, 243, 208, 0.6) !important;
+  border-radius: 9999px !important;
+  padding: 2px 10px !important;
+  font-weight: 600 !important;
+}
+
+.badge-status-pending {
+  background-color: #fffbeb !important;
+  color: #d97706 !important;
+  border: 1px solid rgba(253, 230, 138, 0.6) !important;
+  border-radius: 9999px !important;
+  padding: 2px 10px !important;
+  font-weight: 600 !important;
+}
+
+.badge-status-failed {
+  background-color: #fff1f2 !important;
+  color: #e11d48 !important;
+  border: 1px solid rgba(254, 205, 211, 0.6) !important;
+  border-radius: 9999px !important;
+  padding: 2px 10px !important;
+  font-weight: 600 !important;
+}
+
+/* Primary Dual CTAs (Reference: Sell / Buy buttons) */
+.btn-primary-dark {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-radius: 9999px !important;
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary-dark:hover {
+  background-color: #1e293b !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-secondary-white {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 9999px !important;
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-secondary-white:hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Clean Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f3f7;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

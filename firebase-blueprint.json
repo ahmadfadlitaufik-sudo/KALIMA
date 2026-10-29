@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Order": {
+      "collection": "orders",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "noOrder": { "type": "string", "required": true },
+        "channel": { "type": "string", "required": true },
+        "tanggal": { "type": "string", "required": true },
+        "customerNama": { "type": "string", "required": false },
+        "totalTagihan": { "type": "number", "required": true },
+        "statusBayar": { "type": "string", "required": true },
+        "statusOrder": { "type": "string", "required": true }
+      }
+    },
+    "SKUItem": {
+      "collection": "skus",
+      "fields": {
+        "sku": { "type": "string", "required": true },
+        "seriesCode": { "type": "string", "required": true },
+        "colorName": { "type": "string", "required": true },
+        "size": { "type": "string", "required": true },
+        "hargaRetail": { "type": "number", "required": true },
+        "hpp": { "type": "number", "required": true },
+        "minStock": { "type": "number", "required": true }
+      }
+    },
+    "StockMovement": {
+      "collection": "stockMovements",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "tanggal": { "type": "string", "required": true },
+        "sku": { "type": "string", "required": true },
+        "tipe": { "type": "string", "required": true },
+        "qty": { "type": "number", "required": true },
+        "lokasi": { "type": "string", "required": true }
+      }
+    },
+    "BiayaOperasional": {
+      "collection": "biayaOperasional",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "tanggal": { "type": "string", "required": true },
+        "kategori": { "type": "string", "required": true },
+        "jumlah": { "type": "number", "required": true },
+        "deskripsi": { "type": "string", "required": true }
+      }
+    },
+    "CashAccount": {
+      "collection": "cashAccounts",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "name": { "type": "string", "required": true },
+        "saldo": { "type": "number", "required": true }
+      }
+    },
+    "Customer": {
+      "collection": "customers",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "nama": { "type": "string", "required": true },
+        "noHp": { "type": "string", "required": false }
+      }
+    },
+    "Reseller": {
+      "collection": "resellers",
+      "fields": {
+        "id": { "type": "string", "required": true },
+        "nama": { "type": "string", "required": true }
+      }
+    }
+  }
+}

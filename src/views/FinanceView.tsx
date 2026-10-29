@@ -1,0 +1,1601 @@
+import React, { useState, useMemo } from 'react';
+import {
+  DollarSign,
+  TrendingUp,
+  Clock,
+  AlertCircle,
+  Plus,
+  Trash2,
+  Edit2,
+  Calendar,
+  PieChart,
+  EyeOff,
+  CheckCircle2,
+  Layers,
+  FileSpreadsheet,
+  RotateCcw,
+  AlertTriangle,
+  Building2,
+  Wallet,
+  Scale,
+} from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { BiayaOperasional, Order } from '../types';
+import { CashBankSection } from '../components/CashBankSection';
+import { BalanceSheetSection } from '../components/BalanceSheetSection';
+import { MonthlyPnLChart } from '../components/MonthlyPnLChart';
+import { useCashBank } from '../hooks/useCashBank';
+
+export const FinanceView: React.FC = () => {
+  const {
+    isOwner,
+    orders,
+    biayaOperasional,
+    addBiayaOperasional,
+    updateBiayaOperasional,
+    deleteBiayaOperasional,
+    clearBiayaOperasional,
+  } = useApp();
+
+  const {
+    cashAccounts,
+    handleSalesPaymentSaved,
+    defaultAccount,
+    potongSaldo,
+    tambahSaldo,
+  } = useCashBank();
+
+  // Tab: 'kas_bank' | 'pl_opex' | 'piutang' | 'neraca'
+  const [activeTab, setActiveTab] = useState<'kas_bank' | 'pl_opex' | 'piutang' | 'neraca'>('kas_bank');
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const currentMonthStr = todayStr.substring(0, 7);
+
+  // Active filter type: 'month' | 'custom' | 'all'
+  const [filterType, setFilterType] = useState<'month' | 'custom' | 'all'>('all');
+  const [selectedMonth, setSelectedMonth] = useState('2026-09');
+  const [customStartDate, setCustomStartDate] = useState('2026-03-01');
+  const [customEndDate, setCustomEndDate] = useState(todayStr);
+
+  // Dialog konfirmasi kosongkan OPEX
+  const [isConfirmClearOpexOpen, setIsConfirmClearOpexOpen] = useState(false);
+
+  // Daftar semua bulan yang memiliki transaksi atau pengeluaran
+  const availableMonths = useMemo(() => {
+    const monthSet = new Set<string>();
+    orders.forEach((o) => {
+      if (o.tanggal && o.tanggal.length >= 7) monthSet.add(o.tanggal.substring(0, 7));
+    });
+    biayaOperasional.forEach((b) => {
+      if (b.tanggal && b.tanggal.length >= 7) monthSet.add(b.tanggal.substring(0, 7));
+    });
+    return Array.from(monthSet).sort().reverse();
+  }, [orders, biayaOperasional]);
+
+  // State for Custom OPEX Categories
+  const [customCategoryList, setCustomCategoryList] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('kalima_custom_opex_categories');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
+  const [newCategoryNameInput, setNewCategoryNameInput] = useState('');
+  const [opexSearchQuery, setOpexSearchQuery] = useState('');
+
+  const handleSaveNewCustomCategory = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newCategoryNameInput.trim();
+    if (!trimmed) return;
+    if (!customCategoryList.includes(trimmed)) {
+      const updated = [...customCategoryList, trimmed];
+      setCustomCategoryList(updated);
+      try {
+        localStorage.setItem('kalima_custom_opex_categories', JSON.stringify(updated));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    setNewCategoryNameInput('');
+    setIsAddCategoryModalOpen(false);
+  };
+
+  const allAvailableCategories = useMemo(() => {
+    const standard = [
+      'Marketing & Ads',
+      'Gaji, Upah & Training',
+      'Entertainment & Jamuan',
+      'Packaging & Logistik',
+      'Sewa & Utilitas',
+      'Operasional, Software & Tools',
+      'Pajak & Legalitas',
+      'Lain-lain / Pengeluaran Umum',
+    ];
+    const fromData = Array.from(new Set(biayaOperasional.map((b) => b.kategori).filter(Boolean)));
+    return Array.from(new Set([...standard, ...customCategoryList, ...fromData]));
+  }, [biayaOperasional, customCategoryList]);
+
+  // Modal Add OPEX
+  const [isAddOpexOpen, setIsAddOpexOpen] = useState(false);
+  const [opexKategori, setOpexKategori] = useState<BiayaOperasional['kategori']>('Marketing & Ads');
+  const [opexCustomCategory, setOpexCustomCategory] = useState('');
+  const [isCustomCategoryMode, setIsCustomCategoryMode] = useState(false);
+  const [opexJumlah, setOpexJumlah] = useState<number>(0);
+  const [opexDeskripsi, setOpexDeskripsi] = useState('');
+  const [opexAccountId, setOpexAccountId] = useState<string>('');
+  const [selectedOpexCategoryFilter, setSelectedOpexCategoryFilter] = useState<string>('ALL');
+
+  const openAddOpexModal = () => {
+    const defaultAcc = cashAccounts.find((a) => a.isDefault) || cashAccounts[0];
+    setOpexAccountId(defaultAcc?.id || '');
+    setIsCustomCategoryMode(false);
+    setOpexCustomCategory('');
+    setIsAddOpexOpen(true);
+  };
+
+  // Modal Edit OPEX State
+  const [editingOpex, setEditingOpex] = useState<BiayaOperasional | null>(null);
+  const [editOpexTanggal, setEditOpexTanggal] = useState('');
+  const [editOpexKategori, setEditOpexKategori] = useState('');
+  const [editOpexDeskripsi, setEditOpexDeskripsi] = useState('');
+  const [editOpexJumlah, setEditOpexJumlah] = useState<number>(0);
+  const [editOpexAccountId, setEditOpexAccountId] = useState<string>('none');
+  const [isEditCustomCategoryMode, setIsEditCustomCategoryMode] = useState(false);
+  const [editOpexCustomCategory, setEditOpexCustomCategory] = useState('');
+
+  const handleOpenEditOpex = (item: BiayaOperasional) => {
+    setEditingOpex(item);
+    setEditOpexTanggal(item.tanggal || todayStr);
+    setEditOpexDeskripsi(item.deskripsi);
+    setEditOpexJumlah(item.jumlah);
+    setEditOpexAccountId(item.accountId || 'none');
+
+    const standardCats = [
+      'Marketing & Ads',
+      'Gaji, Upah & Training',
+      'Entertainment & Jamuan',
+      'Packaging & Logistik',
+      'Sewa & Utilitas',
+      'Operasional, Software & Tools',
+      'Pajak & Legalitas',
+      'Lain-lain / Pengeluaran Umum',
+    ];
+
+    if (standardCats.includes(item.kategori)) {
+      setEditOpexKategori(item.kategori);
+      setIsEditCustomCategoryMode(false);
+      setEditOpexCustomCategory('');
+    } else {
+      setEditOpexKategori('__CUSTOM__');
+      setIsEditCustomCategoryMode(true);
+      setEditOpexCustomCategory(item.kategori);
+    }
+  };
+
+  const handleSaveEditOpex = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOpex || editOpexJumlah <= 0) return;
+
+    const finalCategory =
+      isEditCustomCategoryMode && editOpexCustomCategory.trim()
+        ? editOpexCustomCategory.trim()
+        : editOpexKategori;
+
+    updateBiayaOperasional(editingOpex.id, {
+      tanggal: editOpexTanggal || editingOpex.tanggal,
+      kategori: finalCategory,
+      deskripsi: editOpexDeskripsi.trim() || finalCategory,
+      jumlah: editOpexJumlah,
+      accountId: editOpexAccountId === 'none' ? undefined : editOpexAccountId,
+    });
+
+    setEditingOpex(null);
+  };
+
+  // Settle Payment Modal
+  const [settleOrder, setSettleOrder] = useState<Order | null>(null);
+  const [settleAmount, setSettleAmount] = useState<number>(0);
+  const [settleMethod, setSettleMethod] = useState('Transfer BCA');
+  const [settleAccountId, setSettleAccountId] = useState<string>('');
+
+  // Filter orders
+  const monthOrders = useMemo(() => {
+    return orders.filter((o) => {
+      if (o.statusOrder === 'batal') return false;
+      if (filterType === 'all') return true;
+      if (filterType === 'month') return o.tanggal.startsWith(selectedMonth);
+      if (filterType === 'custom') {
+        if (customStartDate && o.tanggal < customStartDate) return false;
+        if (customEndDate && o.tanggal > customEndDate) return false;
+        return true;
+      }
+      return true;
+    });
+  }, [orders, filterType, selectedMonth, customStartDate, customEndDate]);
+
+  // Filter OPEX
+  const monthOpex = useMemo(() => {
+    return biayaOperasional.filter((b) => {
+      if (filterType === 'all') return true;
+      if (filterType === 'month') return b.tanggal.startsWith(selectedMonth);
+      if (filterType === 'custom') {
+        if (customStartDate && b.tanggal < customStartDate) return false;
+        if (customEndDate && b.tanggal > customEndDate) return false;
+        return true;
+      }
+      return true;
+    });
+  }, [biayaOperasional, filterType, selectedMonth, customStartDate, customEndDate]);
+
+  // P&L Metrics
+  const grossSales = useMemo(() => {
+    return monthOrders.reduce((sum, o) => sum + o.subtotal, 0);
+  }, [monthOrders]);
+
+  const totalDiskon = useMemo(() => {
+    return monthOrders.reduce((sum, o) => sum + o.diskon, 0);
+  }, [monthOrders]);
+
+  const netSales = Math.max(0, grossSales - totalDiskon);
+
+  const totalAdminFees = useMemo(() => {
+    return monthOrders.reduce((sum, o) => sum + o.adminFeeAmount, 0);
+  }, [monthOrders]);
+
+  const totalHpp = useMemo(() => {
+    return monthOrders.reduce((sum, o) => sum + o.totalHpp, 0);
+  }, [monthOrders]);
+
+  const grossProfit = netSales - totalHpp - totalAdminFees;
+
+  const totalOpex = useMemo(() => {
+    return monthOpex.reduce((sum, b) => sum + b.jumlah, 0);
+  }, [monthOpex]);
+
+  const netProfit = grossProfit - totalOpex;
+
+  // Category Breakdown for OPEX
+  const opexCategoryBreakdown = useMemo(() => {
+    const map: Record<string, { total: number; count: number }> = {};
+    monthOpex.forEach((b) => {
+      const cat = b.kategori || 'Lain-lain / Pengeluaran Umum';
+      if (!map[cat]) map[cat] = { total: 0, count: 0 };
+      map[cat].total += b.jumlah;
+      map[cat].count += 1;
+    });
+
+    const entries = Object.entries(map).map(([kategori, val]) => ({
+      kategori,
+      total: val.total,
+      count: val.count,
+      percent: totalOpex > 0 ? ((val.total / totalOpex) * 100).toFixed(1) : '0',
+    }));
+
+    return entries.sort((a, b) => b.total - a.total);
+  }, [monthOpex, totalOpex]);
+
+  // Filtered OPEX list based on selected category chip & search query
+  const filteredMonthOpex = useMemo(() => {
+    return monthOpex.filter((b) => {
+      if (selectedOpexCategoryFilter !== 'ALL' && b.kategori !== selectedOpexCategoryFilter) {
+        return false;
+      }
+      if (opexSearchQuery.trim()) {
+        const q = opexSearchQuery.toLowerCase();
+        const matchDesc = (b.deskripsi || '').toLowerCase().includes(q);
+        const matchCat = (b.kategori || '').toLowerCase().includes(q);
+        const matchAcc = (b.accountNama || '').toLowerCase().includes(q);
+        const matchAmount = b.jumlah.toString().includes(q);
+        if (!matchDesc && !matchCat && !matchAcc && !matchAmount) return false;
+      }
+      return true;
+    });
+  }, [monthOpex, selectedOpexCategoryFilter, opexSearchQuery]);
+
+  const getCategoryBadgeColor = (cat: string) => {
+    if (cat.includes('Marketing') || cat.includes('Ads') || cat.includes('Iklan')) {
+      return 'bg-purple-950/80 text-purple-300 border-purple-800/80';
+    }
+    if (cat.includes('Gaji') || cat.includes('Training') || cat.includes('Upah')) {
+      return 'bg-blue-950/80 text-blue-300 border-blue-800/80';
+    }
+    if (cat.includes('Entertainment') || cat.includes('Jamuan')) {
+      return 'bg-amber-950/80 text-amber-300 border-amber-800/80';
+    }
+    if (cat.includes('Packaging') || cat.includes('Logistik')) {
+      return 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80';
+    }
+    if (cat.includes('Sewa') || cat.includes('Utilitas')) {
+      return 'bg-rose-950/80 text-rose-300 border-rose-800/80';
+    }
+    if (cat.includes('Software') || cat.includes('Tools') || cat.includes('Operasional')) {
+      return 'bg-teal-950/80 text-teal-300 border-teal-800/80';
+    }
+    if (cat.includes('Pajak') || cat.includes('Legal')) {
+      return 'bg-indigo-950/80 text-indigo-300 border-indigo-800/80';
+    }
+    return 'bg-slate-900 text-slate-300 border-slate-750';
+  };
+
+  // Receivables (Piutang)
+  const allReceivableOrders = useMemo(() => {
+    return orders.filter((o) => o.sisaPiutang > 0 && o.statusOrder !== 'batal');
+  }, [orders]);
+
+  const totalAllPiutang = useMemo(() => {
+    return allReceivableOrders.reduce((sum, o) => sum + o.sisaPiutang, 0);
+  }, [allReceivableOrders]);
+
+  // Aging Analysis
+  const agingData = useMemo(() => {
+    let under7 = 0;
+    let days7to14 = 0;
+    let days15to30 = 0;
+    let over30 = 0;
+
+    allReceivableOrders.forEach((o) => {
+      const orderDate = new Date(o.tanggal);
+      const diffDays = Math.floor(
+        (new Date().getTime() - orderDate.getTime()) / (1000 * 3600 * 24)
+      );
+
+      if (diffDays <= 7) under7 += o.sisaPiutang;
+      else if (diffDays <= 14) days7to14 += o.sisaPiutang;
+      else if (diffDays <= 30) days15to30 += o.sisaPiutang;
+      else over30 += o.sisaPiutang;
+    });
+
+    return { under7, days7to14, days15to30, over30 };
+  }, [allReceivableOrders]);
+
+  const handleSaveOpex = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (opexJumlah <= 0) return;
+
+    const finalCategory = isCustomCategoryMode && opexCustomCategory.trim()
+      ? opexCustomCategory.trim()
+      : opexKategori;
+
+    addBiayaOperasional({
+      tanggal: new Date().toISOString().split('T')[0],
+      kategori: finalCategory,
+      deskripsi: opexDeskripsi || finalCategory,
+      jumlah: opexJumlah,
+      accountId: opexAccountId || undefined,
+    });
+    setIsAddOpexOpen(false);
+    setOpexJumlah(0);
+    setOpexDeskripsi('');
+    setOpexAccountId('');
+    setIsCustomCategoryMode(false);
+    setOpexCustomCategory('');
+  };
+
+  const handleSaveSettle = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!settleOrder || settleAmount <= 0) return;
+    handleSalesPaymentSaved({
+      orderId: settleOrder.id,
+      amount: settleAmount,
+      method: settleMethod,
+      accountId: settleAccountId || undefined,
+      note: `Pelunasan piutang #${settleOrder.noOrder} via Finance`,
+    });
+    setSettleOrder(null);
+    setSettleAccountId('');
+  };
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Top Navigation Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-3xl border border-slate-200/80 shadow-sm">
+        <div className="segmented-pill-bar flex flex-wrap items-center gap-1 w-full sm:w-auto bg-slate-100/70">
+          <button
+            type="button"
+            onClick={() => setActiveTab('kas_bank')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'kas_bank'
+                ? 'segmented-pill-active'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>Akun Kas & Bank</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                activeTab === 'kas_bank'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-slate-200 text-slate-700'
+              }`}
+            >
+              {cashAccounts.length}
+            </span>
+          </button>
+
+          {isOwner && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('pl_opex')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'pl_opex'
+                  ? 'segmented-pill-active'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span>Laba Rugi (P&L) & OPEX</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('piutang')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'piutang'
+                ? 'segmented-pill-active'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            <span>Monitoring Piutang</span>
+            {allReceivableOrders.length > 0 && (
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                  activeTab === 'piutang'
+                    ? 'bg-rose-500 text-white'
+                    : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {allReceivableOrders.length}
+              </span>
+            )}
+          </button>
+
+          {isOwner && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('neraca')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'neraca'
+                  ? 'segmented-pill-active'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              }`}
+            >
+              <Scale className="w-4 h-4" />
+              <span>Neraca Keuangan (Balance Sheet)</span>
+            </button>
+          )}
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-500 font-mono pr-2">
+          <span>Likuiditas: <strong className="text-emerald-700 font-bold">Rp {cashAccounts.reduce((s, a) => s + (a.saldo || a.saldoAwal || 0), 0).toLocaleString('id-ID')}</strong></span>
+        </div>
+      </div>
+
+      {/* Role notice for Admin */}
+      {!isOwner && activeTab === 'pl_opex' && (
+        <div className="p-4 bg-amber-950/40 border border-amber-800/80 rounded-2xl flex items-center justify-between text-xs text-amber-300">
+          <div className="flex items-center gap-2">
+            <EyeOff className="w-4 h-4 text-amber-400" />
+            <span>
+              Anda login sebagai <strong>Admin/CS</strong>. Sesuai PRD, modul Laba Kotor, HPP, dan Biaya Operasional (OPEX) hanya dapat diakses oleh Owner.
+            </span>
+          </div>
+          <span className="font-mono text-[11px] bg-amber-500/20 px-2 py-0.5 rounded">
+            Monitoring Piutang
+          </span>
+        </div>
+      )}
+
+      {/* TAB 1: KAS & BANK */}
+      {activeTab === 'kas_bank' && <CashBankSection />}
+
+      {/* TAB 2: OWNER FINANCIAL SUMMARY & P&L REPORT */}
+      {activeTab === 'pl_opex' && isOwner && (
+        <div className="space-y-5">
+          {/* Header & Filter Periode */}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
+            <div>
+              <h2 className="text-base font-bold text-white tracking-tight">
+                Laporan Laba Rugi Real-Time (P&L Kalima)
+              </h2>
+              <p className="text-xs text-slate-400">
+                Otomatis dihitung dari order, HPP per SKU, biaya admin marketplace, dan OPEX
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-slate-400">Filter:</span>
+              
+              {/* Filter Type Buttons */}
+              <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button
+                  onClick={() => setFilterType('all')}
+                  className={`px-2.5 py-1 text-xs rounded-lg font-medium cursor-pointer transition-colors ${
+                    filterType === 'all'
+                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Semua
+                </button>
+                <button
+                  onClick={() => setFilterType('month')}
+                  className={`px-2.5 py-1 text-xs rounded-lg font-medium cursor-pointer transition-colors ${
+                    filterType === 'month'
+                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Per Bulan
+                </button>
+                <button
+                  onClick={() => setFilterType('custom')}
+                  className={`px-2.5 py-1 text-xs rounded-lg font-medium cursor-pointer transition-colors ${
+                    filterType === 'custom'
+                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  📅 Rentang Tanggal
+                </button>
+              </div>
+
+              {/* Month Selector */}
+              {filterType === 'month' && (
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white cursor-pointer font-medium"
+                  >
+                    {availableMonths.map((m) => (
+                      <option key={m} value={m}>
+                        Bulan {m}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 rounded-xl px-2 py-1 text-xs text-white"
+                  />
+                </div>
+              )}
+
+              {/* Custom Date Range Selector */}
+              {filterType === 'custom' && (
+                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-amber-500/40">
+                  <div className="flex items-center gap-1 text-xs text-slate-300">
+                    <span className="text-[10px] text-slate-400">Dari:</span>
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                    />
+                  </div>
+                  <span className="text-slate-500 text-xs">-</span>
+                  <div className="flex items-center gap-1 text-xs text-slate-300">
+                    <span className="text-[10px] text-slate-400">Sampai:</span>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-white font-mono"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={openAddOpexModal}
+                className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs shadow-sm cursor-pointer ml-auto sm:ml-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Catat OPEX</span>
+              </button>
+            </div>
+          </div>
+
+          {/* 4 Financial Tiles */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
+              <div className="text-xs text-slate-400 mb-1">Penjualan Bersih (Nett)</div>
+              <div className="text-lg sm:text-2xl font-black text-white font-mono">
+                Rp {netSales.toLocaleString('id-ID')}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                Gross: Rp {grossSales.toLocaleString('id-ID')} (Diskon: Rp {totalDiskon.toLocaleString('id-ID')})
+              </div>
+            </div>
+
+            <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
+              <div className="text-xs text-slate-400 mb-1">Laba Kotor (Gross Profit)</div>
+              <div className="text-lg sm:text-2xl font-black text-emerald-400 font-mono">
+                Rp {grossProfit.toLocaleString('id-ID')}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                Margin: {netSales > 0 ? ((grossProfit / netSales) * 100).toFixed(1) : 0}%
+              </div>
+            </div>
+
+            <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
+              <div className="text-xs text-slate-400 mb-1">Biaya Operasional (OPEX)</div>
+              <div className="text-lg sm:text-2xl font-black text-amber-400 font-mono">
+                Rp {totalOpex.toLocaleString('id-ID')}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                {monthOpex.length} pos pengeluaran tercatat
+              </div>
+            </div>
+
+            <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
+              <div className="text-xs text-slate-400 mb-1">Estimasi Laba Bersih (Nett)</div>
+              <div
+                className={`text-lg sm:text-2xl font-black font-mono ${
+                  netProfit >= 0 ? 'text-emerald-300' : 'text-rose-400'
+                }`}
+              >
+                Rp {netProfit.toLocaleString('id-ID')}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-1">
+                Nett Margin: {netSales > 0 ? ((netProfit / netSales) * 100).toFixed(1) : 0}%
+              </div>
+            </div>
+          </div>
+
+          {/* Visualisasi Recharts Tren Laba Rugi Bulanan */}
+          <MonthlyPnLChart
+            orders={orders}
+            biayaOperasional={biayaOperasional}
+            selectedMonth={filterType === 'month' ? selectedMonth : undefined}
+            onSelectMonth={(m) => {
+              setSelectedMonth(m);
+              setFilterType('month');
+            }}
+          />
+
+          {/* Structured P&L Statement & Category Breakdown Table */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* LEFT: P&L Statement */}
+            <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-400" />
+                  <span>Rincian Laba Rugi {selectedMonth}</span>
+                </h3>
+                <span className="text-[10px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  Basis: Real-Time Accrual
+                </span>
+              </div>
+
+              <div className="space-y-2 text-xs font-mono">
+                <div className="flex justify-between text-slate-200">
+                  <span>(+) Penjualan Kotor (Gross Sales)</span>
+                  <span>Rp {grossSales.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-rose-400">
+                  <span>(-) Potongan & Diskon Penjualan</span>
+                  <span>- Rp {totalDiskon.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-white font-bold pt-1 border-t border-slate-800">
+                  <span>(=) PENJUALAN BERSIH (NET SALES)</span>
+                  <span>Rp {netSales.toLocaleString('id-ID')}</span>
+                </div>
+
+                <div className="flex justify-between text-rose-400 pt-2">
+                  <span>(-) Beban Pokok Penjualan (Total HPP)</span>
+                  <span>- Rp {totalHpp.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-rose-400">
+                  <span>(-) Biaya Admin Marketplace & Channel</span>
+                  <span>- Rp {totalAdminFees.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-emerald-400 font-bold pt-1 border-t border-slate-800">
+                  <span>(=) LABA KOTOR (GROSS PROFIT)</span>
+                  <span>Rp {grossProfit.toLocaleString('id-ID')}</span>
+                </div>
+
+                <div className="flex justify-between text-amber-400 pt-2">
+                  <span>(-) Total Biaya Operasional (OPEX)</span>
+                  <span>- Rp {totalOpex.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="flex justify-between text-base font-black text-emerald-300 pt-2 border-t-2 border-slate-700">
+                  <span>(=) LABA BERSIH (NET INCOME)</span>
+                  <span>Rp {netProfit.toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT: Tabel Ringkasan Beban Operasional per Kategori */}
+            <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <PieChart className="w-4 h-4 text-amber-400" />
+                      <span>Ringkasan Beban per Kategori</span>
+                    </h3>
+                    <div className="text-[11px] text-amber-400 font-mono font-semibold">
+                      Total: Rp {totalOpex.toLocaleString('id-ID')} ({opexCategoryBreakdown.length} Kategori Aktif)
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddCategoryModalOpen(true)}
+                      className="text-[11px] text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-850 border border-slate-700/80 px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3 text-amber-400" />
+                      <span>+ Kategori Baru</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={openAddOpexModal}
+                      className="text-xs text-amber-400 hover:text-amber-300 font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 cursor-pointer transition-colors"
+                    >
+                      + Catat Pengeluaran
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tabel Ringkasan Kategori */}
+                <div className="overflow-x-auto mt-3">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="py-2 px-2.5">Kategori Beban</th>
+                        <th className="py-2 px-2 text-center">Freq</th>
+                        <th className="py-2 px-2.5 text-right">Total (Rp)</th>
+                        <th className="py-2 px-2.5 text-right">Porsi OPEX</th>
+                        <th className="py-2 px-2.5 text-right">% Net Sales</th>
+                        <th className="py-2 px-2 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 font-sans">
+                      {opexCategoryBreakdown.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-slate-500 text-xs">
+                            Belum ada pengeluaran operasional yang dicatat di periode ini.
+                          </td>
+                        </tr>
+                      ) : (
+                        opexCategoryBreakdown.map((cat, idx) => {
+                          const isFiltered = selectedOpexCategoryFilter === cat.kategori;
+                          const ratioToNetSales =
+                            netSales > 0 ? ((cat.total / netSales) * 100).toFixed(1) : '0';
+                          const pctNum = parseFloat(cat.percent) || 0;
+
+                          return (
+                            <tr
+                              key={cat.kategori}
+                              className={`hover:bg-slate-850/50 transition-colors ${
+                                isFiltered ? 'bg-amber-500/10 border-l-2 border-amber-500' : ''
+                              }`}
+                            >
+                              <td className="py-2 px-2.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded border text-[10px] font-semibold ${getCategoryBadgeColor(
+                                      cat.kategori
+                                    )}`}
+                                  >
+                                    {cat.kategori}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-2 px-2 text-center font-mono text-slate-400">
+                                {cat.count}x
+                              </td>
+                              <td className="py-2 px-2.5 text-right font-mono font-bold text-amber-400">
+                                Rp {cat.total.toLocaleString('id-ID')}
+                              </td>
+                              <td className="py-2 px-2.5 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <div className="w-12 bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                      className="bg-amber-500 h-full rounded-full"
+                                      style={{ width: `${Math.min(100, pctNum)}%` }}
+                                    />
+                                  </div>
+                                  <span className="font-mono text-[10px] text-slate-300">
+                                    {cat.percent}%
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-2 px-2.5 text-right font-mono text-slate-400 text-[11px]">
+                                {ratioToNetSales}%
+                              </td>
+                              <td className="py-2 px-2 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSelectedOpexCategoryFilter(
+                                      isFiltered ? 'ALL' : cat.kategori
+                                    )
+                                  }
+                                  className={`px-2 py-0.5 rounded text-[10px] font-semibold cursor-pointer transition-colors ${
+                                    isFiltered
+                                      ? 'bg-amber-500 text-slate-950 font-bold'
+                                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                                  }`}
+                                >
+                                  {isFiltered ? 'Aktif' : 'Filter'}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {selectedOpexCategoryFilter !== 'ALL' && (
+                <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs text-amber-300 mt-2">
+                  <span>
+                    Menampilkan pengeluaran kategori: <strong>{selectedOpexCategoryFilter}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOpexCategoryFilter('ALL')}
+                    className="text-[10px] text-amber-400 hover:underline font-bold cursor-pointer"
+                  >
+                    Tampilkan Semua
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* BOTTOM: Buku Kas Detail Pengeluaran (Expense Ledger Table) */}
+          <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div>
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <span>Buku Catatan Pengeluaran Operasional (Ledger)</span>
+                  <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                    {filteredMonthOpex.length} Transaksi
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Daftar transaksi pengeluaran operasional terperinci sesuai filter periode & kategori
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Search Box */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={opexSearchQuery}
+                    onChange={(e) => setOpexSearchQuery(e.target.value)}
+                    placeholder="Cari deskripsi / kategori / kas..."
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 w-56 focus:outline-none focus:border-amber-500/50"
+                  />
+                  {opexSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setOpexSearchQuery('')}
+                      className="absolute right-2 top-1.5 text-slate-500 hover:text-white text-xs"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {biayaOperasional.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmClearOpexOpen(true)}
+                    className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/30 px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Kosongkan OPEX</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={openAddOpexModal}
+                  className="text-xs text-slate-950 hover:bg-amber-400 font-bold bg-amber-500 px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer shadow-md flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5 text-slate-950" />
+                  <span>+ Tambah Beban</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Category Filter Pills */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setSelectedOpexCategoryFilter('ALL')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all cursor-pointer ${
+                  selectedOpexCategoryFilter === 'ALL'
+                    ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
+                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                }`}
+              >
+                Semua Kategori ({monthOpex.length})
+              </button>
+              {opexCategoryBreakdown.map((cat) => {
+                const isSelected = selectedOpexCategoryFilter === cat.kategori;
+                const badgeClass = getCategoryBadgeColor(cat.kategori);
+
+                return (
+                  <button
+                    key={cat.kategori}
+                    type="button"
+                    onClick={() =>
+                      setSelectedOpexCategoryFilter(
+                        isSelected ? 'ALL' : cat.kategori
+                      )
+                    }
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'ring-2 ring-amber-400 font-bold ' + badgeClass
+                        : badgeClass + ' opacity-85 hover:opacity-100'
+                    }`}
+                  >
+                    <span>{cat.kategori}</span>
+                    <span className="font-mono text-[10px] opacity-80">
+                      ({cat.count})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Detailed Table */}
+            <div className="overflow-x-auto rounded-xl border border-slate-800">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                  <tr>
+                    <th className="py-2.5 px-3">Tanggal</th>
+                    <th className="py-2.5 px-3">Kategori</th>
+                    <th className="py-2.5 px-3">Keterangan / Deskripsi</th>
+                    <th className="py-2.5 px-3">Sumber Kas/Bank</th>
+                    <th className="py-2.5 px-3 text-right">Nominal (Rp)</th>
+                    <th className="py-2.5 px-3 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-sans">
+                  {filteredMonthOpex.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-500 text-xs">
+                        {opexSearchQuery || selectedOpexCategoryFilter !== 'ALL'
+                          ? 'Tidak ada pengeluaran yang cocok dengan kriteria filter.'
+                          : 'Belum ada pengeluaran operasional yang dicatat di periode ini.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredMonthOpex.map((b) => (
+                      <tr key={b.id} className="hover:bg-slate-850/50 transition-colors">
+                        <td className="py-2.5 px-3 font-mono text-slate-400 text-xs">
+                          {b.tanggal}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span
+                            className={`px-2 py-0.5 rounded border text-[10px] font-semibold ${getCategoryBadgeColor(
+                              b.kategori
+                            )}`}
+                          >
+                            {b.kategori}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 font-medium text-white max-w-xs">
+                          {b.deskripsi}
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-slate-400 text-[11px]">
+                          {b.accountNama ? (
+                            <span className="text-amber-400/90 font-medium">
+                              {b.accountNama}
+                            </span>
+                          ) : (
+                            <span className="text-slate-600">-</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-400 text-xs">
+                          Rp {b.jumlah.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditOpex(b)}
+                              title="Edit Pengeluaran"
+                              className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteBiayaOperasional(b.id)}
+                              title="Hapus Pengeluaran"
+                              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: PIUTANG & JATUH TEMPO SECTION */}
+      {activeTab === 'piutang' && (
+        <div className="space-y-4">
+          <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div>
+                <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-rose-400" />
+                  Monitoring Piutang & Jatuh Tempo Pelanggan
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Total piutang beredar: <strong className="text-rose-400 font-mono">Rp {totalAllPiutang.toLocaleString('id-ID')}</strong> ({allReceivableOrders.length} order tertunggak)
+                </p>
+              </div>
+            </div>
+
+            {/* Aging Matrix */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
+                <div className="text-slate-400 text-[11px]">&lt; 7 Hari (Baru)</div>
+                <div className="text-sm font-bold text-white font-mono mt-1">
+                  Rp {agingData.under7.toLocaleString('id-ID')}
+                </div>
+              </div>
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
+                <div className="text-slate-400 text-[11px]">8 - 14 Hari</div>
+                <div className="text-sm font-bold text-amber-400 font-mono mt-1">
+                  Rp {agingData.days7to14.toLocaleString('id-ID')}
+                </div>
+              </div>
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
+                <div className="text-slate-400 text-[11px]">15 - 30 Hari</div>
+                <div className="text-sm font-bold text-rose-400 font-mono mt-1">
+                  Rp {agingData.days15to30.toLocaleString('id-ID')}
+                </div>
+              </div>
+              <div className="bg-slate-950 p-3 rounded-xl border border-rose-900/60">
+                <div className="text-rose-400 text-[11px] font-bold">&gt; 30 Hari (Macet)</div>
+                <div className="text-sm font-black text-rose-400 font-mono mt-1">
+                  Rp {agingData.over30.toLocaleString('id-ID')}
+                </div>
+              </div>
+            </div>
+
+            {/* Table of Receivables */}
+            <div className="overflow-x-auto rounded-xl border border-slate-800">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                  <tr>
+                    <th className="py-2.5 px-3">No. Order & Tgl</th>
+                    <th className="py-2.5 px-3">Channel & Pelanggan</th>
+                    <th className="py-2.5 px-3">Jatuh Tempo</th>
+                    <th className="py-2.5 px-3 text-right">Total Tagihan</th>
+                    <th className="py-2.5 px-3 text-right">Terbayar</th>
+                    <th className="py-2.5 px-3 text-right">Sisa Piutang</th>
+                    <th className="py-2.5 px-3 text-center">Aksi Pelunasan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-sans">
+                  {allReceivableOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-emerald-400 text-xs font-medium">
+                        Semua piutang telah lunas!
+                      </td>
+                    </tr>
+                  ) : (
+                    allReceivableOrders.map((ord) => {
+                      const isOverdue = ord.jatuhTempo && ord.jatuhTempo < todayStr;
+
+                      return (
+                        <tr key={ord.id} className="hover:bg-slate-800/40 transition-colors">
+                          <td className="py-2.5 px-3">
+                            <div className="font-mono font-bold text-white">{ord.noOrder}</div>
+                            <div className="text-[10px] text-slate-400">{ord.tanggal}</div>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className="font-semibold text-white">{ord.customerNama}</div>
+                            <div className="text-[10px] text-slate-400">
+                              {ord.channel} · Telp: {ord.customerHp}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <span
+                              className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded ${
+                                isOverdue
+                                  ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                                  : 'text-slate-300'
+                              }`}
+                            >
+                              {ord.jatuhTempo || 'Tidak ditentukan'}
+                            </span>
+                            {isOverdue && (
+                              <div className="text-[9px] text-rose-400 font-bold mt-0.5">
+                                LEWAT JATUH TEMPO
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-slate-300">
+                            Rp {ord.totalTagihan.toLocaleString('id-ID')}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono text-emerald-400">
+                            Rp {ord.totalTerbayar.toLocaleString('id-ID')}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono font-bold text-rose-400">
+                            Rp {ord.sisaPiutang.toLocaleString('id-ID')}
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            <button
+                              onClick={() => {
+                                setSettleOrder(ord);
+                                setSettleAmount(ord.sisaPiutang);
+                              }}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs"
+                            >
+                              Catat Bayar
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: LAPORAN NERACA KEUANGAN (BALANCE SHEET) */}
+      {activeTab === 'neraca' && isOwner && <BalanceSheetSection />}
+
+      {/* Modal Add OPEX */}
+      {isAddOpexOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-[#121620] border border-slate-700 rounded-2xl p-5 space-y-4 shadow-2xl text-xs">
+            <h3 className="text-sm font-bold text-white">Catat Biaya Operasional (OPEX)</h3>
+
+            <form onSubmit={handleSaveOpex} className="space-y-3">
+              <div>
+                <label className="block text-slate-400 mb-1">Kategori Pos Pengeluaran *</label>
+                <select
+                  value={isCustomCategoryMode ? '__CUSTOM__' : opexKategori}
+                  onChange={(e) => {
+                    if (e.target.value === '__CUSTOM__') {
+                      setIsCustomCategoryMode(true);
+                    } else {
+                      setIsCustomCategoryMode(false);
+                      setOpexKategori(e.target.value);
+                    }
+                  }}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"
+                >
+                  <optgroup label="Kategori Standar & Kustom Tersimpan">
+                    {allAvailableCategories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="__CUSTOM__">✍️ + Tulis Kategori Kustom Baru...</option>
+                </select>
+
+                {isCustomCategoryMode && (
+                  <div className="mt-2 space-y-1">
+                    <label className="block text-[11px] text-amber-300 font-semibold">Nama Kategori Kustom:</label>
+                    <input
+                      type="text"
+                      required
+                      value={opexCustomCategory}
+                      onChange={(e) => setOpexCustomCategory(e.target.value)}
+                      placeholder="Contoh: Biaya Renovasi Rak Toko, Training Barista"
+                      className="w-full bg-slate-900 border border-amber-500/50 rounded-lg p-2 text-white text-xs focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Bayar Dari Akun Kas/Bank</label>
+                <select
+                  value={opexAccountId}
+                  onChange={(e) => setOpexAccountId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"
+                >
+                  <option value="none">-- Jangan Potong Kas (Pencatatan Saja) --</option>
+                  {cashAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nama} ({a.tipe.toUpperCase()} - Saldo: Rp {a.saldo.toLocaleString('id-ID')})
+                    </option>
+                  ))}
+                </select>
+                <div className="text-[10px] text-amber-400/90 mt-0.5">
+                  ⚡ Saldo akun terpilih akan otomatis berkurang & mutasi kas tercatat seketika
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Deskripsi / Keterangan *</label>
+                <input
+                  type="text"
+                  required
+                  value={opexDeskripsi}
+                  onChange={(e) => setOpexDeskripsi(e.target.value)}
+                  placeholder="Contoh: Top-up saldo TikTok Ads kampanye 9.9"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Nominal Biaya (Rp) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={opexJumlah || ''}
+                  onChange={(e) => setOpexJumlah(Number(e.target.value) || 0)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpexOpen(false)}
+                  className="px-3 py-2 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg cursor-pointer shadow-md"
+                >
+                  Simpan Biaya
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edit OPEX */}
+      {editingOpex && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-sm bg-[#121620] border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-2xl text-xs">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Edit2 className="w-4 h-4 text-amber-400" />
+                <span>Edit Biaya Operasional (OPEX)</span>
+              </h3>
+              <span className="text-[10px] font-mono text-slate-500">
+                #{editingOpex.id.substring(0, 8)}
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveEditOpex} className="space-y-3">
+              <div>
+                <label className="block text-slate-400 mb-1">Tanggal Transaksi</label>
+                <input
+                  type="date"
+                  required
+                  value={editOpexTanggal}
+                  onChange={(e) => setEditOpexTanggal(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Kategori Pos Pengeluaran *</label>
+                <select
+                  value={isEditCustomCategoryMode ? '__CUSTOM__' : editOpexKategori}
+                  onChange={(e) => {
+                    if (e.target.value === '__CUSTOM__') {
+                      setIsEditCustomCategoryMode(true);
+                    } else {
+                      setIsEditCustomCategoryMode(false);
+                      setEditOpexKategori(e.target.value);
+                    }
+                  }}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"
+                >
+                  <optgroup label="Kategori Standar & Kustom Tersimpan">
+                    {allAvailableCategories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="__CUSTOM__">✍️ + Tulis Kategori Kustom Baru...</option>
+                </select>
+
+                {isEditCustomCategoryMode && (
+                  <div className="mt-2 space-y-1">
+                    <label className="block text-[11px] text-amber-300 font-semibold">Nama Kategori Kustom:</label>
+                    <input
+                      type="text"
+                      required
+                      value={editOpexCustomCategory}
+                      onChange={(e) => setEditOpexCustomCategory(e.target.value)}
+                      placeholder="Contoh: Biaya Renovasi Rak Toko"
+                      className="w-full bg-slate-900 border border-amber-500/50 rounded-lg p-2 text-white text-xs focus:outline-none focus:border-amber-400"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Sumber Rekening Kas/Bank</label>
+                <select
+                  value={editOpexAccountId}
+                  onChange={(e) => setEditOpexAccountId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"
+                >
+                  <option value="none">-- Tanpa Rekening Kas (Hanya Pencatatan P&L) --</option>
+                  {cashAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nama} ({a.tipe.toUpperCase()} - Saldo: Rp {a.saldo.toLocaleString('id-ID')})
+                    </option>
+                  ))}
+                </select>
+                <div className="text-[10px] text-slate-400 mt-0.5">
+                  💡 Mengubah akun atau nominal akan otomatis menyesuaikan saldo kas terkait.
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Deskripsi / Keterangan *</label>
+                <input
+                  type="text"
+                  required
+                  value={editOpexDeskripsi}
+                  onChange={(e) => setEditOpexDeskripsi(e.target.value)}
+                  placeholder="Keterangan pengeluaran"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Nominal Biaya (Rp) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={editOpexJumlah || ''}
+                  onChange={(e) => setEditOpexJumlah(Number(e.target.value) || 0)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingOpex(null)}
+                  className="px-3 py-2 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg cursor-pointer shadow-md"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Settle Modal */}
+      {settleOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-[#121620] border border-slate-700 rounded-2xl p-5 space-y-4 shadow-2xl text-xs">
+            <h3 className="text-sm font-bold text-white">
+              Pelunasan Piutang #{settleOrder.noOrder}
+            </h3>
+
+            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+              <div className="text-slate-400">Pelanggan: {settleOrder.customerNama}</div>
+              <div className="text-rose-400 font-mono font-bold">
+                Sisa Piutang: Rp {settleOrder.sisaPiutang.toLocaleString('id-ID')}
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveSettle} className="space-y-3">
+              <div>
+                <label className="block text-slate-400 mb-1">Nominal Diterima (Rp)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max={settleOrder.sisaPiutang}
+                  value={settleAmount || ''}
+                  onChange={(e) => setSettleAmount(Number(e.target.value) || 0)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Metode</label>
+                <select
+                  value={settleMethod}
+                  onChange={(e) => setSettleMethod(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"
+                >
+                  <option value="Transfer BCA">Transfer BCA</option>
+                  <option value="Transfer Mandiri">Transfer Mandiri</option>
+                  <option value="Cash / Tunai">Cash / Tunai</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Masuk ke Akun Kas/Bank</label>
+                <select
+                  value={settleAccountId}
+                  onChange={(e) => setSettleAccountId(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-white"
+                >
+                  <option value="">-- Otomatis sesuai metode / Default --</option>
+                  {cashAccounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.nama} (Saldo: Rp {a.saldo.toLocaleString('id-ID')})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSettleOrder(null)}
+                  className="px-3 py-2 rounded-lg text-slate-400 hover:text-white"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg"
+                >
+                  Simpan Pelunasan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL TAMBAH KATEGORI KUSTOM BARU */}
+      {isAddCategoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-sm bg-[#121620] border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-2xl text-xs">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Plus className="w-4 h-4 text-amber-400" />
+                <span>Tambah Kategori Beban Baru</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddCategoryModalOpen(false)}
+                className="text-slate-500 hover:text-white cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Kategori baru yang didaftarkan akan tersimpan dan otomatis muncul di pilihan formulir pencatatan pengeluaran.
+            </p>
+
+            <form onSubmit={handleSaveNewCustomCategory} className="space-y-3">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">
+                  Nama Kategori Beban *
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={newCategoryNameInput}
+                  onChange={(e) => setNewCategoryNameInput(e.target.value)}
+                  placeholder="Contoh: Endorsement TikTok, Renovasi Display, Konsumsi Meeting"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-white text-xs focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+                <div className="font-semibold text-slate-300">Kategori yang sudah terdaftar ({allAvailableCategories.length}):</div>
+                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto pt-1">
+                  {allAvailableCategories.map((c) => (
+                    <span key={c} className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] text-slate-300">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCategoryModalOpen(false)}
+                  className="px-3 py-2 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg cursor-pointer shadow-md"
+                >
+                  Simpan Kategori
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL KONFIRMASI KOSONGKAN DATA OPEX */}
+      {isConfirmClearOpexOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-[#121620] border border-rose-500/40 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white">Kosongkan Seluruh Data OPEX?</h3>
+                <p className="text-xs text-slate-400">Tindakan ini tidak dapat dibatalkan</p>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
+              <p>
+                Saat ini terdapat <strong className="text-amber-400 font-mono">{biayaOperasional.length} catatan pengeluaran</strong> dengan total akumulasi senilai <strong className="text-amber-400 font-mono">Rp {biayaOperasional.reduce((acc, b) => acc + b.jumlah, 0).toLocaleString('id-ID')}</strong>.
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Gunakan fitur ini jika Anda ingin membersihkan data pengeluaran lama atau data ganda sebelum meng-upload ulang file CSV yang baru.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsConfirmClearOpexOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-900 border border-slate-800 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  clearBiayaOperasional();
+                  setIsConfirmClearOpexOpen(false);
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-600/20 cursor-pointer flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Ya, Hapus Semua OPEX</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
