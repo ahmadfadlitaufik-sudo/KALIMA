@@ -54,3 +54,100 @@ export const negativeStock = (summary: Record<string, StockEntry>, field: StockF
 /** Nilai HPP stok yang benar-benar ada (stok minus tidak dihitung), dibulatkan ke rupiah. */
 export const stockValue = (skus: { sku: string; hpp: number }[], summary: Record<string, StockEntry>, field: StockField): number =>
   Math.round(skus.reduce((sum, sku) => sum + Math.max(0, summary[sku.sku]?.[field] ?? 0) * (sku.hpp || 0), 0));
+
+export type DashboardPeriod = 'this_month' | 'last_month' | 'this_year';
+
+export const PERIOD_LABELS: Record<DashboardPeriod, { label: string; previous: string }> = {
+  this_month: { label: 'Bulan ini', previous: 'bulan lalu' },
+  last_month: { label: 'Bulan lalu', previous: '2 bulan lalu' },
+  this_year: { label: 'Tahun ini', previous: 'periode sama tahun lalu' },
+};
+
+const pad = (value: number): string => String(value).padStart(2, '0');
+const monthStart = (year: number, month: number): string => {
+  const date = new Date(Date.UTC(year, month, 1));
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-01`;
+};
+const monthEnd = (year: number, month: number): string => {
+  const date = new Date(Date.UTC(year, month + 1, 0));
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+};
+
+/** Rentang tanggal (YYYY-MM-DD, inklusif) untuk periode dan periode pembandingnya. */
+export const periodRange = (
+  period: DashboardPeriod,
+  today: string,
+): { start: string; end: string; prevStart: string; prevEnd: string } => {
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7)) - 1;
+  if (period === 'this_year') {
+    return { start: `${year}-01-01`, end: today, prevStart: `${year - 1}-01-01`, prevEnd: `${year - 1}${today.slice(4)}` };
+  }
+  const offset = period === 'last_month' ? 1 : 0;
+  return {
+    start: monthStart(year, month - offset),
+    end: monthEnd(year, month - offset),
+    prevStart: monthStart(year, month - offset - 1),
+    prevEnd: monthEnd(year, month - offset - 1),
+  };
+};
+
+/** Omzet, laba kotor, pcs, dan jumlah order (tanpa batal) di antara dua tanggal. */
+export const salesSummary = (
+  orders: { tanggal: string; statusOrder: string; totalTagihan: number; labaKotor: number; items: { qty: number }[] }[],
+  start: string,
+  end: string,
+): { omzet: number; laba: number; qty: number; count: number } => {
+  const summary = { omzet: 0, laba: 0, qty: 0, count: 0 };
+  for (const order of orders) {
+    if (order.statusOrder === 'batal' || order.tanggal < start || order.tanggal > end) {
+      continue;
+    }
+    summary.omzet += order.totalTagihan;
+    summary.laba += order.labaKotor;
+    summary.qty += order.items.reduce((sum, item) => sum + item.qty, 0);
+    summary.count++;
+  }
+  return summary;
+};
+
+/** Perubahan dalam persen (dibulatkan), atau null bila periode pembanding nol. */
+export const percentChange = (current: number, previous: number): number | null =>
+  previous === 0 ? null : Math.round(((current - previous) / previous) * 100);
+
+export type ActionItemId = 'cancel_requests' | 'overdue' | 'due_soon' | 'negative_stock' | 'low_stock' | 'po_in_transit';
+
+export type ActionItem = { id: ActionItemId; count: number; amount?: number };
+
+const DUE_SOON_DAYS = 7;
+
+const addDays = (date: string, days: number): string => {
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+};
+
+/** Daftar hal yang perlu ditindak, urut dari yang paling mendesak; yang nol tidak dimasukkan. */
+export const actionItems = (input: {
+  today: string;
+  orders: { statusOrder: string; statusBayar: string; sisaPiutang: number; jatuhTempo?: string }[];
+  purchaseOrders: { statusPO: string }[];
+  negativeCount: number;
+  lowStockCount: number;
+}): ActionItem[] => {
+  const dueSoonLimit = addDays(input.today, DUE_SOON_DAYS);
+  const receivables = input.orders.filter((order) => order.statusOrder !== 'batal' && order.statusBayar !== 'lunas' && order.sisaPiutang > 0 && order.jatuhTempo);
+  const overdue = receivables.filter((order) => order.jatuhTempo! < input.today);
+  const dueSoon = receivables.filter((order) => order.jatuhTempo! >= input.today && order.jatuhTempo! <= dueSoonLimit);
+  const total = (list: { sisaPiutang: number }[]) => list.reduce((sum, order) => sum + order.sisaPiutang, 0);
+
+  const items: ActionItem[] = [
+    { id: 'cancel_requests', count: input.orders.filter((order) => order.statusOrder === 'menunggu_approval_batal').length },
+    { id: 'overdue', count: overdue.length, amount: total(overdue) },
+    { id: 'due_soon', count: dueSoon.length, amount: total(dueSoon) },
+    { id: 'negative_stock', count: input.negativeCount },
+    { id: 'low_stock', count: input.lowStockCount },
+    { id: 'po_in_transit', count: input.purchaseOrders.filter((po) => po.statusPO === 'dikirim').length },
+  ];
+  return items.filter((item) => item.count > 0);
+};
