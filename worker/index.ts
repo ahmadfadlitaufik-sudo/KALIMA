@@ -1,10 +1,11 @@
 import { handleAuth } from './auth';
+import { handleWorkspace } from './workspace';
 import { HttpError, error } from './http';
 import { Env } from './types';
 
 type ApiHandler = (req: Request, env: Env, path: string) => Promise<Response | null>;
 
-const apiHandlers: ApiHandler[] = [handleAuth];
+const apiHandlers: ApiHandler[] = [handleAuth, handleWorkspace];
 
 const handleApi = async (req: Request, env: Env, path: string): Promise<Response> => {
   try {
