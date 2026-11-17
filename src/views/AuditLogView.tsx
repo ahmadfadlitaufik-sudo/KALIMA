@@ -1,25 +1,45 @@
 import React, { useState, useMemo } from 'react';
-import { History, Search, Filter, ShieldCheck, UserCheck } from 'lucide-react';
+import { History, Search, ShieldCheck, UserCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { AuditLog } from '../types';
+import { filterAuditLogs } from '../services/auditFilter';
+
+const PAGE_SIZE = 50;
 
 export const AuditLogView: React.FC = () => {
   const { auditLogs } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [moduleFilter, setModuleFilter] = useState<string>('ALL');
+  const [userFilter, setUserFilter] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [page, setPage] = useState(0);
 
-  const filteredLogs = useMemo(() => {
-    return auditLogs.filter((log) => {
-      const matchesQuery =
-        log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.detail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.userName.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesModule =
-        moduleFilter === 'ALL' || log.module === moduleFilter;
+  const userNames = useMemo(() => [...new Set(auditLogs.map((log) => log.userName))].sort(), [auditLogs]);
 
-      return matchesQuery && matchesModule;
-    });
-  }, [auditLogs, searchQuery, moduleFilter]);
+  const filteredLogs = useMemo(
+    () =>
+      filterAuditLogs(auditLogs, {
+        query: searchQuery,
+        module: moduleFilter === 'ALL' ? undefined : moduleFilter,
+        user: userFilter || undefined,
+        from: fromDate || undefined,
+        to: toDate || undefined,
+      }),
+    [auditLogs, searchQuery, moduleFilter, userFilter, fromDate, toDate],
+  );
+
+  const pageCount = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageLogs = filteredLogs.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const hasFilter = Boolean(searchQuery || moduleFilter !== 'ALL' || userFilter || fromDate || toDate);
+  const resetFilters = () => {
+    setSearchQuery('');
+    setModuleFilter('ALL');
+    setUserFilter('');
+    setFromDate('');
+    setToDate('');
+    setPage(0);
+  };
 
   return (
     <div className="space-y-5 pb-12">
@@ -41,14 +61,17 @@ export const AuditLogView: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
         <div className="relative sm:col-span-2">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
           <input
             type="text"
             placeholder="Cari aktivitas, nama pengguna, atau rincian transaksi..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(0);
+            }}
             className="w-full bg-slate-950 border border-slate-800 pl-9 pr-4 py-1.5 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-amber-500"
           />
         </div>
@@ -56,7 +79,11 @@ export const AuditLogView: React.FC = () => {
         <div>
           <select
             value={moduleFilter}
-            onChange={(e) => setModuleFilter(e.target.value)}
+            onChange={(e) => {
+              setModuleFilter(e.target.value);
+              setPage(0);
+            }}
+            aria-label="Modul"
             className="w-full bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-slate-300 focus:outline-none"
           >
             <option value="ALL">Semua Modul</option>
@@ -68,6 +95,48 @@ export const AuditLogView: React.FC = () => {
             <option value="Auth">Autentikasi & Sistem</option>
           </select>
         </div>
+
+        <select
+          value={userFilter}
+          onChange={(e) => {
+            setUserFilter(e.target.value);
+            setPage(0);
+          }}
+          aria-label="Pengguna"
+          className="w-full bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-slate-300 focus:outline-none"
+        >
+          <option value="">Semua Pengguna</option>
+          {userNames.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+
+        <label className="flex items-center gap-1.5 text-xs text-slate-500">
+          <span className="shrink-0">Dari</span>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => {
+              setFromDate(e.target.value);
+              setPage(0);
+            }}
+            className="w-full bg-slate-950 border border-slate-800 px-2 py-1.5 rounded-xl text-xs text-slate-300 focus:outline-none"
+          />
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-slate-500">
+          <span className="shrink-0">s.d.</span>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => {
+              setToDate(e.target.value);
+              setPage(0);
+            }}
+            className="w-full bg-slate-950 border border-slate-800 px-2 py-1.5 rounded-xl text-xs text-slate-300 focus:outline-none"
+          />
+        </label>
       </div>
 
       {/* Audit Log Table */}
@@ -76,7 +145,7 @@ export const AuditLogView: React.FC = () => {
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[11px] tracking-wider">
               <tr>
-                <th className="py-3 px-4">Waktu (WIB)</th>
+                <th className="py-3 px-4">Waktu</th>
                 <th className="py-3 px-3">Pengguna & Peran</th>
                 <th className="py-3 px-3">Modul</th>
                 <th className="py-3 px-3">Aksi</th>
@@ -84,7 +153,19 @@ export const AuditLogView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-sans">
-              {filteredLogs.map((log) => (
+              {pageLogs.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-10 text-center text-slate-500">
+                    Tidak ada aktivitas yang cocok.{' '}
+                    {hasFilter && (
+                      <button type="button" onClick={resetFilters} className="font-semibold text-indigo-700 hover:underline cursor-pointer">
+                        Hapus filter
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              )}
+              {pageLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
                   <td className="py-3 px-4 font-mono text-xs text-slate-400 whitespace-nowrap">
                     {log.timestamp}
@@ -117,6 +198,34 @@ export const AuditLogView: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-slate-800 text-xs text-slate-500">
+          <span>
+            {filteredLogs.length === 0
+              ? '0 aktivitas'
+              : `${currentPage * PAGE_SIZE + 1}–${Math.min((currentPage + 1) * PAGE_SIZE, filteredLogs.length)} dari ${filteredLogs.length} aktivitas`}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage(currentPage - 1)}
+              disabled={currentPage === 0}
+              className="px-3 py-1.5 rounded-lg border border-slate-300 font-semibold text-slate-700 disabled:opacity-40 cursor-pointer disabled:cursor-default"
+            >
+              ← Sebelumnya
+            </button>
+            <span>
+              {currentPage + 1} / {pageCount}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage(currentPage + 1)}
+              disabled={currentPage >= pageCount - 1}
+              className="px-3 py-1.5 rounded-lg border border-slate-300 font-semibold text-slate-700 disabled:opacity-40 cursor-pointer disabled:cursor-default"
+            >
+              Selanjutnya →
+            </button>
+          </div>
         </div>
       </div>
     </div>
