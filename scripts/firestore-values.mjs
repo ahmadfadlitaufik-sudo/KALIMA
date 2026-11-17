@@ -30,4 +30,4 @@ export const fromFirestoreFields = (fields) =>
 export const WORKSPACE_DOC_IDS = ['orders', 'stock_movements', 'master', 'finance', 'operations', 'audit_logs'];
 
 /** Batas ukuran satu dokumen di API (byte). */
-export const MAX_DOC_BYTES = 1_800_000;
+export const MAX_DOC_BYTES = 10_000_000;

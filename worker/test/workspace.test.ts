@@ -2,6 +2,7 @@ import { env } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { call, loginAs, setupOwner } from './helpers';
 import { hashPassword } from '../crypto';
+import { decodeDoc } from '../workspace';
 
 const put = async (cookie: string, id: string, data: unknown) =>
   call('PUT', `/api/workspace/${id}`, { data }, cookie);
@@ -52,14 +53,46 @@ describe('workspace API', () => {
     expect((await put(cookie, 'main', {})).status).toBe(404);
   });
 
-  it('rejects a body over 1,800,000 bytes with 413', async () => {
+  it('rejects a body over 10,000,000 bytes with 413', async () => {
     const cookie = await setupOwner();
-    const bigData = { orders: ['x'.repeat(1_800_001)] };
+    const bigData = { orders: ['x'.repeat(10_000_001)] };
 
     const res = await put(cookie, 'orders', bigData);
 
     expect(res.status).toBe(413);
     expect(((await res.json()) as { error: string }).error).toMatch(/^Data terlalu besar/);
+  });
+
+  it('stores documents compressed so a 3 MB orders list still saves and round-trips', async () => {
+    const cookie = await setupOwner();
+    const orders = Array.from({ length: 4000 }, (_, i) => ({ id: `o${i}`, catatan: 'Kaos polos 210 GSM hitam XL '.repeat(25) }));
+
+    const res = await put(cookie, 'orders', { orders });
+
+    expect(res.status).toBe(200);
+    const raw = await env.DB.prepare("SELECT data FROM workspace_docs WHERE id = 'orders'").first<{ data: string }>();
+    expect(raw!.data.startsWith('gz:')).toBe(true);
+    expect(raw!.data.length).toBeLessThan(1_000_000);
+    const all = (await (await call('GET', '/api/workspace', undefined, cookie)).json()) as { docs: Record<string, { data: { orders: unknown[] } }> };
+    expect(all.docs.orders.data.orders).toEqual(orders);
+  });
+
+  it('still reads documents saved before compression', async () => {
+    const cookie = await setupOwner();
+    await env.DB.prepare("INSERT INTO workspace_docs (id, data, version, updated_at) VALUES ('orders', '{\"orders\":[{\"id\":\"lama\"}]}', 3, 'x')").run();
+
+    const all = (await (await call('GET', '/api/workspace', undefined, cookie)).json()) as { docs: Record<string, { data: unknown }> };
+
+    expect(all.docs.orders.data).toEqual({ orders: [{ id: 'lama' }] });
+  });
+
+  it('rejects data that stays over the storage limit after compression with 413', async () => {
+    const cookie = await setupOwner();
+    const noise = Array.from({ length: 24 }, () => Array.from(crypto.getRandomValues(new Uint8Array(65_536)), (b) => b.toString(16).padStart(2, '0')).join('')).join('');
+
+    const res = await put(cookie, 'orders', { orders: [noise] });
+
+    expect(res.status).toBe(413);
   });
 
   it('rejects data that is not an object with 400', async () => {
@@ -108,7 +141,7 @@ describe('workspace API', () => {
 
   describe('owner-only data', () => {
     const storedData = async (id: string) =>
-      JSON.parse((await env.DB.prepare('SELECT data FROM workspace_docs WHERE id = ?').bind(id).first<{ data: string }>())!.data);
+      decodeDoc((await env.DB.prepare('SELECT data FROM workspace_docs WHERE id = ?').bind(id).first<{ data: string }>())!.data);
 
     it('keeps SKU, series and BOM (HPP) unchanged when an admin saves master', async () => {
       const ownerCookie = await setupOwner();
