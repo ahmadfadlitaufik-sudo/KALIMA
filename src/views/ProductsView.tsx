@@ -42,7 +42,7 @@ export const ProductsView: React.FC = () => {
     syncAllSkuNames,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'katalog_seri' | 'semua_sku' | 'bom_aksesoris'>('katalog_seri');
+  const [activeTab, setActiveTab] = useState<'katalog_seri' | 'semua_sku' | 'bom_aksesoris'>('semua_sku');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSeries, setSelectedSeries] = useState<string>('ALL');
   const [selectedSizeFilter, setSelectedSizeFilter] = useState<string>('ALL');

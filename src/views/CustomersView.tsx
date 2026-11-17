@@ -42,7 +42,6 @@ import {
 } from 'lucide-react';
 import { useApp, normalizePhone } from '../context/AppContext';
 import { Customer, Order, SalesChannelName, Reseller, CustomerCategory } from '../types';
-import { ResellerView } from './ResellerView';
 
 export type MainCategoryTab = 'ALL' | 'Umum' | 'Reseller' | 'Marketplace' | 'VIP';
 export type FrequencyFilter = 'ALL' | 'baru' | 'reguler' | 'loyal' | 'no_order';
@@ -62,10 +61,10 @@ export const CustomersView: React.FC = () => {
     syncCustomersFromOrders,
     setQuickOrderModalOpen,
     isOwner,
+    setCurrentView,
   } = useApp();
 
   // Top View Toggle: Database Customer vs CRM Mitra Hub
-  const [activeMainView, setActiveMainView] = useState<'customer_db' | 'crm_mitra'>('customer_db');
 
   // Category Filter Bar State
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<MainCategoryTab>('ALL');
@@ -721,12 +720,8 @@ export const CustomersView: React.FC = () => {
         <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800/80 w-full sm:w-auto">
           <button
             type="button"
-            onClick={() => setActiveMainView('customer_db')}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              activeMainView === 'customer_db'
-                ? 'bg-amber-500 text-slate-950 shadow-xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
+            aria-current="page"
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer bg-amber-500 text-slate-950 shadow-xs`}
           >
             <Users className="w-4 h-4" />
             <span>Database Customer ({customers.length})</span>
@@ -734,15 +729,11 @@ export const CustomersView: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => setActiveMainView('crm_mitra')}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              activeMainView === 'crm_mitra'
-                ? 'bg-amber-500 text-slate-950 shadow-xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-900'
-            }`}
+            onClick={() => setCurrentView('reseller')}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-400 hover:text-white hover:bg-slate-900`}
           >
             <Store className="w-4 h-4" />
-            <span>CRM Mitra Reseller ({resellers.length})</span>
+            <span>Mitra Reseller ({resellers.length}) →</span>
           </button>
         </div>
 
@@ -757,14 +748,7 @@ export const CustomersView: React.FC = () => {
       {/* ========================================================================= */}
       {/* VIEW MODE: CRM MITRA RESELLER HUB */}
       {/* ========================================================================= */}
-      {activeMainView === 'crm_mitra' ? (
-        <div className="animate-in fade-in duration-200">
-          <ResellerView />
-        </div>
-      ) : (
-        /* ========================================================================= */
-        /* VIEW MODE: DATABASE CUSTOMER MASTER */
-        /* ========================================================================= */
+      {/* Database pelanggan */}
         <div className="space-y-5 animate-in fade-in duration-200">
           {/* Executive Header Banner */}
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-[#121620] p-5 sm:p-6 rounded-3xl border border-slate-800/80 shadow-md">
@@ -998,7 +982,7 @@ export const CustomersView: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setActiveMainView('crm_mitra')}
+                  onClick={() => setCurrentView('reseller')}
                   className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shrink-0"
                 >
                   <Store className="w-3.5 h-3.5" />
@@ -1502,11 +1486,9 @@ export const CustomersView: React.FC = () => {
                                 </button>
                               ) : (
                                 <button
-                                  onClick={() => {
-                                    setActiveMainView('crm_mitra');
-                                  }}
+                                  onClick={() => setCurrentView('reseller')}
                                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                                  title="Buka Hub CRM Mitra untuk toko ini" aria-label="Buka Hub CRM Mitra untuk toko ini"
+                                  title="Buka menu Reseller untuk toko ini" aria-label="Buka menu Reseller untuk toko ini"
                                 >
                                   <Crown className="w-3.5 h-3.5 text-amber-400" />
                                   <span>Kelola Mitra</span>
@@ -1580,7 +1562,6 @@ export const CustomersView: React.FC = () => {
             )}
           </div>
         </div>
-      )}
 
       {/* ========================================================================= */}
       {/* MODAL: Tentukan Jadi Mitra / Reseller */}

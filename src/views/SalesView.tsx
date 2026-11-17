@@ -611,7 +611,7 @@ export const SalesView: React.FC = () => {
         </div>
 
         {/* Row 2: Search Query & Dropdown Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {/* Search */}
           <div className="relative sm:col-span-1">
             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
@@ -622,22 +622,6 @@ export const SalesView: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 pl-9 pr-3 py-2 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-900 transition-colors"
             />
-          </div>
-
-          {/* Channel */}
-          <div>
-            <select
-              value={selectedChannel}
-              onChange={(e) => setSelectedChannel(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 px-3 py-2 rounded-2xl text-xs text-slate-700 font-medium focus:outline-none focus:bg-white focus:border-slate-900 cursor-pointer transition-colors"
-            >
-              <option value="ALL">Semua Channel Penjualan</option>
-              {channels.map((c) => (
-                <option key={c.id} value={c.name}>
-                  Channel: {c.name}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Payment Status */}
@@ -670,69 +654,26 @@ export const SalesView: React.FC = () => {
           </div>
         </div>
 
-        {/* Row 3: Quick Channel Pills (Umum, Reseller, Shopee, TikTok, etc.) */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-slate-100">
-          <span className="text-xs text-slate-500 font-medium mr-1">Filter Channel:</span>
-          <button
-            type="button"
-            onClick={() => setSelectedChannel('ALL')}
-            className={`px-3 py-1.5 text-xs rounded-xl cursor-pointer transition-all ${getChannelFilterBtnClass(
-              'ALL',
-              selectedChannel === 'ALL'
-            )}`}
-          >
-            Semua Channel ({orders.filter((o) => o.statusOrder !== 'batal').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedChannel('Shopee')}
-            className={`px-3 py-1.5 text-xs rounded-xl cursor-pointer transition-all ${getChannelFilterBtnClass(
-              'Shopee',
-              selectedChannel === 'Shopee'
-            )}`}
-          >
-            Shopee ({orders.filter((o) => o.channel === 'Shopee' && o.statusOrder !== 'batal').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedChannel('Umum')}
-            className={`px-3 py-1.5 text-xs rounded-xl cursor-pointer transition-all ${getChannelFilterBtnClass(
-              'Umum',
-              selectedChannel === 'Umum'
-            )}`}
-          >
-            Umum / Retail ({orders.filter((o) => o.channel === 'Umum' && o.statusOrder !== 'batal').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedChannel('Reseller')}
-            className={`px-3 py-1.5 text-xs rounded-xl cursor-pointer transition-all ${getChannelFilterBtnClass(
-              'Reseller',
-              selectedChannel === 'Reseller'
-            )}`}
-          >
-            Reseller ({orders.filter((o) => o.channel === 'Reseller' && o.statusOrder !== 'batal').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedChannel('TikTok')}
-            className={`px-3 py-1.5 text-xs rounded-xl cursor-pointer transition-all ${getChannelFilterBtnClass(
-              'TikTok',
-              selectedChannel === 'TikTok'
-            )}`}
-          >
-            TikTok Shop ({orders.filter((o) => o.channel === 'TikTok' && o.statusOrder !== 'batal').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedChannel('TAPADA')}
-            className={`px-3 py-1.5 text-xs rounded-xl cursor-pointer transition-all ${getChannelFilterBtnClass(
-              'TAPADA',
-              selectedChannel === 'TAPADA'
-            )}`}
-          >
-            TAPADA ({orders.filter((o) => o.channel === 'TAPADA' && o.statusOrder !== 'batal').length})
-          </button>
+        {/* Filter channel: satu baris chip, dibuat dari daftar channel */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-slate-100" role="group" aria-label="Filter channel">
+          <span className="text-xs text-slate-500 font-medium mr-1">Channel:</span>
+          {[{ name: 'ALL', label: 'Semua' }, ...channels.map((channel) => ({ name: channel.name, label: channel.name }))].map(({ name, label }) => {
+            const count = orders.filter((o) => o.statusOrder !== 'batal' && (name === 'ALL' || o.channel === name)).length;
+            if (name !== 'ALL' && count === 0) {
+              return null;
+            }
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => setSelectedChannel(name)}
+                aria-pressed={selectedChannel === name}
+                className={`px-3 py-1.5 text-xs rounded-xl cursor-pointer transition-all ${getChannelFilterBtnClass(name, selectedChannel === name)}`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
         </div>
       </div>
 
