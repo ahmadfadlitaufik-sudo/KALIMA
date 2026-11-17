@@ -68,10 +68,13 @@ export const requireOwner = async (req: Request, env: Env): Promise<SessionUser>
   return user;
 };
 
-const countRecentFailures = async (env: Env, email: string): Promise<number> => {
+/** Alamat jaringan pengirim (diisi Cloudflare); kosong saat uji lokal. */
+const clientIp = (req: Request): string => req.headers.get('cf-connecting-ip') ?? '';
+
+const countRecentFailures = async (env: Env, email: string, ip: string): Promise<number> => {
   const since = new Date(Date.now() - FAILURE_WINDOW_MS).toISOString();
-  const row = await env.DB.prepare('SELECT COUNT(*) AS total FROM login_failures WHERE email = ? AND failed_at > ?')
-    .bind(email, since)
+  const row = await env.DB.prepare('SELECT COUNT(*) AS total FROM login_failures WHERE email = ? AND ip = ? AND failed_at > ?')
+    .bind(email, ip, since)
     .first<{ total: number }>();
   return row?.total ?? 0;
 };
@@ -81,14 +84,15 @@ const login = async (req: Request, env: Env): Promise<Response> => {
   const email = normalizeEmail(body.email);
   const password = typeof body.password === 'string' ? body.password : '';
 
-  if (await countRecentFailures(env, email) >= MAX_FAILURES) {
+  const ip = clientIp(req);
+  if (await countRecentFailures(env, email, ip) >= MAX_FAILURES) {
     throw new HttpError(429, 'Terlalu banyak percobaan masuk. Coba lagi 15 menit lagi.');
   }
 
   const user = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first<UserRow>();
   const isValid = user !== null && user.active === 1 && await verifyPassword(password, user.salt, user.password_hash);
   if (!isValid) {
-    await env.DB.prepare('INSERT INTO login_failures (email, failed_at) VALUES (?, ?)').bind(email, new Date().toISOString()).run();
+    await env.DB.prepare('INSERT INTO login_failures (email, ip, failed_at) VALUES (?, ?, ?)').bind(email, ip, new Date().toISOString()).run();
     throw new HttpError(401, INVALID_LOGIN);
   }
 

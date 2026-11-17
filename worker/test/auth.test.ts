@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:test';
+import { SELF, env } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { OWNER_EMAIL, OWNER_PASSWORD, call, countUsers, loginAs, sessionCookie, setupOwner } from './helpers';
 
@@ -66,6 +66,25 @@ describe('login', () => {
     const blocked = await call('POST', '/api/auth/login', { email: OWNER_EMAIL, password: OWNER_PASSWORD });
 
     expect(blocked.status).toBe(429);
+  });
+
+  it('counts failures per network address, so one attacker cannot lock the owner out everywhere', async () => {
+    await setupOwner();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await SELF.fetch('https://kalima.test/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'cf-connecting-ip': '203.0.113.9' },
+        body: JSON.stringify({ email: OWNER_EMAIL, password: 'salah-sekali' }),
+      });
+    }
+
+    const fromOwnerNetwork = await SELF.fetch('https://kalima.test/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'cf-connecting-ip': '198.51.100.7' },
+      body: JSON.stringify({ email: OWNER_EMAIL, password: OWNER_PASSWORD }),
+    });
+
+    expect(fromOwnerNetwork.status).toBe(200);
   });
 
   it('ignores failures older than 15 minutes', async () => {

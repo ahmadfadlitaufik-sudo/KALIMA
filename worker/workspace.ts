@@ -42,26 +42,48 @@ const saveDoc = async (req: Request, env: Env, id: WorkspaceDocId, email: string
   }
 
   let data: unknown;
+  let baseVersion: unknown;
   try {
-    data = (JSON.parse(raw) as { data?: unknown }).data;
+    ({ data, baseVersion } = JSON.parse(raw) as { data?: unknown; baseVersion?: unknown });
   } catch {
     throw new HttpError(400, 'Data yang dikirim tidak valid.');
   }
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     throw new HttpError(400, 'Data yang dikirim tidak valid.');
   }
+  if (baseVersion !== undefined && (!Number.isInteger(baseVersion) || (baseVersion as number) < 0)) {
+    throw new HttpError(400, 'Data yang dikirim tidak valid.');
+  }
 
   const updatedAt = new Date().toISOString();
-  const row = await env.DB.prepare(
-    `INSERT INTO workspace_docs (id, data, version, updated_at, updated_by) VALUES (?, ?, 1, ?, ?)
-     ON CONFLICT(id) DO UPDATE SET data = excluded.data, version = workspace_docs.version + 1,
-       updated_at = excluded.updated_at, updated_by = excluded.updated_by
-     RETURNING version`,
-  )
-    .bind(id, JSON.stringify(data), updatedAt, email)
-    .first<{ version: number }>();
+  const payload = JSON.stringify(data);
+  let row: { version: number } | null;
+  if (baseVersion === undefined) {
+    // Tanpa versi dasar (skrip impor): timpa apa adanya.
+    row = await env.DB.prepare(
+      `INSERT INTO workspace_docs (id, data, version, updated_at, updated_by) VALUES (?, ?, 1, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET data = excluded.data, version = workspace_docs.version + 1,
+         updated_at = excluded.updated_at, updated_by = excluded.updated_by
+       RETURNING version`,
+    ).bind(id, payload, updatedAt, email).first<{ version: number }>();
+  } else if (baseVersion === 0) {
+    row = await env.DB.prepare(
+      `INSERT INTO workspace_docs (id, data, version, updated_at, updated_by) VALUES (?, ?, 1, ?, ?)
+       ON CONFLICT(id) DO NOTHING RETURNING version`,
+    ).bind(id, payload, updatedAt, email).first<{ version: number }>();
+  } else {
+    row = await env.DB.prepare(
+      `UPDATE workspace_docs SET data = ?, version = version + 1, updated_at = ?, updated_by = ?
+       WHERE id = ? AND version = ? RETURNING version`,
+    ).bind(payload, updatedAt, email, id, baseVersion).first<{ version: number }>();
+  }
 
-  return json({ version: row!.version, updatedAt });
+  if (!row) {
+    // Orang lain sudah menyimpan lebih dulu: klien harus ambil, gabungkan, lalu simpan ulang.
+    const current = await env.DB.prepare('SELECT version FROM workspace_docs WHERE id = ?').bind(id).first<{ version: number }>();
+    return json({ error: 'Data sudah diubah pengguna lain. Memuat ulang lalu menyimpan lagi.', version: current?.version ?? 0 }, 409);
+  }
+  return json({ version: row.version, updatedAt });
 };
 
 /** Tangani /api/workspace*; kembalikan null bila jalur bukan milik modul ini. */

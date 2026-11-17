@@ -75,4 +75,34 @@ describe('workspace API', () => {
 
     expect((await put(adminCookie, 'finance', { cashAccounts: [] })).status).toBe(200);
   });
+
+  it('rejects a save based on an outdated version with 409 and keeps the newer data', async () => {
+    const cookie = await setupOwner();
+    await put(cookie, 'orders', { orders: [{ id: 'a' }] });
+    await call('PUT', '/api/workspace/orders', { data: { orders: [{ id: 'a' }, { id: 'b' }] }, baseVersion: 1 }, cookie);
+
+    const stale = await call('PUT', '/api/workspace/orders', { data: { orders: [{ id: 'c' }] }, baseVersion: 1 }, cookie);
+
+    expect(stale.status).toBe(409);
+    expect(await stale.json()).toMatchObject({ version: 2 });
+    const all = (await (await call('GET', '/api/workspace', undefined, cookie)).json()) as { docs: Record<string, { data: unknown }> };
+    expect(all.docs.orders.data).toEqual({ orders: [{ id: 'a' }, { id: 'b' }] });
+  });
+
+  it('rejects a baseVersion of 0 when the document already exists', async () => {
+    const cookie = await setupOwner();
+    await put(cookie, 'master', { skus: [] });
+
+    const res = await call('PUT', '/api/workspace/master', { data: { skus: [{ sku: 'x' }] }, baseVersion: 0 }, cookie);
+
+    expect(res.status).toBe(409);
+  });
+
+  it('accepts baseVersion 0 for a document that does not exist yet', async () => {
+    const cookie = await setupOwner();
+
+    const res = await call('PUT', '/api/workspace/finance', { data: { cashAccounts: [] }, baseVersion: 0 }, cookie);
+
+    expect(await res.json()).toMatchObject({ version: 1 });
+  });
 });

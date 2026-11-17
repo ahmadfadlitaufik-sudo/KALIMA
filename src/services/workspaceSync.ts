@@ -1,16 +1,17 @@
 import { WorkspaceDocId } from './api';
 
-/** Kunci cache localStorage yang menandakan browser ini pernah memuat data. */
-const CACHED_DATA_KEYS = ['orders', 'movements', 'series', 'skus', 'customers', 'cash_accounts'];
+/** Kunci localStorage yang menandakan muat awal dari server pernah berhasil di browser ini. */
+const SERVER_LOADED_KEY = 'server_loaded';
 
-/** true bila browser belum punya cache data sama sekali (mis. pertama kali membuka domain baru). */
+/** Browser baru = muat awal dari server belum pernah berhasil di sini (cache data contoh tidak dihitung). */
 export const isFreshBrowser = (storage: Pick<Storage, 'getItem'>, prefix: string): boolean =>
-  CACHED_DATA_KEYS.every((key) => storage.getItem(`${prefix}${key}`) === null);
+  storage.getItem(`${prefix}${SERVER_LOADED_KEY}`) === null;
 
-/**
- * Tentukan data awal: browser baru memakai data server apa adanya (tanpa data contoh),
- * browser dengan cache menggabungkan seperti biasa, dan bila server kosong pakai data lokal.
- */
+/** Tandai bahwa data server sudah dimuat penuh di browser ini. */
+export const markServerLoaded = (storage: Pick<Storage, 'setItem'>, prefix: string): void => {
+  storage.setItem(`${prefix}${SERVER_LOADED_KEY}`, new Date().toISOString());
+};
+
 export const pickInitial = <T>(fresh: boolean, local: T, server: T | undefined, merge: (local: T, server: T) => T): T => {
   if (server === undefined) {
     return local;

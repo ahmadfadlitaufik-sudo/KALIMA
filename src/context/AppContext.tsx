@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { ApiError, WorkspaceDocId, api, onUnauthorized } from '../services/api';
-import { docsToRefetch, isFreshBrowser, pickInitial } from '../services/workspaceSync';
+import { docsToRefetch, isFreshBrowser, markServerLoaded, pickInitial } from '../services/workspaceSync';
+import { NotLoadedError, createWorkspaceSaver } from '../services/workspaceSaver';
 
 /** Selang cek perubahan data di server (ms) selama tab terlihat. */
 const POLL_INTERVAL_MS = 5000;
@@ -508,8 +509,6 @@ export const AppProvider: React.FC<{
   const financeSyncTimeoutRef = useRef<any>(null);
   const operationsSyncTimeoutRef = useRef<any>(null);
   const auditSyncTimeoutRef = useRef<any>(null);
-  /** Versi terakhir tiap dokumen yang sudah diketahui browser ini. */
-  const knownVersionsRef = useRef<Partial<Record<WorkspaceDocId, number>>>({});
   /** Browser baru (belum ada cache): data server dipakai apa adanya tanpa data contoh. */
   const freshBrowserRef = useRef(isFreshBrowser(localStorage, STORAGE_PREFIX));
 
@@ -568,17 +567,25 @@ export const AppProvider: React.FC<{
     return () => onUnauthorized(null);
   }, [onSignOut]);
 
-  /** Simpan satu dokumen ke server dan catat versinya agar polling tidak mengambil ulang perubahan sendiri. */
-  const saveWorkspaceDoc = async (id: WorkspaceDocId, data: object): Promise<void> => {
-    const { version } = await api.saveDoc(id, data);
-    knownVersionsRef.current[id] = version;
-  };
+  /**
+   * Simpan dokumen ke server dengan versi dasar. Bentrok (409) → ambil & gabung dokumen terbaru lalu simpan ulang.
+   * Dokumen yang gagal tersimpan ditandai dan dicoba lagi saat polling. `pullWorkspaceRef` diisi di bawah.
+   */
+  const pullWorkspaceRef = useRef<(onlyIds?: WorkspaceDocId[]) => Promise<void>>(async () => {});
+  const saverRef = useRef(
+    createWorkspaceSaver({
+      saveDoc: (id, data, baseVersion) => api.saveDoc(id, data, baseVersion),
+      refetch: (id) => pullWorkspaceRef.current([id]),
+      isReady: () => isCloudInitializedRef.current,
+    }),
+  );
+  const saveWorkspaceDoc = (id: WorkspaceDocId, build: () => object): Promise<void> => saverRef.current.save(id, build);
 
   /** Gagal simpan: data lokal tetap ada, status sinkron jadi error, data terlalu besar diberi tahu. */
   const reportSaveError = (id: WorkspaceDocId, err: unknown) => {
     console.warn(`Failed to save ${id} to server:`, err);
     setCloudSyncStatus('error');
-    if (err instanceof ApiError && err.status === 413) {
+    if ((err instanceof ApiError && err.status === 413) || err instanceof NotLoadedError) {
       window.alert(err.message);
     }
   };
@@ -590,12 +597,9 @@ export const AppProvider: React.FC<{
       if (targetOrders) ordersRef.current = targetOrders;
       if (targetMovements) stockMovementsRef.current = targetMovements;
 
-      const ordersToSave = ordersRef.current;
-      const movementsToSave = stockMovementsRef.current;
-
       await Promise.all([
-        saveWorkspaceDoc('orders', { orders: ordersToSave }),
-        saveWorkspaceDoc('stock_movements', { stockMovements: movementsToSave }),
+        saveWorkspaceDoc('orders', () => ({ orders: ordersRef.current })),
+        saveWorkspaceDoc('stock_movements', () => ({ stockMovements: stockMovementsRef.current })),
       ]);
 
       const now = new Date();
@@ -623,13 +627,13 @@ export const AppProvider: React.FC<{
       if (overrides?.customers) customersRef.current = overrides.customers;
       if (overrides?.resellers) resellersRef.current = overrides.resellers;
 
-      await saveWorkspaceDoc('master', {
+      await saveWorkspaceDoc('master', () => ({
         series: seriesRef.current,
         skus: skusRef.current,
         bomItems: bomItemsRef.current,
         customers: customersRef.current,
         resellers: resellersRef.current
-      });
+      }));
       setCloudSyncStatus('connected');
     } catch (err) {
       reportSaveError('master', err);
@@ -651,7 +655,7 @@ export const AppProvider: React.FC<{
       if (overrides?.bankReconciliations) bankReconciliationsRef.current = overrides.bankReconciliations;
       if (overrides?.journalEntries) journalEntriesRef.current = overrides.journalEntries;
 
-      await saveWorkspaceDoc('finance', {
+      await saveWorkspaceDoc('finance', () => ({
         biayaOperasional: biayaOperasionalRef.current,
         cashAccounts: cashAccountsRef.current,
         cashMutations: cashMutationsRef.current,
@@ -660,7 +664,7 @@ export const AppProvider: React.FC<{
         fixedAssets: fixedAssetsRef.current,
         balanceSheetConfig: balanceSheetConfigRef.current,
         customOpexCategories: customOpexCategoriesRef.current,
-      });
+      }));
       setCloudSyncStatus('connected');
     } catch (err) {
       reportSaveError('finance', err);
@@ -682,13 +686,13 @@ export const AppProvider: React.FC<{
       if (overrides?.vendors) vendorsRef.current = overrides.vendors;
       if (overrides?.purchaseOrders) purchaseOrdersRef.current = overrides.purchaseOrders;
 
-      await saveWorkspaceDoc('operations', {
+      await saveWorkspaceDoc('operations', () => ({
         suratTitip: suratTitipRef.current,
         laporanTitipLaku: laporanTitipLakuRef.current,
         stockOpnameSessions: stockOpnameSessionsRef.current,
         vendors: vendorsRef.current,
         purchaseOrders: purchaseOrdersRef.current
-      });
+      }));
       setCloudSyncStatus('connected');
     } catch (err) {
       reportSaveError('operations', err);
@@ -856,11 +860,25 @@ export const AppProvider: React.FC<{
       }
       applyRemoteDoc(id, (docs[id]?.data ?? {}) as Record<string, any>, fresh);
       if (docs[id]) {
-        knownVersionsRef.current[id] = docs[id]!.version;
+        saverRef.current.recordVersion(id, docs[id]!.version);
       }
     }
     setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
     markSynced();
+  };
+  pullWorkspaceRef.current = pullWorkspace;
+
+  /** Simpan ulang dokumen yang belum tersimpan (gagal, atau tertunda karena update dari pengguna lain). */
+  const retryDirtyDocsRef = useRef<() => void>(() => {});
+  retryDirtyDocsRef.current = () => {
+    const dirty = saverRef.current.dirtyDocs();
+    if (dirty.includes('orders') || dirty.includes('stock_movements')) void saveOrdersToCloud();
+    if (dirty.includes('master')) void saveMasterToCloud();
+    if (dirty.includes('finance')) void saveFinanceToCloud();
+    if (dirty.includes('operations')) void saveOperationsToCloud();
+    if (dirty.includes('audit_logs')) {
+      saveWorkspaceDoc('audit_logs', () => ({ auditLogs: auditLogsRef.current.slice(0, 150) })).catch((err) => reportSaveError('audit_logs', err));
+    }
   };
 
   // Muat data dari server saat aplikasi dibuka, lalu cek perubahan tiap 5 detik selama tab terlihat.
@@ -874,6 +892,8 @@ export const AppProvider: React.FC<{
         if (cancelled) return;
         freshBrowserRef.current = false;
         isCloudInitializedRef.current = true;
+        markServerLoaded(localStorage, STORAGE_PREFIX);
+        retryDirtyDocsRef.current();
       } catch (err) {
         console.warn('Initial workspace load failed:', err);
         setCloudSyncStatus('offline');
@@ -888,9 +908,12 @@ export const AppProvider: React.FC<{
       }
       polling = true;
       try {
-        const changed = docsToRefetch(knownVersionsRef.current, await api.fetchVersions());
+        const changed = docsToRefetch(saverRef.current.knownVersions(), await api.fetchVersions());
         if (changed.length > 0 && !cancelled) {
           await pullWorkspace(changed);
+        }
+        if (!cancelled) {
+          retryDirtyDocsRef.current();
         }
       } catch (err) {
         console.warn('Workspace poll failed:', err);
@@ -922,6 +945,9 @@ export const AppProvider: React.FC<{
 
       // 1. Direct fetch from server documents
       const cloudDocs = await api.fetchWorkspace();
+      for (const id of Object.keys(cloudDocs) as WorkspaceDocId[]) {
+        saverRef.current.recordVersion(id, cloudDocs[id]!.version);
+      }
 
       // 2. Union merge with local refs (local modifications always preserved!)
       const cloudOrders = cloudDocs.orders?.data.orders as Order[];
@@ -958,40 +984,7 @@ export const AppProvider: React.FC<{
       const cloudAudit = (cloudDocs.audit_logs?.data ?? null) as Record<string, any> | null;
       const mergedAudit = mergeById(auditLogsRef.current, cloudAudit?.auditLogs).slice(0, 150);
 
-      // 3. Save back to server
-      await Promise.all([
-        saveWorkspaceDoc('orders', { orders: mergedOrders }),
-        saveWorkspaceDoc('stock_movements', { stockMovements: mergedMovements }),
-        saveWorkspaceDoc('master', {
-          series: mergedSeries,
-          skus: mergedSkus,
-          bomItems: mergedBom,
-          customers: mergedCustomers,
-          resellers: mergedResellers,
-        }),
-        saveWorkspaceDoc('finance', {
-          biayaOperasional: mergedBO,
-          cashAccounts: mergedAccounts,
-          cashMutations: mergedMutations,
-          bankReconciliations: mergedRecon,
-          journalEntries: mergedJournals,
-          fixedAssets: mergedFixedAssets,
-          balanceSheetConfig: balanceSheetConfigRef.current,
-          customOpexCategories: mergedOpexCategories,
-        }),
-        saveWorkspaceDoc('operations', {
-          suratTitip: mergedSurat,
-          laporanTitipLaku: mergedLaporan,
-          stockOpnameSessions: mergedSessions,
-          vendors: mergedVendors,
-          purchaseOrders: mergedPOs,
-        }),
-        saveWorkspaceDoc('audit_logs', {
-          auditLogs: mergedAudit,
-        })
-      ]);
-
-      // 4. Update local states and refs
+      // 3a. Simpan hasil gabung ke ref dulu, agar simpan-ulang setelah bentrok membaca data terbaru
       ordersRef.current = mergedOrders;
       stockMovementsRef.current = mergedMovements;
       seriesRef.current = mergedSeries;
@@ -1013,6 +1006,41 @@ export const AppProvider: React.FC<{
       fixedAssetsRef.current = mergedFixedAssets;
       customOpexCategoriesRef.current = mergedOpexCategories;
 
+
+      // 3. Save back to server
+      await Promise.all([
+        saveWorkspaceDoc('orders', () => ({ orders: ordersRef.current })),
+        saveWorkspaceDoc('stock_movements', () => ({ stockMovements: stockMovementsRef.current })),
+        saveWorkspaceDoc('master', () => ({
+          series: seriesRef.current,
+          skus: skusRef.current,
+          bomItems: bomItemsRef.current,
+          customers: customersRef.current,
+          resellers: resellersRef.current,
+        })),
+        saveWorkspaceDoc('finance', () => ({
+          biayaOperasional: biayaOperasionalRef.current,
+          cashAccounts: cashAccountsRef.current,
+          cashMutations: cashMutationsRef.current,
+          bankReconciliations: bankReconciliationsRef.current,
+          journalEntries: journalEntriesRef.current,
+          fixedAssets: fixedAssetsRef.current,
+          balanceSheetConfig: balanceSheetConfigRef.current,
+          customOpexCategories: customOpexCategoriesRef.current,
+        })),
+        saveWorkspaceDoc('operations', () => ({
+          suratTitip: suratTitipRef.current,
+          laporanTitipLaku: laporanTitipLakuRef.current,
+          stockOpnameSessions: stockOpnameSessionsRef.current,
+          vendors: vendorsRef.current,
+          purchaseOrders: purchaseOrdersRef.current,
+        })),
+        saveWorkspaceDoc('audit_logs', () => ({
+          auditLogs: auditLogsRef.current,
+        }))
+      ]);
+
+      // 4. Update local states
       isRemoteUpdateRef.current = true;
       setOrders(mergedOrders);
       setStockMovements(mergedMovements);
@@ -1074,6 +1102,7 @@ export const AppProvider: React.FC<{
   // Debounced auto-save for Master Data
   useEffect(() => {
     if (isRemoteUpdateRef.current || !isCloudInitializedRef.current) return;
+    saverRef.current.markDirty('master');
     if (masterSyncTimeoutRef.current) clearTimeout(masterSyncTimeoutRef.current);
     masterSyncTimeoutRef.current = setTimeout(() => { saveMasterToCloud(); }, 1500);
     return () => { if (masterSyncTimeoutRef.current) clearTimeout(masterSyncTimeoutRef.current); };
@@ -1082,6 +1111,7 @@ export const AppProvider: React.FC<{
   // Debounced auto-save for Finance Data
   useEffect(() => {
     if (isRemoteUpdateRef.current || !isCloudInitializedRef.current) return;
+    saverRef.current.markDirty('finance');
     if (financeSyncTimeoutRef.current) clearTimeout(financeSyncTimeoutRef.current);
     financeSyncTimeoutRef.current = setTimeout(() => { saveFinanceToCloud(); }, 1500);
     return () => { if (financeSyncTimeoutRef.current) clearTimeout(financeSyncTimeoutRef.current); };
@@ -1090,6 +1120,7 @@ export const AppProvider: React.FC<{
   // Debounced auto-save for Operations Data
   useEffect(() => {
     if (isRemoteUpdateRef.current || !isCloudInitializedRef.current) return;
+    saverRef.current.markDirty('operations');
     if (operationsSyncTimeoutRef.current) clearTimeout(operationsSyncTimeoutRef.current);
     operationsSyncTimeoutRef.current = setTimeout(() => { saveOperationsToCloud(); }, 1500);
     return () => { if (operationsSyncTimeoutRef.current) clearTimeout(operationsSyncTimeoutRef.current); };
@@ -1098,9 +1129,10 @@ export const AppProvider: React.FC<{
   // Debounced auto-save for Audit Logs
   useEffect(() => {
     if (isRemoteUpdateRef.current || !isCloudInitializedRef.current) return;
+    saverRef.current.markDirty('audit_logs');
     if (auditSyncTimeoutRef.current) clearTimeout(auditSyncTimeoutRef.current);
     auditSyncTimeoutRef.current = setTimeout(() => {
-      saveWorkspaceDoc('audit_logs', { auditLogs: auditLogsRef.current.slice(0, 150) }).catch((err) => reportSaveError('audit_logs', err));
+      saveWorkspaceDoc('audit_logs', () => ({ auditLogs: auditLogsRef.current.slice(0, 150) })).catch((err) => reportSaveError('audit_logs', err));
     }, 1500);
     return () => { if (auditSyncTimeoutRef.current) clearTimeout(auditSyncTimeoutRef.current); };
   }, [auditLogs]);

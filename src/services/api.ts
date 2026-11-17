@@ -109,6 +109,7 @@ export const api = {
   fetchVersions: async (): Promise<Partial<Record<WorkspaceDocId, number>>> =>
     (await request<{ versions: Partial<Record<WorkspaceDocId, number>> }>('GET', '/api/workspace/versions')).versions,
 
-  saveDoc: (id: WorkspaceDocId, data: object): Promise<{ version: number; updatedAt: string }> =>
-    request('PUT', `/api/workspace/${id}`, { data }),
+  /** Simpan dokumen; `baseVersion` = versi yang terakhir diketahui (409 bila server sudah lebih baru). */
+  saveDoc: (id: WorkspaceDocId, data: object, baseVersion: number): Promise<{ version: number; updatedAt: string }> =>
+    request('PUT', `/api/workspace/${id}`, { data, baseVersion }),
 };

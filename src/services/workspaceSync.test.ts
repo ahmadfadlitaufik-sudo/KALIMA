@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { docsToRefetch, isFreshBrowser, pickInitial } from './workspaceSync';
+import { docsToRefetch, isFreshBrowser, markServerLoaded, pickInitial } from './workspaceSync';
 
 const PREFIX = 'kalima_app_v1_';
 const memoryStorage = (entries: Record<string, string>) => ({
@@ -11,12 +11,16 @@ describe('isFreshBrowser', () => {
     expect(isFreshBrowser(memoryStorage({ [`${PREFIX}theme`]: 'light' }), PREFIX)).toBe(true);
   });
 
-  it('is false when orders are cached', () => {
-    expect(isFreshBrowser(memoryStorage({ [`${PREFIX}orders`]: '[]' }), PREFIX)).toBe(false);
+  it('stays true when seeds were cached but no server load ever finished', () => {
+    expect(isFreshBrowser(memoryStorage({ [`${PREFIX}orders`]: '[]', [`${PREFIX}cash_accounts`]: '[]' }), PREFIX)).toBe(true);
   });
 
-  it('is false when cash accounts are cached', () => {
-    expect(isFreshBrowser(memoryStorage({ [`${PREFIX}cash_accounts`]: '[]' }), PREFIX)).toBe(false);
+  it('is false once a server load has finished in this browser', () => {
+    const storage = { entries: {} as Record<string, string>, getItem(key: string) { return this.entries[key] ?? null; }, setItem(key: string, value: string) { this.entries[key] = value; } };
+
+    markServerLoaded(storage, PREFIX);
+
+    expect(isFreshBrowser(storage, PREFIX)).toBe(false);
   });
 });
 
