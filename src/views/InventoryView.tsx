@@ -32,6 +32,7 @@ import {
   Boxes,
   Package,
 } from 'lucide-react';
+import { negativeStock, stockValue } from '../services/dashboardMetrics';
 import { useApp } from '../context/AppContext';
 import { SKUItem, ApparelSize, StockOpnameSession, StockOpnameItem } from '../types';
 
@@ -411,8 +412,9 @@ export const InventoryView: React.FC = () => {
       totalGudang += data.gudang;
       totalReseller += data.reseller;
       totalStock += data.total;
-      totalHppValue += data.total * (s.hpp || 50000);
     });
+    totalHppValue = stockValue(skus, stockSummary, 'total');
+    const minus = negativeStock(stockSummary, 'total');
 
     const outOfStockCount = skus.filter((s) => (stockSummary[s.sku]?.gudang ?? 0) <= 0).length;
 
@@ -421,6 +423,8 @@ export const InventoryView: React.FC = () => {
       totalReseller,
       totalStock,
       totalHppValue,
+      minusSkuCount: minus.count,
+      minusPcs: minus.pcs,
       lowStockCount: lowStockSKUs.length,
       outOfStockCount,
     };
@@ -516,8 +520,13 @@ export const InventoryView: React.FC = () => {
                   <span className="text-xs font-medium text-slate-400 font-sans">pcs</span>
                 </div>
                 <div className="text-[11px] text-emerald-700 mt-1 flex items-center gap-1 font-medium">
-                  <span>Est. HPP Aset: Rp {overallInventoryStats.totalHppValue.toLocaleString('id-ID')}</span>
+                  <span title="Stok minus tidak dihitung">Nilai HPP stok: Rp {overallInventoryStats.totalHppValue.toLocaleString('id-ID')}</span>
                 </div>
+                {overallInventoryStats.minusSkuCount > 0 && (
+                  <div className="text-[11px] text-rose-600 mt-1 font-semibold">
+                    {overallInventoryStats.minusSkuCount} SKU stok minus ({overallInventoryStats.minusPcs.toLocaleString('id-ID')} pcs) — perlu stok opname
+                  </div>
+                )}
               </div>
             </div>
 

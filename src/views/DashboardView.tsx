@@ -11,6 +11,7 @@ import {
   RefreshCw,
   FileSpreadsheet,
   ArrowUpRight,
+  ArrowDownRight,
   Wallet,
   Sparkles,
   ArrowRight,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { orderSortComparator } from '../types';
+import { cashFlowForMonth, grossMarginPercent, negativeStock, qtySoldInMonth, stockValue } from '../services/dashboardMetrics';
 import { CashBankSection } from '../components/CashBankSection';
 import { MonthlySalesPerformanceChart } from '../components/MonthlySalesPerformanceChart';
 import fintechGrowthImg from '../assets/images/fintech_growth_card_1790731112363.jpg';
@@ -41,17 +43,24 @@ export const DashboardView: React.FC = () => {
     setQuickOrderModalOpen,
     setCurrentView,
     cashAccounts,
+    cashMutations,
     purchaseOrders,
   } = useApp();
 
   const [dateFilter, setDateFilter] = useState<'today' | '7days' | '30days' | 'all'>('30days');
 
   // Compute Total Cash Balance
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const monthCashFlow = useMemo(() => cashFlowForMonth(cashMutations, currentMonth), [cashMutations, currentMonth]);
+  const qtySoldThisMonth = useMemo(() => qtySoldInMonth(orders, currentMonth), [orders, currentMonth]);
+  const MONTHLY_QUOTA_PCS = 1500;
+  const periodLabel = { today: 'hari ini', '7days': '7 hari terakhir', '30days': '30 hari terakhir', all: 'semua waktu' }[dateFilter];
+
   const totalCashBalance = useMemo(() => {
     return cashAccounts.reduce((sum, acc) => sum + (acc.saldo || 0), 0);
   }, [cashAccounts]);
 
-  // Compute 30-day PO Expenditures
+  // Total belanja semua PO
   const totalBelanjaPO = useMemo(() => {
     return purchaseOrders.reduce((sum, po) => sum + (po.totalTagihan || 0), 0);
   }, [purchaseOrders]);
@@ -113,14 +122,10 @@ export const DashboardView: React.FC = () => {
 
   const totalStokGudang = Object.values(stockSummary).reduce((acc, it) => acc + it.gudang, 0);
   const totalStokReseller = Object.values(stockSummary).reduce((acc, it) => acc + it.reseller, 0);
+  const minusStock = negativeStock(stockSummary, 'total');
 
   // Nilai Persediaan (HPP * stock) - Owner only
-  const totalNilaiPersediaan = useMemo(() => {
-    return skus.reduce((sum, sku) => {
-      const stockGudang = stockSummary[sku.sku]?.gudang || 0;
-      return sum + stockGudang * sku.hpp;
-    }, 0);
-  }, [skus, stockSummary]);
+  const totalNilaiPersediaan = useMemo(() => stockValue(skus, stockSummary, 'gudang'), [skus, stockSummary]);
 
   // Piutang Outstanding
   const piutangOrders = useMemo(() => {
@@ -179,9 +184,22 @@ export const DashboardView: React.FC = () => {
                 Saldo Kas & Likuiditas
               </span>
             </div>
-            <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              <ArrowUpRight className="w-3 h-3 stroke-[2.5]" />
-              <span>+18.4% bulan ini</span>
+            <div
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                monthCashFlow.count === 0
+                  ? 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+                  : monthCashFlow.net >= 0
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                    : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+              }`}
+              title={`Kas masuk Rp ${monthCashFlow.masuk.toLocaleString('id-ID')} · keluar Rp ${monthCashFlow.keluar.toLocaleString('id-ID')} bulan ini`}
+            >
+              {monthCashFlow.count > 0 && (monthCashFlow.net >= 0 ? <ArrowUpRight className="w-3 h-3 stroke-[2.5]" /> : <ArrowDownRight className="w-3 h-3 stroke-[2.5]" />)}
+              <span>
+                {monthCashFlow.count === 0
+                  ? 'Belum ada mutasi bulan ini'
+                  : `${monthCashFlow.net >= 0 ? '+' : '−'}Rp ${Math.abs(monthCashFlow.net).toLocaleString('id-ID')} bulan ini`}
+              </span>
             </div>
           </div>
 
@@ -194,7 +212,9 @@ export const DashboardView: React.FC = () => {
             <div className="flex items-center gap-2 mt-2 text-xs text-slate-400">
               <span className="text-slate-300 font-medium">{cashAccounts.length} Rekening Terhubung</span>
               <span>·</span>
-              <span className="text-emerald-400 font-medium">Arus Kas Positif</span>
+              <span className={`font-medium ${monthCashFlow.count === 0 ? 'text-slate-400' : monthCashFlow.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {monthCashFlow.count === 0 ? 'Arus kas bulan ini belum tercatat' : monthCashFlow.net >= 0 ? 'Arus kas bulan ini positif' : 'Arus kas bulan ini negatif'}
+              </span>
             </div>
           </div>
 
@@ -240,7 +260,7 @@ export const DashboardView: React.FC = () => {
               Target Omzet Bulanan
             </h3>
             <p className="text-xs text-rose-50/90 mt-2 font-medium leading-relaxed">
-              Tercapai <strong>{totalQtySold} pcs</strong> dari kuota 1.500 pcs ({((totalQtySold / 1500) * 100).toFixed(0)}%).
+              Bulan ini terjual <strong>{qtySoldThisMonth.toLocaleString('id-ID')} pcs</strong> dari kuota {MONTHLY_QUOTA_PCS.toLocaleString('id-ID')} pcs ({Math.round((qtySoldThisMonth / MONTHLY_QUOTA_PCS) * 100)}%).
             </p>
           </div>
 
@@ -264,21 +284,25 @@ export const DashboardView: React.FC = () => {
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-rose-500" />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700">
-                  Skor Kesehatan
+                  {isOwner ? 'Margin Kotor' : 'Penjualan'}
                 </span>
               </div>
-              <div className="text-sm font-extrabold text-slate-900">
-                Likuiditas & Margin
+              <div className="text-sm font-extrabold text-slate-900 first-letter:uppercase">
+                {periodLabel}
               </div>
               <div className="text-[11px] text-slate-600">
-                Rasio lancar 2.8x (Optimal)
+                {isOwner
+                  ? `Laba kotor Rp ${totalLabaKotor.toLocaleString('id-ID')}`
+                  : `${totalQtySold.toLocaleString('id-ID')} pcs terjual`}
               </div>
             </div>
 
             {/* Circular Gauge / Badge */}
             <div className="w-13 h-13 rounded-full bg-white shadow-sm border border-rose-200 flex flex-col items-center justify-center shrink-0">
-              <span className="text-base font-black text-rose-600 font-mono leading-none">94%</span>
-              <span className="text-[8px] font-bold text-slate-500 uppercase mt-0.5">Skor</span>
+              <span className="text-base font-black text-rose-600 font-mono leading-none">
+                {isOwner ? (grossMarginPercent(totalOmzet, totalLabaKotor) === null ? '–' : `${grossMarginPercent(totalOmzet, totalLabaKotor)}%`) : filteredOrders.length}
+              </span>
+              <span className="text-[8px] font-bold text-slate-500 uppercase mt-0.5">{isOwner ? 'Margin' : 'Order'}</span>
             </div>
           </div>
 
@@ -286,13 +310,13 @@ export const DashboardView: React.FC = () => {
           <div className="card-pastel-peach p-4 flex items-center justify-between relative overflow-hidden flex-1 group">
             <div className="space-y-0.5 max-w-[62%]">
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
-                Alokasi Bahan 30 Hari
+                Total Belanja PO
               </span>
               <div className="text-base font-black text-slate-900 font-mono tracking-tight">
                 Rp {totalBelanjaPO.toLocaleString('id-ID')}
               </div>
               <div className="text-[11px] text-slate-600 truncate">
-                {totalQtyPesanPO} pcs bahan 185, 210, 290
+                {totalQtyPesanPO.toLocaleString('id-ID')} pcs dari {purchaseOrders.length} PO
               </div>
             </div>
 
@@ -432,6 +456,16 @@ export const DashboardView: React.FC = () => {
               <span>·</span>
               <span>Konsinyasi: <strong className="text-amber-600 font-mono">{totalStokReseller}</strong></span>
             </div>
+            {minusStock.count > 0 && (
+              <button
+                type="button"
+                onClick={() => setCurrentView('inventory')}
+                className="mt-2 flex items-start gap-1 text-left text-xs font-semibold text-rose-600 hover:underline cursor-pointer"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                {minusStock.count} SKU stok minus ({minusStock.pcs.toLocaleString('id-ID')} pcs) — cek stok
+              </button>
+            )}
           </div>
         </div>
 
