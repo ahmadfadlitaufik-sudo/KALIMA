@@ -26,12 +26,41 @@ const handleApi = async (req: Request, env: Env, path: string): Promise<Response
   }
 };
 
+const SECURITY_HEADERS: Record<string, string> = {
+  'content-security-policy': [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "img-src 'self' data: blob:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; '),
+  'x-frame-options': 'DENY',
+  'strict-transport-security': 'max-age=31536000; includeSubDomains',
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+};
+
+/** Tambahkan header keamanan standar browser ke setiap respons. */
+const withSecurityHeaders = (res: Response): Response => {
+  const secured = new Response(res.body, res);
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+    secured.headers.set(name, value);
+  }
+  return secured;
+};
+
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const path = new URL(req.url).pathname;
     if (path === '/api' || path.startsWith('/api/')) {
-      return handleApi(req, env, path);
+      return withSecurityHeaders(await handleApi(req, env, path));
     }
-    return env.ASSETS.fetch(req);
+    return withSecurityHeaders(await env.ASSETS.fetch(req));
   },
 } satisfies ExportedHandler<Env>;
