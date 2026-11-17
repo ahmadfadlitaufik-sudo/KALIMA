@@ -100,7 +100,7 @@ const MainLayout: React.FC = () => {
             {currentView === 'customers' && <CustomersView />}
             {currentView === 'reseller' && <ResellerView />}
             {currentView === 'finance' && <FinanceView />}
-            {currentView === 'import_export' && <ImportExportView />}
+            {currentView === 'import_export' && isOwner && <ImportExportView />}
             {currentView === 'audit' && <AuditLogView />}
             {currentView === 'users' && isOwner && <UsersView />}
           </Suspense>

@@ -105,4 +105,60 @@ describe('workspace API', () => {
 
     expect(await res.json()).toMatchObject({ version: 1 });
   });
+
+  describe('owner-only data', () => {
+    const storedData = async (id: string) =>
+      JSON.parse((await env.DB.prepare('SELECT data FROM workspace_docs WHERE id = ?').bind(id).first<{ data: string }>())!.data);
+
+    it('keeps SKU, series and BOM (HPP) unchanged when an admin saves master', async () => {
+      const ownerCookie = await setupOwner();
+      await put(ownerCookie, 'master', { series: [{ id: 's1' }], skus: [{ sku: 'A', hpp: 50000 }], bomItems: [{ id: 'b1', biayaPerUnit: 500 }], customers: [] });
+      const adminCookie = await createAdmin();
+
+      await put(adminCookie, 'master', { series: [], skus: [{ sku: 'A', hpp: 1 }], bomItems: [], customers: [{ id: 'c1' }] });
+
+      expect(await storedData('master')).toEqual({
+        series: [{ id: 's1' }],
+        skus: [{ sku: 'A', hpp: 50000 }],
+        bomItems: [{ id: 'b1', biayaPerUnit: 500 }],
+        customers: [{ id: 'c1' }],
+      });
+    });
+
+    it('hides the balance sheet and fixed assets from admins and ignores their changes', async () => {
+      const ownerCookie = await setupOwner();
+      await put(ownerCookie, 'finance', { cashAccounts: [], fixedAssets: [{ id: 'f1' }], balanceSheetConfig: { modal: 10 } });
+      const adminCookie = await createAdmin();
+
+      const seen = (await (await call('GET', '/api/workspace', undefined, adminCookie)).json()) as { docs: Record<string, { data: object }> };
+      expect(seen.docs.finance.data).toEqual({ cashAccounts: [] });
+
+      await put(adminCookie, 'finance', { cashAccounts: [{ id: 'k1' }], fixedAssets: [], balanceSheetConfig: { modal: 0 } });
+      expect(await storedData('finance')).toEqual({ cashAccounts: [{ id: 'k1' }], fixedAssets: [{ id: 'f1' }], balanceSheetConfig: { modal: 10 } });
+
+      const ownerSees = (await (await call('GET', '/api/workspace', undefined, ownerCookie)).json()) as { docs: Record<string, { data: object }> };
+      expect(ownerSees.docs.finance.data).toMatchObject({ fixedAssets: [{ id: 'f1' }] });
+    });
+
+    it('only appends to the audit log and stamps new entries with the saver', async () => {
+      const ownerCookie = await setupOwner();
+      await put(ownerCookie, 'audit_logs', { auditLogs: [{ id: 'a1', userName: 'Fadli', userRole: 'owner', detail: 'asli' }] });
+      const adminCookie = await createAdmin();
+
+      await put(adminCookie, 'audit_logs', {
+        auditLogs: [
+          { id: 'a2', userName: 'Palsu', userRole: 'owner', detail: 'baru' },
+          { id: 'a1', userName: 'Fadli', userRole: 'owner', detail: 'diubah' },
+        ],
+      });
+      await put(adminCookie, 'audit_logs', { auditLogs: [] });
+
+      expect(await storedData('audit_logs')).toEqual({
+        auditLogs: [
+          { id: 'a2', userName: 'Siti', userRole: 'admin', detail: 'baru' },
+          { id: 'a1', userName: 'Fadli', userRole: 'owner', detail: 'asli' },
+        ],
+      });
+    });
+  });
 });

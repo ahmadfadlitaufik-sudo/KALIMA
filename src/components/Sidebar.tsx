@@ -113,12 +113,6 @@ export const Sidebar: React.FC = () => {
       description: 'Kas, bank & neraca keuangan',
     },
     {
-      id: 'import_export',
-      label: 'Impor & Ekspor',
-      icon: FileSpreadsheet,
-      description: 'Excel workbook & sinkronisasi',
-    },
-    {
       id: 'audit',
       label: 'Jejak Audit',
       icon: History,
@@ -126,6 +120,12 @@ export const Sidebar: React.FC = () => {
     },
     ...(isOwner
       ? [
+          {
+            id: 'import_export' as AppView,
+            label: 'Impor & Ekspor',
+            icon: FileSpreadsheet,
+            description: 'Excel workbook & sinkronisasi',
+          },
           {
             id: 'users' as AppView,
             label: 'Pengguna',

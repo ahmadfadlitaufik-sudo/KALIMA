@@ -1,6 +1,7 @@
 import { requireUser } from './auth';
+import { applyReadPolicy, applyWritePolicy } from './policy';
 import { HttpError, json } from './http';
-import { Env } from './types';
+import { Env, SessionUser } from './types';
 
 export const WORKSPACE_DOC_IDS = ['orders', 'stock_movements', 'master', 'finance', 'operations', 'audit_logs'] as const;
 export type WorkspaceDocId = (typeof WORKSPACE_DOC_IDS)[number];
@@ -17,11 +18,11 @@ interface DocRow {
   updated_at: string;
 }
 
-const readAll = async (env: Env): Promise<Response> => {
+const readAll = async (env: Env, user: SessionUser): Promise<Response> => {
   const { results } = await env.DB.prepare('SELECT id, data, version, updated_at FROM workspace_docs').all<DocRow>();
   const docs: Record<string, { data: unknown; version: number; updatedAt: string }> = {};
   for (const row of results) {
-    docs[row.id] = { data: JSON.parse(row.data), version: row.version, updatedAt: row.updated_at };
+    docs[row.id] = { data: applyReadPolicy(row.id, JSON.parse(row.data), user), version: row.version, updatedAt: row.updated_at };
   }
   return json({ docs });
 };
@@ -35,7 +36,8 @@ const readVersions = async (env: Env): Promise<Response> => {
   return json({ versions });
 };
 
-const saveDoc = async (req: Request, env: Env, id: WorkspaceDocId, email: string): Promise<Response> => {
+const saveDoc = async (req: Request, env: Env, id: WorkspaceDocId, user: SessionUser): Promise<Response> => {
+  const email = user.email;
   const raw = await req.text();
   if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
     throw new HttpError(413, 'Data terlalu besar untuk disimpan (maksimal 1,8 MB per bagian). Hubungi pengembang.');
@@ -55,8 +57,10 @@ const saveDoc = async (req: Request, env: Env, id: WorkspaceDocId, email: string
     throw new HttpError(400, 'Data yang dikirim tidak valid.');
   }
 
+  const storedRow = await env.DB.prepare('SELECT data FROM workspace_docs WHERE id = ?').bind(id).first<{ data: string }>();
+  const stored = storedRow ? (JSON.parse(storedRow.data) as Record<string, unknown>) : null;
   const updatedAt = new Date().toISOString();
-  const payload = JSON.stringify(data);
+  const payload = JSON.stringify(applyWritePolicy(id, data as Record<string, unknown>, stored, user));
   let row: { version: number } | null;
   if (baseVersion === undefined) {
     // Tanpa versi dasar (skrip impor): timpa apa adanya.
@@ -94,14 +98,14 @@ export const handleWorkspace = async (req: Request, env: Env, path: string): Pro
   const user = await requireUser(req, env);
 
   if (req.method === 'GET' && path === '/api/workspace') {
-    return readAll(env);
+    return readAll(env, user);
   }
   if (req.method === 'GET' && path === '/api/workspace/versions') {
     return readVersions(env);
   }
   const id = path.slice('/api/workspace/'.length);
   if (req.method === 'PUT' && isWorkspaceDocId(id)) {
-    return saveDoc(req, env, id, user.email);
+    return saveDoc(req, env, id, user);
   }
   return null;
 };
