@@ -31,6 +31,9 @@ import { useApp } from '../context/AppContext';
 import { CashAccount, CashAccountType, CashMutation, CashMutationType } from '../types';
 import { BankReconciliationModal } from './BankReconciliationModal';
 
+/** Jumlah baris buku kas yang ditampilkan sekaligus. */
+const LEDGER_PAGE_SIZE = 25;
+
 export const CashBankSection: React.FC = () => {
   const {
     cashAccounts,
@@ -48,7 +51,8 @@ export const CashBankSection: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [accountViewMode, setAccountViewMode] = useState<'both' | 'cards' | 'table'>('both');
+  const [accountViewMode, setAccountViewMode] = useState<'both' | 'cards' | 'table'>('table');
+  const [visibleMutationCount, setVisibleMutationCount] = useState(LEDGER_PAGE_SIZE);
 
   // Bank Reconciliation Modal
   const [isReconciliationOpen, setIsReconciliationOpen] = useState<boolean>(false);
@@ -989,7 +993,7 @@ export const CashBankSection: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredMutations.map((m) => {
+                filteredMutations.slice(0, visibleMutationCount).map((m) => {
                   const isMasuk = m.tipe === 'masuk';
                   const isKeluar = m.tipe === 'keluar';
                   const isTransfer = m.tipe === 'transfer';
@@ -1052,6 +1056,17 @@ export const CashBankSection: React.FC = () => {
             </tbody>
           </table>
         </div>
+        {filteredMutations.length > visibleMutationCount && (
+          <div className="pt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setVisibleMutationCount((count) => count + LEDGER_PAGE_SIZE)}
+              className="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer"
+            >
+              Tampilkan {Math.min(LEDGER_PAGE_SIZE, filteredMutations.length - visibleMutationCount)} lagi ({visibleMutationCount} dari {filteredMutations.length})
+            </button>
+          </div>
+        )}
       </div>
 
       {/* MODAL 1: Tambah / Edit Akun Kas & Bank */}
