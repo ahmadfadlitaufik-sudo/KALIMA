@@ -14,7 +14,7 @@
     {
       "binding": "DB",
       "database_name": "kalima-db",
-      "database_id": "TO_BE_FILLED_IN_TASK_8",
+      "database_id": "7be1a865-f061-4e6e-a5a6-563eea9dfeb9",
       "migrations_dir": "migrations"
     }
   ],
