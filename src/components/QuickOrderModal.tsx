@@ -91,9 +91,9 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
   const [orderDate, setOrderDate] = useState<string>(() => getLocalDateString());
 
   // Channel & Customer
-  const [selectedChannel, setSelectedChannel] = useState<SalesChannelName>('Shopee');
+  const [selectedChannel, setSelectedChannel] = useState<SalesChannelName | ''>('');
   const [customerMode, setCustomerMode] = useState<'existing' | 'new'>('existing');
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(customers[0]?.id || '');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [newCustNama, setNewCustNama] = useState('');
   const [newCustHp, setNewCustHp] = useState('');
   const [newCustKota, setNewCustKota] = useState('Jakarta');
@@ -118,7 +118,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
   const [potongOngkirAccountId, setPotongOngkirAccountId] = useState<string>('');
   const [noResi, setNoResi] = useState('');
   const [catatan, setCatatan] = useState('');
-  const [overrideStock, setOverrideStock] = useState(true);
+  const [overrideStock, setOverrideStock] = useState(false);
 
   // Status & error
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -157,25 +157,16 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
       state_statusBayar: statusBayar,
       state_totalTerbayar: totalTerbayar,
     },
-    { enabled: true, logToConsole: true }
+    { enabled: false, logToConsole: false }
   );
-
-  // Auto-sync customer selection if customers was initially empty or current selection not in list
-  React.useEffect(() => {
-    if (customers.length > 0) {
-      if (!selectedCustomerId || !customers.some((c) => c.id === selectedCustomerId)) {
-        setSelectedCustomerId(customers[0].id);
-      }
-    }
-  }, [customers, selectedCustomerId]);
 
   // Clean form state reset
   const resetFormState = React.useCallback(() => {
     setCartItems([]);
     setOrderDate(getLocalDateString());
-    setSelectedChannel('Shopee');
+    setSelectedChannel('');
     setCustomerMode('existing');
-    setSelectedCustomerId(customers[0]?.id || '');
+    setSelectedCustomerId('');
     setNewCustNama('');
     setNewCustHp('');
     setNewCustKota('Jakarta');
@@ -191,7 +182,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
     setPotongOngkirAccountId('');
     setNoResi('');
     setCatatan('');
-    setOverrideStock(true);
+    setOverrideStock(false);
     setErrorMessage(null);
     setIsSubmitting(false);
   }, [customers]);
@@ -349,6 +340,17 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
       return;
     }
 
+    if (!selectedChannel) {
+      setErrorMessage('Pilih sales channel terlebih dahulu.');
+      formContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (customerMode === 'existing' && !customers.some((c) => c.id === selectedCustomerId)) {
+      setErrorMessage('Pilih pelanggan terlebih dahulu, atau tambahkan sebagai pelanggan baru.');
+      formContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     let customerId = selectedCustomerId;
     let customerNama = '';
     let customerHp = '';
@@ -371,7 +373,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
       customerHp = createdCust.noHp;
       customerKota = createdCust.kota;
     } else {
-      const cust = customers.find((c) => c.id === selectedCustomerId) || customers[0];
+      const cust = customers.find((c) => c.id === selectedCustomerId);
       customerId = cust?.id || `cust-umum-${Date.now()}`;
       customerNama = cust?.nama || 'Pelanggan Umum';
       customerHp = cust?.noHp || '-';
@@ -392,7 +394,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
       // Await persistence and synchronous state update to avoid race conditions
       const result = await addOrder({
         tanggal: orderDate,
-        channel: selectedChannel,
+        channel: selectedChannel as SalesChannelName,
         customerId,
         customerNama,
         customerHp,
@@ -674,6 +676,9 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                   onChange={(e) => setSelectedCustomerId(e.target.value)}
                   className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:border-slate-900 cursor-pointer"
                 >
+                  <option value="" disabled>
+                    — Pilih pelanggan —
+                  </option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.nama} - {c.kota} ({c.noHp})

@@ -1,3 +1,4 @@
+import { useEscapeClosesModal } from './hooks/useEscapeClosesModal';
 import React, { useState, useCallback, Suspense, lazy } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -24,6 +25,7 @@ const UsersView = lazy(() => import('./views/UsersView').then(m => ({ default: m
 
 const MainLayout: React.FC = () => {
   const { currentView, quickOrderModalOpen, setQuickOrderModalOpen, theme, isOwner } = useApp();
+  useEscapeClosesModal();
   const [createdOrderForReceipt, setCreatedOrderForReceipt] = useState<Order | null>(null);
   const [showOrderSuccessBanner, setShowOrderSuccessBanner] = useState<Order | null>(null);
 
