@@ -22,3 +22,18 @@ export const pathToView = (path: string): AppView => {
   const match = (Object.keys(VIEW_PATHS) as AppView[]).find((view) => VIEW_PATHS[view] === normalized);
   return match ?? 'dashboard';
 };
+
+/** Judul halaman (tampil di header dan judul tab browser). */
+export const VIEW_TITLES: Record<AppView, string> = {
+  dashboard: 'Dashboard',
+  sales: 'Penjualan',
+  inventory: 'Inventori',
+  purchases: 'Pengadaan PO',
+  products: 'Master SKU',
+  customers: 'Customer CRM',
+  reseller: 'Reseller & Konsinyasi',
+  finance: 'Keuangan & Neraca',
+  import_export: 'Impor & Ekspor',
+  audit: 'Jejak Audit',
+  users: 'Pengguna',
+};

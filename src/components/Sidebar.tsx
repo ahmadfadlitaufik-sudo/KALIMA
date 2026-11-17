@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   UserCheck,
   Users,
-  PlusCircle,
   X,
   ChevronRight,
   ChevronLeft,
@@ -20,6 +19,8 @@ import {
   UserCog,
 } from 'lucide-react';
 import { useApp, AppView } from '../context/AppContext';
+
+const SIDEBAR_EXPANDED_KEY = 'kalima_app_v1_sidebar_expanded';
 
 export const Sidebar: React.FC = () => {
   const {
@@ -32,11 +33,25 @@ export const Sidebar: React.FC = () => {
     orders,
     purchaseOrders,
     getLowStockSKUs,
-    setQuickOrderModalOpen,
     logout,
   } = useApp();
 
-  const [expanded, setExpanded] = useState(false);
+  // Label menu tampil secara bawaan; pilihan ciutkan diingat per browser.
+  const [expanded, setExpandedState] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_EXPANDED_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const setExpanded = (value: boolean) => {
+    setExpandedState(value);
+    try {
+      localStorage.setItem(SIDEBAR_EXPANDED_KEY, value ? '1' : '0');
+    } catch {
+      // abaikan: hanya preferensi tampilan
+    }
+  };
 
   // Pending cancellation approvals
   const pendingCancellations = orders.filter(
@@ -185,24 +200,12 @@ export const Sidebar: React.FC = () => {
             <button
               onClick={() => setMobileMenuOpen(false)}
               className="p-1.5 text-slate-400 hover:text-slate-900 rounded-lg lg:hidden"
+              aria-label="Tutup menu"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Quick Order Mini CTA */}
-          <button
-            onClick={() => setQuickOrderModalOpen(true)}
-            className={`w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-2xl shadow-sm transition-all cursor-pointer ${
-              expanded || mobileMenuOpen ? 'px-4 text-xs' : 'p-2'
-            }`}
-            title="Tambah Order Cepat"
-          >
-            <PlusCircle className="w-5 h-5 text-white shrink-0" />
-            {(expanded || mobileMenuOpen) && (
-              <span className="truncate">+ Order Cepat</span>
-            )}
-          </button>
         </div>
 
         {/* Center: Navigation Icon Squircles (Exact Reference Style) */}
@@ -215,6 +218,8 @@ export const Sidebar: React.FC = () => {
               <div key={item.id} className="relative group">
                 <button
                   onClick={() => handleNavClick(item.id)}
+                  aria-label={item.label}
+                  aria-current={isActive ? 'page' : undefined}
                   className={`w-full flex items-center gap-3.5 p-2.5 rounded-2xl transition-all cursor-pointer ${
                     isActive
                       ? 'bg-slate-900 text-white shadow-md'

@@ -14,25 +14,23 @@ import {
   Check,
   RefreshCw,
   Search,
-  Info,
   Sparkles,
   Activity,
   LogOut,
 } from 'lucide-react';
-import { useApp, AppView } from '../context/AppContext';
+import { useApp } from '../context/AppContext';
+import { VIEW_TITLES } from '../services/viewRoute';
 import { ChangePasswordModal } from './ChangePasswordModal';
 
 export const Header: React.FC = () => {
   const {
     currentView,
-    setCurrentView,
     setMobileMenuOpen,
     currentUser,
     isOwner,
     orders,
     getLowStockSKUs,
     setQuickOrderModalOpen,
-    resetData,
     theme,
     toggleTheme,
     cloudSyncStatus,
@@ -51,21 +49,11 @@ export const Header: React.FC = () => {
     (o) => o.statusOrder === 'menunggu_approval_batal'
   ).length;
 
-  const topNavTabs: { id: AppView; label: string }[] = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'sales', label: 'Penjualan' },
-    { id: 'inventory', label: 'Inventori' },
-    { id: 'purchases', label: 'Pengadaan PO' },
-    { id: 'finance', label: 'Keuangan' },
-    { id: 'products', label: 'Produk SKU' },
-    { id: 'customers', label: 'Customer CRM' },
-    { id: 'reseller', label: 'Mitra Reseller' },
-  ];
 
   return (
     <header className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
       {/* Left: Brand Badge & Segmented Top Nav Pills (Exact match to Reference Image) */}
-      <div className="flex items-center gap-3 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+      <div className="flex items-center gap-3 min-w-0">
         {/* Mobile menu trigger */}
         <button
           onClick={() => setMobileMenuOpen(true)}
@@ -75,30 +63,7 @@ export const Header: React.FC = () => {
           <Menu className="w-4 h-4 text-slate-700" />
         </button>
 
-        {/* Circular Brand Icon (Reference: Canadian Maple Leaf circle badge) */}
-        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#f43f5e] via-[#fb7185] to-[#fb923c] text-white flex items-center justify-center font-black text-sm shadow-md shrink-0 ring-4 ring-white">
-          <span>K</span>
-        </div>
-
-        {/* Segmented Pill Navigation Bar */}
-        <nav className="segmented-pill-bar flex items-center gap-1 shrink-0 bg-white">
-          {topNavTabs.map((tab) => {
-            const isActive = currentView === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setCurrentView(tab.id)}
-                className={`px-4 py-2 rounded-full text-xs transition-all cursor-pointer whitespace-nowrap ${
-                  isActive
-                    ? 'segmented-pill-active'
-                    : 'text-slate-500 hover:text-slate-900 font-medium hover:bg-slate-50'
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
+        <h1 className="text-lg font-extrabold text-slate-900 tracking-tight truncate">{VIEW_TITLES[currentView]}</h1>
       </div>
 
       {/* Right Action Icons (Reference: Circular white buttons & Dark CTA) */}
@@ -205,19 +170,6 @@ export const Header: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Info / Reset Demo Button */}
-        <button
-          onClick={() => {
-            if (window.confirm('Reset semua data kembali ke format demo awal Kalima Apparel?')) {
-              resetData();
-            }
-          }}
-          title="Info & Reset Data Demo"
-          className="btn-circle-action cursor-pointer"
-        >
-          <Info className="w-4 h-4 text-slate-600" />
-        </button>
 
         {/* Theme Switcher Button */}
         <button

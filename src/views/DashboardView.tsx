@@ -7,7 +7,6 @@ import {
   Clock,
   ChevronRight,
   EyeOff,
-  Plus,
   RefreshCw,
   FileSpreadsheet,
   ArrowUpRight,
@@ -40,7 +39,6 @@ export const DashboardView: React.FC = () => {
     biayaOperasional,
     calculateStockSummary,
     getLowStockSKUs,
-    setQuickOrderModalOpen,
     setCurrentView,
     cashAccounts,
     cashMutations,
@@ -219,14 +217,7 @@ export const DashboardView: React.FC = () => {
           </div>
 
           {/* Bottom Action Row: Frosted Buttons (Sell / Buy Style in Reference) */}
-          <div className="grid grid-cols-2 gap-2.5 pt-2 relative z-10">
-            <button
-              onClick={() => setQuickOrderModalOpen(true)}
-              className="frosted-btn py-2.5 px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>+ Order Baru</span>
-            </button>
+          <div className="grid grid-cols-1 gap-2.5 pt-2 relative z-10">
             <button
               onClick={() => setCurrentView('finance')}
               className="frosted-btn py-2.5 px-3 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer"
@@ -370,13 +361,6 @@ export const DashboardView: React.FC = () => {
             ))}
           </div>
 
-          <button
-            onClick={() => setQuickOrderModalOpen(true)}
-            className="btn-primary-dark text-xs flex items-center gap-1.5 cursor-pointer !py-2 !px-4"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Order Baru</span>
-          </button>
         </div>
       </div>
 
