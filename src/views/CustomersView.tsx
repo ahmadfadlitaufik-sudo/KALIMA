@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchHandoff } from '../hooks/useSearchHandoff';
 import {
   Users,
   Search,
@@ -71,6 +72,7 @@ export const CustomersView: React.FC = () => {
   const [selectedFreqFilter, setSelectedFreqFilter] = useState<FrequencyFilter>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('ltv_desc');
   const [searchQuery, setSearchQuery] = useState('');
+  useSearchHandoff('customers', setSearchQuery);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
 
   // Selection & Bulk Action State

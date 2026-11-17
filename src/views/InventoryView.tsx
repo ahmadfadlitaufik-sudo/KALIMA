@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchHandoff } from '../hooks/useSearchHandoff';
 import {
   PackagePlus,
   ClipboardList,
@@ -58,6 +59,7 @@ export const InventoryView: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<'stok_berjalan' | 'barang_masuk' | 'opname' | 'reject' | 'kartu_stok'>('stok_berjalan');
   const [searchQuery, setSearchQuery] = useState('');
+  useSearchHandoff('inventory', setSearchQuery);
   const [selectedSeriesFilter, setSelectedSeriesFilter] = useState<string>('ALL');
   const [syncToast, setSyncToast] = useState<string | null>(null);
 

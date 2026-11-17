@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useSearchHandoff } from '../hooks/useSearchHandoff';
 import {
   Plus,
   Upload,
@@ -55,6 +56,7 @@ export const SalesView: React.FC = () => {
 
   // Search & Basic Filters
   const [searchQuery, setSearchQuery] = useState('');
+  useSearchHandoff('sales', setSearchQuery);
   const [selectedChannel, setSelectedChannel] = useState<string>('ALL');
   const [selectedStatusBayar, setSelectedStatusBayar] = useState<string>('ALL');
   const [selectedStatusOrder, setSelectedStatusOrder] = useState<string>('ALL');

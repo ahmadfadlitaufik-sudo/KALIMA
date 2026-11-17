@@ -11,7 +11,6 @@ import {
   CloudOff,
   Check,
   RefreshCw,
-  Search,
   Sparkles,
   Activity,
   LogOut,
@@ -19,6 +18,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { VIEW_TITLES } from '../services/viewRoute';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { GlobalSearch } from './GlobalSearch';
 
 export const Header: React.FC = () => {
   const {
@@ -36,7 +36,6 @@ export const Header: React.FC = () => {
   } = useApp();
 
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const [syncSuccessMessage, setSyncSuccessMessage] = useState<string | null>(null);
 
@@ -64,14 +63,7 @@ export const Header: React.FC = () => {
 
       {/* Right Action Icons (Reference: Circular white buttons & Dark CTA) */}
       <div className="flex flex-wrap items-center justify-end gap-2 md:shrink-0">
-        {/* Search Action */}
-        <button
-          onClick={() => setSearchOpen(!searchOpen)}
-          title="Cari transaksi, SKU, atau pelanggan..." aria-label="Cari transaksi, SKU, atau pelanggan..."
-          className="btn-circle-action cursor-pointer"
-        >
-          <Search className="w-4 h-4 text-slate-600" />
-        </button>
+        <GlobalSearch />
 
         {/* Notifications Button with Red Dot */}
         <div className="relative">
