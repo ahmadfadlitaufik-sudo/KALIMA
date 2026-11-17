@@ -408,7 +408,7 @@ export const ProductsView: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => handleOpenEditSeries(ser)}
-                            title="Edit Parameter Lini Produk"
+                            title="Edit Parameter Lini Produk" aria-label="Edit Parameter Lini Produk"
                             className="p-1 rounded-lg bg-slate-900 hover:bg-amber-500 hover:text-slate-950 text-slate-400 transition-colors cursor-pointer shrink-0"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -740,7 +740,7 @@ export const ProductsView: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleOpenEditSku(sku)}
-                                  title="Edit SKU"
+                                  title="Edit SKU" aria-label="Edit SKU"
                                   className="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 transition-colors cursor-pointer"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
@@ -748,7 +748,7 @@ export const ProductsView: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => setSkuToDelete(sku)}
-                                  title="Hapus SKU"
+                                  title="Hapus SKU" aria-label="Hapus SKU"
                                   className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-600 hover:text-white text-slate-400 transition-colors cursor-pointer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />

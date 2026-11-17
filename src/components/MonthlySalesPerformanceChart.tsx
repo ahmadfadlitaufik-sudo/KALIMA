@@ -519,7 +519,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                   ? 'segmented-pill-active'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
-              title="Tren Omzet & Laba"
+              title="Tren Omzet & Laba" aria-label="Tren Omzet & Laba"
             >
               <TrendingUp className="w-3.5 h-3.5" />
               <span>Omzet & Laba</span>
@@ -532,7 +532,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                   ? 'segmented-pill-active'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
-              title="Komposisi Channel Penjualan"
+              title="Komposisi Channel Penjualan" aria-label="Komposisi Channel Penjualan"
             >
               <Layers className="w-3.5 h-3.5" />
               <span>Saluran (Channel)</span>
@@ -545,7 +545,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                   ? 'segmented-pill-active'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
-              title="Volume Penjualan (Pcs) & Transaksi"
+              title="Volume Penjualan (Pcs) & Transaksi" aria-label="Volume Penjualan (Pcs) & Transaksi"
             >
               <Package className="w-3.5 h-3.5" />
               <span>Volume & Qty</span>
@@ -558,7 +558,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                   ? 'segmented-pill-active'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
-              title="Average Order Value (AOV)"
+              title="Average Order Value (AOV)" aria-label="Average Order Value (AOV)"
             >
               <DollarSign className="w-3.5 h-3.5" />
               <span>AOV</span>
@@ -596,7 +596,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
           {/* CSV Download Button */}
           <button
             onClick={handleExportCSV}
-            title="Download Rekap Bulanan CSV"
+            title="Download Rekap Bulanan CSV" aria-label="Download Rekap Bulanan CSV"
             className="btn-circle-action cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-slate-700" />

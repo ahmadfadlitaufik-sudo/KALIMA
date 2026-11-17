@@ -390,7 +390,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
                 ? 'bg-slate-800 text-white border-slate-700'
                 : 'bg-slate-950 text-slate-400 hover:text-white border-slate-800'
             }`}
-            title="Tampilkan / Sembunyikan tabel angka detail bulanan"
+            title="Tampilkan / Sembunyikan tabel angka detail bulanan" aria-label="Tampilkan / Sembunyikan tabel angka detail bulanan"
           >
             <TableIcon className="w-3.5 h-3.5 text-amber-400" />
             <span>{showDataTable ? 'Tutup Tabel' : 'Tabel Angka'}</span>

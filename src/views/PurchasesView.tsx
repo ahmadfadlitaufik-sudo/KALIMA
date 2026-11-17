@@ -199,7 +199,7 @@ export const PurchasesView: React.FC = () => {
               setSelectedPOForTracking(po);
               setIsTrackingModalOpen(true);
             }}
-            title="Klik untuk melihat detail timeline tracking"
+            title="Klik untuk melihat detail timeline tracking" aria-label="Klik untuk melihat detail timeline tracking"
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 transition-all cursor-pointer group shadow-2xs"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -220,7 +220,7 @@ export const PurchasesView: React.FC = () => {
               setSelectedPOForTracking(po);
               setIsTrackingModalOpen(true);
             }}
-            title="Klik untuk melihat detail timeline tracking"
+            title="Klik untuk melihat detail timeline tracking" aria-label="Klik untuk melihat detail timeline tracking"
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 transition-all cursor-pointer group shadow-2xs"
           >
             <Truck className="w-3.5 h-3.5 text-blue-600 animate-pulse shrink-0" />
@@ -240,7 +240,7 @@ export const PurchasesView: React.FC = () => {
             setSelectedPOForTracking(po);
             setIsTrackingModalOpen(true);
           }}
-          title="Klik untuk melihat detail timeline tracking"
+          title="Klik untuk melihat detail timeline tracking" aria-label="Klik untuk melihat detail timeline tracking"
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all cursor-pointer group shadow-2xs"
         >
           <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
@@ -765,7 +765,7 @@ export const PurchasesView: React.FC = () => {
                                   setSelectedPOForTracking(po);
                                   setIsTrackingModalOpen(true);
                                 }}
-                                title="Buka Modal Detail Tracking Pesanan Vendor"
+                                title="Buka Modal Detail Tracking Pesanan Vendor" aria-label="Buka Modal Detail Tracking Pesanan Vendor"
                                 className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
                               >
                                 <Eye className="w-3 h-3 text-slate-500" />
@@ -786,7 +786,7 @@ export const PurchasesView: React.FC = () => {
                                   setIsPaymentModalOpen(true);
                                 }}
                                 className="px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
-                                title="Buka form pelunasan utang vendor"
+                                title="Buka form pelunasan utang vendor" aria-label="Buka form pelunasan utang vendor"
                               >
                                 <DollarSign className="w-3 h-3 text-amber-600" />
                                 <span>Bayar Hutang</span>
@@ -804,7 +804,7 @@ export const PurchasesView: React.FC = () => {
                                 setSelectedPOForTracking(po);
                                 setIsTrackingModalOpen(true);
                               }}
-                              title="Buka Modal Detail Tracking & Perjalanan Barang"
+                              title="Buka Modal Detail Tracking & Perjalanan Barang" aria-label="Buka Modal Detail Tracking & Perjalanan Barang"
                               className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200/80 transition-colors cursor-pointer"
                             >
                               <Truck className="w-3.5 h-3.5 text-blue-600" />
@@ -816,7 +816,7 @@ export const PurchasesView: React.FC = () => {
                                 setSelectedPOForDocument(po);
                                 setIsDocumentModalOpen(true);
                               }}
-                              title="Lihat & Cetak Dokumen PO Resmi"
+                              title="Lihat & Cetak Dokumen PO Resmi" aria-label="Lihat & Cetak Dokumen PO Resmi"
                               className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200/80 transition-colors cursor-pointer"
                             >
                               <FileText className="w-3.5 h-3.5 text-amber-600" />
@@ -829,7 +829,7 @@ export const PurchasesView: React.FC = () => {
                                   setSelectedPOForShipping(po);
                                   setIsShipModalOpen(true);
                                 }}
-                                title="Update Ekspedisi & Nomor Resi Kargo"
+                                title="Update Ekspedisi & Nomor Resi Kargo" aria-label="Update Ekspedisi & Nomor Resi Kargo"
                                 className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200/80 transition-colors cursor-pointer"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
@@ -843,7 +843,7 @@ export const PurchasesView: React.FC = () => {
                                   setSelectedPOForReceiving(po);
                                   setIsReceiveModalOpen(true);
                                 }}
-                                title="Terima Barang & Masukkan ke Stok Gudang"
+                                title="Terima Barang & Masukkan ke Stok Gudang" aria-label="Terima Barang & Masukkan ke Stok Gudang"
                                 className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200/80 transition-colors cursor-pointer"
                               >
                                 <ArrowDownLeft className="w-3.5 h-3.5" />
@@ -859,7 +859,7 @@ export const PurchasesView: React.FC = () => {
                                     showToast(`Purchase Order #${po.noPO} berhasil dihapus.`);
                                   }
                                 }}
-                                title="Hapus PO"
+                                title="Hapus PO" aria-label="Hapus PO"
                                 className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1106,7 +1106,7 @@ export const PurchasesView: React.FC = () => {
                         setIsVendorModalOpen(true);
                       }}
                       className="p-1.5 text-slate-400 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-                      title="Edit Vendor"
+                      title="Edit Vendor" aria-label="Edit Vendor"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
@@ -1123,7 +1123,7 @@ export const PurchasesView: React.FC = () => {
                           }
                         }}
                         className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
-                        title="Hapus Vendor"
+                        title="Hapus Vendor" aria-label="Hapus Vendor"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1517,7 +1517,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
               <p className="text-xs text-slate-500">Terbitkan order resmi pengadaan bahan / CMT ke vendor pabrik.</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+          <button aria-label="Tutup" data-modal-close onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -1917,7 +1917,7 @@ const ShipPOModal: React.FC<ShipPOModalProps> = ({ isOpen, onClose, po, onSave }
               <p className="text-xs text-slate-500">{po.noPO} · Vendor: {po.vendorNama}</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+          <button aria-label="Tutup" data-modal-close onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -2109,7 +2109,7 @@ const ReceivePOModal: React.FC<ReceivePOModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
+          <button aria-label="Tutup" data-modal-close onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -2348,7 +2348,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
               </p>
             </div>
           </div>
-          <button
+          <button aria-label="Tutup" data-modal-close
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors"
           >
@@ -2653,7 +2653,7 @@ const PODocumentModal: React.FC<PODocumentModalProps> = ({ isOpen, onClose, po }
               <Printer className="w-3.5 h-3.5" />
               <span>Cetak / Simpan PDF</span>
             </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-colors cursor-pointer">
+            <button aria-label="Tutup" data-modal-close onClick={onClose} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-colors cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -2873,7 +2873,7 @@ const VendorFormModal: React.FC<VendorFormModalProps> = ({
               <p className="text-xs text-slate-500">Pabrik rajut, garmen konveksi CMT, atau sablon rekanan.</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-colors cursor-pointer">
+          <button aria-label="Tutup" data-modal-close onClick={onClose} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-colors cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -3065,7 +3065,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
             </div>
           </div>
 
-          <button
+          <button aria-label="Tutup" data-modal-close
             onClick={onClose}
             className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-colors cursor-pointer"
           >
@@ -3316,7 +3316,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                           <button
                             type="button"
                             onClick={handleCopyResi}
-                            title="Salin Nomor Resi"
+                            title="Salin Nomor Resi" aria-label="Salin Nomor Resi"
                             className="p-1 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded transition-colors cursor-pointer"
                           >
                             {copiedResi ? (

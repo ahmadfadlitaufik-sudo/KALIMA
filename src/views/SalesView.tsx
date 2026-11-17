@@ -403,7 +403,7 @@ export const SalesView: React.FC = () => {
           <button
             onClick={() => setCurrentView('import_export')}
             className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold px-3.5 py-2.5 rounded-2xl text-xs border border-slate-200/80 transition-all cursor-pointer shadow-2xs"
-            title="Import transaksi penjualan massal dari file Excel (.xlsx, .xls) atau .CSV"
+            title="Import transaksi penjualan massal dari file Excel (.xlsx, .xls) atau .CSV" aria-label="Import transaksi penjualan massal dari file Excel (.xlsx, .xls) atau .CSV"
           >
             <Upload className="w-4 h-4 text-slate-600" />
             <span>Upload Penjualan (Excel/CSV)</span>

@@ -479,7 +479,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
               </p>
             </div>
           </div>
-          <button
+          <button aria-label="Tutup" data-modal-close
             onClick={handleClose}
             className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
           >
@@ -958,7 +958,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                           type="button"
                           onClick={() => handleUpdateQty(it.sku, 0)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
-                          title="Hapus dari keranjang"
+                          title="Hapus dari keranjang" aria-label="Hapus dari keranjang"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -1004,7 +1004,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                               type="button"
                               onClick={() => handleUpdatePrice(it.sku, undefined)}
                               className="text-[11px] text-amber-700 hover:text-rose-600 font-semibold underline cursor-pointer"
-                              title={`Kembalikan ke harga normal Rp ${defaultPrice.toLocaleString('id-ID')}`}
+                              title={`Kembalikan ke harga normal Rp ${defaultPrice.toLocaleString('id-ID')}`} aria-label={`Kembalikan ke harga normal Rp ${defaultPrice.toLocaleString('id-ID')}`}
                             >
                               Reset Normal (Rp {defaultPrice.toLocaleString('id-ID')})
                             </button>

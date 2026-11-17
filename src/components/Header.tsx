@@ -71,7 +71,7 @@ export const Header: React.FC = () => {
         {/* Search Action */}
         <button
           onClick={() => setSearchOpen(!searchOpen)}
-          title="Cari transaksi, SKU, atau pelanggan..."
+          title="Cari transaksi, SKU, atau pelanggan..." aria-label="Cari transaksi, SKU, atau pelanggan..."
           className="btn-circle-action cursor-pointer"
         >
           <Search className="w-4 h-4 text-slate-600" />
@@ -81,7 +81,7 @@ export const Header: React.FC = () => {
         <div className="relative">
           <button
             onClick={() => setShowNotificationPopup(!showNotificationPopup)}
-            title="Notifikasi & Peringatan Sistem"
+            title="Notifikasi & Peringatan Sistem" aria-label="Notifikasi & Peringatan Sistem"
             className="btn-circle-action cursor-pointer relative"
           >
             <Bell className="w-4 h-4 text-slate-600" />
@@ -133,6 +133,12 @@ export const Header: React.FC = () => {
                 : cloudSyncStatus === 'syncing'
                 ? 'Sedang menyinkronkan data dengan server...'
                 : '⚠️ Cloud Terputus/Offline. Klik untuk sambungkan & sinkronkan data sekarang.'
+            } aria-label={
+              cloudSyncStatus === 'connected'
+                ? `Server Terhubung (Multi-User). Terakhir sinkron: ${lastSyncedAt || 'Baru saja'}. Klik untuk tarik data terbaru dari tim.`
+                : cloudSyncStatus === 'syncing'
+                ? 'Sedang menyinkronkan data dengan server...'
+                : '⚠️ Cloud Terputus/Offline. Klik untuk sambungkan & sinkronkan data sekarang.'
             }
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer select-none ${
               cloudSyncStatus === 'connected'
@@ -174,7 +180,7 @@ export const Header: React.FC = () => {
         {/* Theme Switcher Button */}
         <button
           onClick={toggleTheme}
-          title={theme === 'dark' ? 'Mode Terang (Soft Card)' : 'Mode Gelap'}
+          title={theme === 'dark' ? 'Mode Terang (Soft Card)' : 'Mode Gelap'} aria-label={theme === 'dark' ? 'Mode Terang (Soft Card)' : 'Mode Gelap'}
           className="btn-circle-action cursor-pointer"
         >
           {theme === 'dark' ? (
@@ -188,7 +194,7 @@ export const Header: React.FC = () => {
         <button
           type="button"
           onClick={() => setChangePasswordOpen(true)}
-          title={`${currentUser.name} — ${currentUser.email}. Klik untuk ganti kata sandi.`}
+          title={`${currentUser.name} — ${currentUser.email}. Klik untuk ganti kata sandi.`} aria-label={`${currentUser.name} — ${currentUser.email}. Klik untuk ganti kata sandi.`}
           className="px-3 py-2 rounded-full bg-white border border-slate-200/80 shadow-sm text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
         >
           {isOwner ? (
@@ -206,7 +212,7 @@ export const Header: React.FC = () => {
         {/* Logout Button */}
         <button
           onClick={logout}
-          title="Keluar / Logout Akun"
+          title="Keluar / Logout Akun" aria-label="Keluar / Logout Akun"
           className="btn-circle-action text-slate-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
         >
           <LogOut className="w-4 h-4" />

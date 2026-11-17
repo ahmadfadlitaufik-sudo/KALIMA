@@ -181,7 +181,7 @@ export const Sidebar: React.FC = () => {
             <button
               onClick={() => handleNavClick('dashboard')}
               className="flex items-center gap-3 cursor-pointer group"
-              title="Kalima Apparel"
+              title="Kalima Apparel" aria-label="Kalima Apparel"
             >
               <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#f43f5e] via-[#fb7185] to-[#fb923c] text-white flex items-center justify-center font-black text-base shadow-md ring-4 ring-rose-50 transition-transform group-hover:scale-105">
                 K
@@ -308,7 +308,7 @@ export const Sidebar: React.FC = () => {
             {/* Logout button */}
             <button
               onClick={logout}
-              title="Keluar dari Aplikasi (Logout)"
+              title="Keluar dari Aplikasi (Logout)" aria-label="Keluar dari Aplikasi (Logout)"
               className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
@@ -319,7 +319,7 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={() => setExpanded(!expanded)}
             className="hidden lg:flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
-            title={expanded ? 'Kecilkan Sidebar Dock' : 'Perluas Sidebar Dock'}
+            title={expanded ? 'Kecilkan Sidebar Dock' : 'Perluas Sidebar Dock'} aria-label={expanded ? 'Kecilkan Sidebar Dock' : 'Perluas Sidebar Dock'}
           >
             {expanded ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>

@@ -192,7 +192,7 @@ export const UsersView: React.FC = () => {
                         disabled={isSelf || saving}
                         onClick={() => handleToggleActive(user)}
                         className={`inline-flex items-center gap-1 font-semibold disabled:opacity-60 ${user.active ? 'text-emerald-400' : 'text-slate-500'}`}
-                        title={isSelf ? 'Tidak bisa mengubah akun Anda sendiri' : 'Klik untuk mengubah status'}
+                        title={isSelf ? 'Tidak bisa mengubah akun Anda sendiri' : 'Klik untuk mengubah status'} aria-label={isSelf ? 'Tidak bisa mengubah akun Anda sendiri' : 'Klik untuk mengubah status'}
                       >
                         <UserCheck className="w-3.5 h-3.5" />
                         {user.active ? 'Aktif' : 'Nonaktif'}
@@ -208,7 +208,7 @@ export const UsersView: React.FC = () => {
                             onClick={() => handleResetPassword(user)}
                             disabled={saving}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-500/10"
-                            title="Reset kata sandi"
+                            title="Reset kata sandi" aria-label="Reset kata sandi"
                           >
                             <KeyRound className="w-3.5 h-3.5" />
                           </button>
@@ -217,7 +217,7 @@ export const UsersView: React.FC = () => {
                             onClick={() => handleDelete(user)}
                             disabled={saving}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10"
-                            title="Hapus pengguna"
+                            title="Hapus pengguna" aria-label="Hapus pengguna"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

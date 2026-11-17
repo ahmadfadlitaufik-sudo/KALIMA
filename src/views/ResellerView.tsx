@@ -727,7 +727,7 @@ export const ResellerView: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => openEditResellerModal(res)}
-                          title="Edit Data Mitra"
+                          title="Edit Data Mitra" aria-label="Edit Data Mitra"
                           className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
@@ -737,7 +737,7 @@ export const ResellerView: React.FC = () => {
                             setDeleteModalReseller(res);
                             setDeleteReturnStock(true);
                           }}
-                          title="Hapus Mitra Konsinyasi"
+                          title="Hapus Mitra Konsinyasi" aria-label="Hapus Mitra Konsinyasi"
                           className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/50 rounded-xl transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

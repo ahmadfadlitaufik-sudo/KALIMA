@@ -659,7 +659,7 @@ export const CashBankSection: React.FC = () => {
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                       <button
                         type="button"
-                        title="Edit Akun"
+                        title="Edit Akun" aria-label="Edit Akun"
                         onClick={() => handleOpenEditAccount(acc)}
                         className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition-colors cursor-pointer"
                       >
@@ -668,7 +668,7 @@ export const CashBankSection: React.FC = () => {
                       {!acc.isDefault && cashAccounts.length > 1 && (
                         <button
                           type="button"
-                          title="Hapus Akun"
+                          title="Hapus Akun" aria-label="Hapus Akun"
                           onClick={() => setDeletingAccountId(acc.id)}
                           className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                         >
@@ -825,7 +825,7 @@ export const CashBankSection: React.FC = () => {
                             type="button"
                             onClick={() => handleCopyRekening(acc)}
                             className="flex items-center gap-1 hover:text-amber-400 transition-colors cursor-pointer"
-                            title="Salin No. Rekening"
+                            title="Salin No. Rekening" aria-label="Salin No. Rekening"
                           >
                             <span>{acc.nomorRekening || '-'}</span>
                             {isCopied ? (
@@ -861,7 +861,7 @@ export const CashBankSection: React.FC = () => {
                               type="button"
                               onClick={() => handleOpenTrx('masuk', acc.id)}
                               className="px-2 py-0.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 text-[11px] font-bold rounded border border-emerald-500/30 cursor-pointer"
-                              title="Catat Kas Masuk"
+                              title="Catat Kas Masuk" aria-label="Catat Kas Masuk"
                             >
                               + Masuk
                             </button>
@@ -869,7 +869,7 @@ export const CashBankSection: React.FC = () => {
                               type="button"
                               onClick={() => handleOpenTrx('keluar', acc.id)}
                               className="px-2 py-0.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 text-[11px] font-bold rounded border border-rose-500/30 cursor-pointer"
-                              title="Catat Kas Keluar"
+                              title="Catat Kas Keluar" aria-label="Catat Kas Keluar"
                             >
                               - Keluar
                             </button>
@@ -877,7 +877,7 @@ export const CashBankSection: React.FC = () => {
                               type="button"
                               onClick={() => handleOpenTransfer(acc.id)}
                               className="px-2 py-0.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-[11px] font-bold rounded border border-blue-500/30 cursor-pointer"
-                              title="Pindah Saldo"
+                              title="Pindah Saldo" aria-label="Pindah Saldo"
                             >
                               ⇄ Trf
                             </button>
@@ -885,7 +885,7 @@ export const CashBankSection: React.FC = () => {
                               type="button"
                               onClick={() => handleOpenEditAccount(acc)}
                               className="p-1 text-slate-400 hover:text-white rounded"
-                              title="Edit Akun"
+                              title="Edit Akun" aria-label="Edit Akun"
                             >
                               <Edit2 className="w-3 h-3" />
                             </button>

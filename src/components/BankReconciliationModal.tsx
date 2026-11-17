@@ -362,7 +362,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
               </button>
             </div>
 
-            <button
+            <button aria-label="Tutup" data-modal-close
               onClick={onClose}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
             >
@@ -860,7 +860,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                           <button
                             onClick={() => setViewingHistorySession(session)}
                             className="p-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-700 transition-colors cursor-pointer"
-                            title="Lihat Detail Berita Acara"
+                            title="Lihat Detail Berita Acara" aria-label="Lihat Detail Berita Acara"
                           >
                             <FileText className="w-4 h-4 text-blue-400" />
                           </button>
@@ -873,7 +873,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                                 }
                               }}
                               className="p-2 bg-slate-900 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 rounded-xl border border-slate-700 transition-colors cursor-pointer"
-                              title="Hapus Sesi"
+                              title="Hapus Sesi" aria-label="Hapus Sesi"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

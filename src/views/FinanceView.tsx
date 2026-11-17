@@ -998,7 +998,7 @@ export const FinanceView: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenEditOpex(b)}
-                              title="Edit Pengeluaran"
+                              title="Edit Pengeluaran" aria-label="Edit Pengeluaran"
                               className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
@@ -1006,7 +1006,7 @@ export const FinanceView: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => deleteBiayaOperasional(b.id)}
-                              title="Hapus Pengeluaran"
+                              title="Hapus Pengeluaran" aria-label="Hapus Pengeluaran"
                               className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />

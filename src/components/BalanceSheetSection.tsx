@@ -522,7 +522,7 @@ export const BalanceSheetSection: React.FC = () => {
               <button
                 onClick={handleAutoCalibrateEquity}
                 className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
-                title="Seimbangkan otomatis modal awal pemilik agar selisih neraca menjadi Rp 0"
+                title="Seimbangkan otomatis modal awal pemilik agar selisih neraca menjadi Rp 0" aria-label="Seimbangkan otomatis modal awal pemilik agar selisih neraca menjadi Rp 0"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Seimbangkan Modal (Auto-Calibrate)</span>
@@ -805,7 +805,7 @@ export const BalanceSheetSection: React.FC = () => {
                         setActiveSubView('jurnal');
                       }}
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/25 text-[11px] font-medium transition-colors cursor-pointer"
-                      title="Klik untuk membuka buku jurnal akun Kas/Bank"
+                      title="Klik untuk membuka buku jurnal akun Kas/Bank" aria-label="Klik untuk membuka buku jurnal akun Kas/Bank"
                     >
                       <span>Jurnal</span>
                       <ArrowRight className="w-2.5 h-2.5" />
@@ -991,7 +991,7 @@ export const BalanceSheetSection: React.FC = () => {
                       type="button"
                       onClick={() => setActiveSubView('buku_besar')}
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 text-[11px] font-medium transition-colors cursor-pointer"
-                      title="Klik untuk membuka Buku Besar Pembantu Utang Dagang"
+                      title="Klik untuk membuka Buku Besar Pembantu Utang Dagang" aria-label="Klik untuk membuka Buku Besar Pembantu Utang Dagang"
                     >
                       <span>Buku Besar</span>
                       <ArrowRight className="w-2.5 h-2.5" />
@@ -1769,7 +1769,7 @@ const BalanceConfigModal: React.FC<BalanceConfigModalProps> = ({
               <p className="text-xs text-slate-400">Modal disetor, akumulasi laba ditahan, dan pengambilan prive.</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+          <button aria-label="Tutup" data-modal-close onClick={onClose} className="text-slate-400 hover:text-white p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -1932,7 +1932,7 @@ const FixedAssetFormModal: React.FC<FixedAssetFormModalProps> = ({
               <p className="text-xs text-slate-400">Mesin sablon, rak gudang, perangkat kantor.</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+          <button aria-label="Tutup" data-modal-close onClick={onClose} className="text-slate-400 hover:text-white p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -2119,7 +2119,7 @@ const PrintBalanceSheetModal: React.FC<PrintBalanceSheetModalProps> = ({
               <Printer className="w-3.5 h-3.5" />
               <span>Cetak / Simpan PDF</span>
             </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
+            <button aria-label="Tutup" data-modal-close onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
               <X className="w-5 h-5" />
             </button>
           </div>

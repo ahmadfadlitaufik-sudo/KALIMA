@@ -365,7 +365,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             <button
               onClick={handleExportCSV}
               className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 hover:border-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-              title="Ekspor Laporan Performa Vendor ke Excel / CSV"
+              title="Ekspor Laporan Performa Vendor ke Excel / CSV" aria-label="Ekspor Laporan Performa Vendor ke Excel / CSV"
             >
               <Download className="w-3.5 h-3.5 text-emerald-600" />
               <span>Ekspor CSV</span>

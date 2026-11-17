@@ -786,7 +786,7 @@ export const CustomersView: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={handleSyncOrders}
-                title="Tarik kontak dari transaksi order & deduplikasi nomor HP otomatis"
+                title="Tarik kontak dari transaksi order & deduplikasi nomor HP otomatis" aria-label="Tarik kontak dari transaksi order & deduplikasi nomor HP otomatis"
                 className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold px-3 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -795,7 +795,7 @@ export const CustomersView: React.FC = () => {
 
               <button
                 onClick={handleMergeDuplicates}
-                title="Satukan profil customer yang memiliki nomor WhatsApp/HP yang sama"
+                title="Satukan profil customer yang memiliki nomor WhatsApp/HP yang sama" aria-label="Satukan profil customer yang memiliki nomor WhatsApp/HP yang sama"
                 className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-purple-300 border border-purple-500/30 font-semibold px-3 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-purple-400" />
@@ -804,7 +804,7 @@ export const CustomersView: React.FC = () => {
 
               <button
                 onClick={() => setIsImportModalOpen(true)}
-                title="Impor kontak dari Excel atau CSV"
+                title="Impor kontak dari Excel atau CSV" aria-label="Impor kontak dari Excel atau CSV"
                 className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 font-medium px-3 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
               >
                 <Upload className="w-3.5 h-3.5 text-blue-400" />
@@ -813,7 +813,7 @@ export const CustomersView: React.FC = () => {
 
               <button
                 onClick={handleExportCsv}
-                title="Download kontak ke format Excel / CSV"
+                title="Download kontak ke format Excel / CSV" aria-label="Download kontak ke format Excel / CSV"
                 className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 font-medium px-3 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
               >
                 <Download className="w-3.5 h-3.5 text-emerald-400" />
@@ -1191,6 +1191,10 @@ export const CustomersView: React.FC = () => {
                           selectedCustomerIds.size === sortedCustomers.length && sortedCustomers.length > 0
                             ? 'Batalkan semua pilihan'
                             : 'Pilih semua customer yang tampil'
+                        } aria-label={
+                          selectedCustomerIds.size === sortedCustomers.length && sortedCustomers.length > 0
+                            ? 'Batalkan semua pilihan'
+                            : 'Pilih semua customer yang tampil'
                         }
                         className="text-slate-400 hover:text-white cursor-pointer"
                       >
@@ -1332,7 +1336,7 @@ export const CustomersView: React.FC = () => {
                                   )
                                 }
                                 className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-2xs ${theme.badge} hover:brightness-110`}
-                                title="Klik untuk mengubah segmen customer"
+                                title="Klik untuk mengubah segmen customer" aria-label="Klik untuk mengubah segmen customer"
                               >
                                 <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
                                 <span>{cat}</span>
@@ -1489,7 +1493,7 @@ export const CustomersView: React.FC = () => {
                                 <button
                                   onClick={() => handleOpenPromote(cust)}
                                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold border border-amber-500/30 text-xs transition-all cursor-pointer shadow-2xs"
-                                  title="Tentukan customer ini sebagai Mitra / Reseller resmi"
+                                  title="Tentukan customer ini sebagai Mitra / Reseller resmi" aria-label="Tentukan customer ini sebagai Mitra / Reseller resmi"
                                 >
                                   <Store className="w-3.5 h-3.5" />
                                   <span>+ Mitra</span>
@@ -1500,7 +1504,7 @@ export const CustomersView: React.FC = () => {
                                     setActiveMainView('crm_mitra');
                                   }}
                                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                                  title="Buka Hub CRM Mitra untuk toko ini"
+                                  title="Buka Hub CRM Mitra untuk toko ini" aria-label="Buka Hub CRM Mitra untuk toko ini"
                                 >
                                   <Crown className="w-3.5 h-3.5 text-amber-400" />
                                   <span>Kelola Mitra</span>
@@ -1511,7 +1515,7 @@ export const CustomersView: React.FC = () => {
                               <button
                                 onClick={() => setHistoryCustomerModal(cust)}
                                 className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-colors cursor-pointer"
-                                title="Lihat Rincian Seluruh Riwayat Order Customer"
+                                title="Lihat Rincian Seluruh Riwayat Order Customer" aria-label="Lihat Rincian Seluruh Riwayat Order Customer"
                               >
                                 <Receipt className="w-3.5 h-3.5" />
                               </button>
@@ -1520,7 +1524,7 @@ export const CustomersView: React.FC = () => {
                               <button
                                 onClick={() => setEditCustomerModal(cust)}
                                 className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors cursor-pointer"
-                                title="Edit Data Kontak & Catatan"
+                                title="Edit Data Kontak & Catatan" aria-label="Edit Data Kontak & Catatan"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
@@ -1529,7 +1533,7 @@ export const CustomersView: React.FC = () => {
                               <button
                                 onClick={() => setDeleteConfirmCustomer(cust)}
                                 className="p-1.5 rounded-xl bg-slate-900 hover:bg-rose-950/70 text-slate-500 hover:text-rose-400 border border-slate-800 hover:border-rose-500/50 transition-colors cursor-pointer"
-                                title="Hapus customer ini dari database"
+                                title="Hapus customer ini dari database" aria-label="Hapus customer ini dari database"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>

@@ -33,7 +33,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
               <Printer className="w-3.5 h-3.5" />
               <span>Cetak Nota</span>
             </button>
-            <button
+            <button aria-label="Tutup" data-modal-close
               onClick={onClose}
               className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
             >

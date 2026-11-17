@@ -294,7 +294,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
               </p>
             </div>
           </div>
-          <button
+          <button aria-label="Tutup" data-modal-close
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
