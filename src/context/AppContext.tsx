@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useMemo,
 import { ApiError, WorkspaceDocId, api, onUnauthorized } from '../services/api';
 import { SyncBase, docsToRefetch, isFreshBrowser, loadSyncBase, markServerLoaded, pickInitial, snapshotDoc, storeSyncBase } from '../services/workspaceSync';
 import { ListSnapshot, mergeList, mergeValue } from '../services/threeWayMerge';
-import { pathToView, viewToPath } from '../services/viewRoute';
+import { VIEW_TITLES, pathToView, viewToPath } from '../services/viewRoute';
 import { NotLoadedError, createWorkspaceSaver } from '../services/workspaceSaver';
 
 /** Selang cek perubahan data di server (ms) selama tab terlihat. */
@@ -355,6 +355,9 @@ export const AppProvider: React.FC<{
       window.history.pushState(null, '', path);
     }
   }, []);
+  useEffect(() => {
+    document.title = `${VIEW_TITLES[currentView]} — Kalima`;
+  }, [currentView]);
   useEffect(() => {
     const handlePopState = () => setCurrentViewState(pathToView(window.location.pathname));
     window.addEventListener('popstate', handlePopState);
