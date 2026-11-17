@@ -146,25 +146,25 @@ export const Header: React.FC = () => {
               <>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 <CloudCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="hidden sm:inline font-medium text-[11px]">Sync Cloud</span>
+                <span className="hidden sm:inline font-medium text-xs">Sync Cloud</span>
               </>
             ) : cloudSyncStatus === 'syncing' ? (
               <>
                 <RefreshCw className="w-3.5 h-3.5 text-amber-600 animate-spin shrink-0" />
-                <span className="hidden sm:inline font-medium text-[11px]">Menyinkronkan...</span>
+                <span className="hidden sm:inline font-medium text-xs">Menyinkronkan...</span>
               </>
             ) : (
               <>
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping shrink-0" />
                 <CloudOff className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                <span className="font-bold text-[11px]">Offline · Klik Sync</span>
+                <span className="font-bold text-xs">Offline · Klik Sync</span>
               </>
             )}
           </button>
 
 
           {syncSuccessMessage && (
-            <div className="absolute right-0 top-full mt-1.5 bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-lg flex items-center gap-1.5 whitespace-nowrap z-50 animate-fade-in">
+            <div className="absolute right-0 top-full mt-1.5 bg-slate-900 text-white text-xs font-semibold px-2.5 py-1 rounded-lg shadow-lg flex items-center gap-1.5 whitespace-nowrap z-50 animate-fade-in">
               <Check className="w-3 h-3 text-emerald-400" />
               <span>{syncSuccessMessage}</span>
             </div>
@@ -197,7 +197,7 @@ export const Header: React.FC = () => {
             <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
           )}
           <span className="hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
-          <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700">
+          <span className="text-[11px] uppercase font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700">
             {currentUser.role}
           </span>
         </button>

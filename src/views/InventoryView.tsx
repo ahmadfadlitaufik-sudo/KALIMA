@@ -465,7 +465,7 @@ export const InventoryView: React.FC = () => {
               <span>{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
                     isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700 border border-slate-200'
                   }`}
                 >
@@ -487,7 +487,7 @@ export const InventoryView: React.FC = () => {
             {/* 1. Total SKU */}
             <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Total SKU & Varian
                 </span>
                 <div className="p-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200/80">
@@ -498,7 +498,7 @@ export const InventoryView: React.FC = () => {
                 <div className="text-2xl font-bold text-slate-900 font-mono tracking-tight">
                   {skus.length} <span className="text-xs font-medium text-slate-400 font-sans">SKU</span>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
+                <div className="text-xs text-slate-500 mt-1 flex items-center gap-1 font-medium">
                   <span>{allSeriesOptions.length} Lini / Seri Produk Aktif</span>
                 </div>
               </div>
@@ -507,7 +507,7 @@ export const InventoryView: React.FC = () => {
             {/* 2. Stok Gudang Utama */}
             <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Stok Siap Jual Gudang
                 </span>
                 <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/80">
@@ -519,11 +519,11 @@ export const InventoryView: React.FC = () => {
                   {overallInventoryStats.totalGudang.toLocaleString('id-ID')}{' '}
                   <span className="text-xs font-medium text-slate-400 font-sans">pcs</span>
                 </div>
-                <div className="text-[11px] text-emerald-700 mt-1 flex items-center gap-1 font-medium">
+                <div className="text-xs text-emerald-700 mt-1 flex items-center gap-1 font-medium">
                   <span title="Stok minus tidak dihitung">Nilai HPP stok: Rp {overallInventoryStats.totalHppValue.toLocaleString('id-ID')}</span>
                 </div>
                 {overallInventoryStats.minusSkuCount > 0 && (
-                  <div className="text-[11px] text-rose-600 mt-1 font-semibold">
+                  <div className="text-xs text-rose-600 mt-1 font-semibold">
                     {overallInventoryStats.minusSkuCount} SKU stok minus ({overallInventoryStats.minusPcs.toLocaleString('id-ID')} pcs) — perlu stok opname
                   </div>
                 )}
@@ -533,7 +533,7 @@ export const InventoryView: React.FC = () => {
             {/* 3. Stok Titip Reseller */}
             <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Stok Titip Reseller
                 </span>
                 <div className="p-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200/80">
@@ -545,7 +545,7 @@ export const InventoryView: React.FC = () => {
                   {overallInventoryStats.totalReseller.toLocaleString('id-ID')}{' '}
                   <span className="text-xs font-medium text-slate-400 font-sans">pcs</span>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 font-medium">
+                <div className="text-xs text-slate-500 mt-1 flex items-center gap-1 font-medium">
                   <span>Konsinyasi di mitra toko</span>
                 </div>
               </div>
@@ -554,7 +554,7 @@ export const InventoryView: React.FC = () => {
             {/* 4. SKU Kritis / Menipis */}
             <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-sm relative overflow-hidden flex flex-col justify-between">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   Perlu Buffer / Restock
                 </span>
                 <div className={`p-2 rounded-xl border ${
@@ -570,7 +570,7 @@ export const InventoryView: React.FC = () => {
                   {overallInventoryStats.lowStockCount}{' '}
                   <span className="text-xs font-medium text-slate-400 font-sans">SKU</span>
                 </div>
-                <div className="text-[11px] mt-1 flex items-center gap-1 font-medium">
+                <div className="text-xs mt-1 flex items-center gap-1 font-medium">
                   {overallInventoryStats.outOfStockCount > 0 ? (
                     <span className="text-rose-600 font-semibold">
                       {overallInventoryStats.outOfStockCount} SKU Habis Total (0 pcs)
@@ -647,7 +647,7 @@ export const InventoryView: React.FC = () => {
           <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3.5 px-4">Kode SKU</th>
                     <th className="py-3.5 px-3">Lini & Nama Produk</th>
@@ -686,7 +686,7 @@ export const InventoryView: React.FC = () => {
                             <div className="font-semibold text-slate-900 line-clamp-1" title={sku.name}>
                               {sku.name}
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                            <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
                               <span className="text-slate-600 font-medium">
                                 Lini: {seriesLabel} ({sku.seriesCode})
                               </span>
@@ -696,7 +696,7 @@ export const InventoryView: React.FC = () => {
                           </td>
                           <td className="py-3 px-3 text-center">
                             <span className="font-medium text-slate-700">{sku.colorName || '-'}</span>{' '}
-                            <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 font-mono text-[11px]">
+                            <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 font-mono text-xs">
                               {sku.size || '-'}
                             </span>
                           </td>
@@ -714,15 +714,15 @@ export const InventoryView: React.FC = () => {
                           </td>
                           <td className="py-3 px-4 text-center whitespace-nowrap">
                             {isOutOfStock ? (
-                              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80">
+                              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80">
                                 HABIS
                               </span>
                             ) : isLow ? (
-                              <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80">
+                              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80">
                                 MENIPIS
                               </span>
                             ) : (
-                              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                                 Aman
                               </span>
                             )}
@@ -793,7 +793,7 @@ export const InventoryView: React.FC = () => {
               </div>
               <div>
                 <h4 className="text-xs font-bold text-slate-900">Ingin Alur Pengadaan Kaos Lengkap?</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Gunakan modul Purchase Order untuk order ke pabrik vendor, tracking resi ekspedisi kargo, hingga checklist penerimaan.
                 </p>
               </div>
@@ -982,7 +982,7 @@ export const InventoryView: React.FC = () => {
               </button>
             </div>
 
-            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 px-2">
+            <div className="text-xs text-slate-500 flex items-center gap-1.5 px-2">
               <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span>Setiap penyesuaian otomatis dicatat ke riwayat audit & kartu stok.</span>
             </div>
@@ -1073,14 +1073,14 @@ export const InventoryView: React.FC = () => {
               {/* Live Opname KPI Metrics Banner */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
-                  <div className="text-[11px] text-slate-500 font-medium">Total SKU Dicek</div>
+                  <div className="text-xs text-slate-500 font-medium">Total SKU Dicek</div>
                   <div className="text-base font-mono font-bold text-slate-900 mt-0.5">
                     {batchMetrics.totalChecked} SKU
                   </div>
                 </div>
 
                 <div className="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-200/80 shadow-xs">
-                  <div className="text-[11px] text-emerald-700 flex items-center gap-1 font-medium">
+                  <div className="text-xs text-emerald-700 flex items-center gap-1 font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Cocok / Sesuai</span>
                   </div>
@@ -1090,7 +1090,7 @@ export const InventoryView: React.FC = () => {
                 </div>
 
                 <div className="bg-blue-50/70 p-3.5 rounded-2xl border border-blue-200/80 shadow-xs">
-                  <div className="text-[11px] text-blue-700 flex items-center gap-1 font-medium">
+                  <div className="text-xs text-blue-700 flex items-center gap-1 font-medium">
                     <TrendingUp className="w-3.5 h-3.5" />
                     <span>Surplus (Lebih)</span>
                   </div>
@@ -1100,7 +1100,7 @@ export const InventoryView: React.FC = () => {
                 </div>
 
                 <div className="bg-rose-50/70 p-3.5 rounded-2xl border border-rose-200/80 shadow-xs">
-                  <div className="text-[11px] text-rose-700 flex items-center gap-1 font-medium">
+                  <div className="text-xs text-rose-700 flex items-center gap-1 font-medium">
                     <TrendingDown className="w-3.5 h-3.5" />
                     <span>Minus (Kurang)</span>
                   </div>
@@ -1110,7 +1110,7 @@ export const InventoryView: React.FC = () => {
                 </div>
 
                 <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs col-span-2 sm:col-span-1">
-                  <div className="text-[11px] text-slate-500 font-medium">Dampak Nilai (HPP)</div>
+                  <div className="text-xs text-slate-500 font-medium">Dampak Nilai (HPP)</div>
                   <div
                     className={`text-sm font-mono font-bold mt-0.5 ${
                       batchMetrics.totalSelisihNominal === 0
@@ -1188,7 +1188,7 @@ export const InventoryView: React.FC = () => {
               <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-700">
-                    <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                    <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">
                       <tr>
                         <th className="py-3 px-4">Kode SKU</th>
                         <th className="py-3 px-3">Produk & Varian</th>
@@ -1236,10 +1236,10 @@ export const InventoryView: React.FC = () => {
                                 <div className="font-semibold text-slate-900 line-clamp-1">
                                   {sku.name}
                                 </div>
-                                <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
                                   <span>{sku.colorName || '-'}</span>
                                   <span>·</span>
-                                  <span className="font-bold text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-mono text-[10px]">
+                                  <span className="font-bold text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-mono text-[11px]">
                                     {sku.size || '-'}
                                   </span>
                                   <span>·</span>
@@ -1281,15 +1281,15 @@ export const InventoryView: React.FC = () => {
                               </td>
                               <td className="py-2.5 px-3 text-center whitespace-nowrap">
                                 {diff === 0 ? (
-                                  <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80">
+                                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80">
                                     0 (Cocok)
                                   </span>
                                 ) : diff > 0 ? (
-                                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/80">
+                                  <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/80">
                                     +{diff} Surplus
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80">
+                                  <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80">
                                     {diff} Minus
                                   </span>
                                 )}
@@ -1428,7 +1428,7 @@ export const InventoryView: React.FC = () => {
                         >
                           {selisih > 0 ? `+${selisih}` : selisih} pcs
                         </div>
-                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">
                           Dampak: Rp {dampakRp.toLocaleString('id-ID')}
                         </div>
                       </div>
@@ -1529,14 +1529,14 @@ export const InventoryView: React.FC = () => {
 
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80 text-xs">
                         <div>
-                          <div className="text-slate-500 text-[11px]">Item Diperiksa</div>
+                          <div className="text-slate-500 text-xs">Item Diperiksa</div>
                           <div className="font-mono font-bold text-slate-900 mt-0.5">
                             {sess.totalItemChecked} SKU
                           </div>
                         </div>
 
                         <div>
-                          <div className="text-slate-500 text-[11px]">Status Selisih</div>
+                          <div className="text-slate-500 text-xs">Status Selisih</div>
                           <div className="font-mono text-slate-700 mt-0.5">
                             <span className="text-emerald-700 font-medium">{sess.totalMatch} Cocok</span>
                             {' · '}
@@ -1547,7 +1547,7 @@ export const InventoryView: React.FC = () => {
                         </div>
 
                         <div>
-                          <div className="text-slate-500 text-[11px]">Net Selisih Unit</div>
+                          <div className="text-slate-500 text-xs">Net Selisih Unit</div>
                           <div
                             className={`font-mono font-bold mt-0.5 ${
                               sess.netSelisihQty === 0
@@ -1562,7 +1562,7 @@ export const InventoryView: React.FC = () => {
                         </div>
 
                         <div>
-                          <div className="text-slate-500 text-[11px]">Dampak Nominal (HPP)</div>
+                          <div className="text-slate-500 text-xs">Dampak Nominal (HPP)</div>
                           <div
                             className={`font-mono font-bold mt-0.5 ${
                               sess.netSelisihNominal === 0
@@ -1719,7 +1719,7 @@ export const InventoryView: React.FC = () => {
           <div className="bg-white rounded-3xl border border-slate-200/80 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+                <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Tanggal</th>
                     <th className="py-3 px-3">Kode SKU</th>
@@ -1734,7 +1734,7 @@ export const InventoryView: React.FC = () => {
                 <tbody className="divide-y divide-slate-100 font-sans">
                   {filteredMovements.slice(0, 50).map((mov) => (
                     <tr key={mov.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-2.5 px-4 font-mono text-[11px] text-slate-500">
+                      <td className="py-2.5 px-4 font-mono text-xs text-slate-500">
                         {mov.tanggal}
                       </td>
                       <td className="py-2.5 px-3 font-mono font-bold text-slate-900">
@@ -1744,7 +1744,7 @@ export const InventoryView: React.FC = () => {
                       </td>
                       <td className="py-2.5 px-3">
                         <span
-                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase ${
+                          className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border uppercase ${
                             mov.tipe === 'opname'
                               ? 'bg-purple-50 text-purple-700 border-purple-200/80'
                               : mov.qty > 0
@@ -1769,7 +1769,7 @@ export const InventoryView: React.FC = () => {
                       <td className="py-2.5 px-3 text-slate-500 truncate max-w-[220px]">
                         {mov.catatan || '-'}
                       </td>
-                      <td className="py-2.5 px-4 text-slate-500 text-[11px]">
+                      <td className="py-2.5 px-4 text-slate-500 text-xs">
                         {mov.recordedBy}
                       </td>
                     </tr>
@@ -1799,17 +1799,17 @@ export const InventoryView: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2.5 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80">
               <div>
-                <span className="text-slate-500 text-[11px] font-medium">Total Item SKU:</span>
+                <span className="text-slate-500 text-xs font-medium">Total Item SKU:</span>
                 <p className="font-mono font-bold text-slate-900 mt-0.5">{batchMetrics.totalChecked} SKU</p>
               </div>
               <div>
-                <span className="text-slate-500 text-[11px] font-medium">SKU Berselisih:</span>
+                <span className="text-slate-500 text-xs font-medium">SKU Berselisih:</span>
                 <p className="font-mono font-bold text-amber-700 mt-0.5">
                   {batchMetrics.surplusCount + batchMetrics.deficitCount} SKU
                 </p>
               </div>
               <div>
-                <span className="text-slate-500 text-[11px] font-medium">Net Perubahan Unit:</span>
+                <span className="text-slate-500 text-xs font-medium">Net Perubahan Unit:</span>
                 <p
                   className={`font-mono font-bold mt-0.5 ${
                     batchMetrics.totalSelisihQty >= 0 ? 'text-blue-700' : 'text-rose-700'
@@ -1820,7 +1820,7 @@ export const InventoryView: React.FC = () => {
                 </p>
               </div>
               <div>
-                <span className="text-slate-500 text-[11px] font-medium">Net Dampak Nilai (HPP):</span>
+                <span className="text-slate-500 text-xs font-medium">Net Dampak Nilai (HPP):</span>
                 <p
                   className={`font-mono font-bold mt-0.5 ${
                     batchMetrics.totalSelisihNominal >= 0 ? 'text-blue-700' : 'text-rose-700'
@@ -1832,7 +1832,7 @@ export const InventoryView: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-amber-50/70 border border-amber-200/80 p-3 rounded-2xl text-[11px] text-amber-900">
+            <div className="bg-amber-50/70 border border-amber-200/80 p-3 rounded-2xl text-xs text-amber-900">
               Penyesuaian stok akan langsung mengubah saldo stok Gudang Utama, mencatat kartu stok, dan menambahkan entri permanen di Jejak Audit (Audit Trail).
             </div>
 
@@ -1870,7 +1870,7 @@ export const InventoryView: React.FC = () => {
                   </span>
                   <h3 className="text-sm font-bold text-slate-900">{viewingSessionDetail.judul}</h3>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Tanggal: {viewingSessionDetail.tanggal} · Petugas: {viewingSessionDetail.petugas} ({viewingSessionDetail.userRole})
                 </p>
               </div>
@@ -1892,7 +1892,7 @@ export const InventoryView: React.FC = () => {
 
               <div className="rounded-2xl border border-slate-200/80 overflow-hidden">
                 <table className="w-full text-left text-xs text-slate-700">
-                  <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[10px]">
+                  <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase text-[11px]">
                     <tr>
                       <th className="py-2.5 px-3">Kode SKU & Nama</th>
                       <th className="py-2.5 px-3 text-right">Stok Sistem</th>
@@ -1907,7 +1907,7 @@ export const InventoryView: React.FC = () => {
                       <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
                         <td className="py-2 px-3">
                           <div className="font-mono font-bold text-slate-900">{it.sku}</div>
-                          <div className="text-[11px] text-slate-600 line-clamp-1">{it.namaProduk}</div>
+                          <div className="text-xs text-slate-600 line-clamp-1">{it.namaProduk}</div>
                         </td>
                         <td className="py-2 px-3 text-right font-mono text-slate-500">
                           {it.systemQty} pcs
@@ -1917,15 +1917,15 @@ export const InventoryView: React.FC = () => {
                         </td>
                         <td className="py-2 px-3 text-center">
                           {it.selisihQty === 0 ? (
-                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80">
+                            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80">
                               0 (Cocok)
                             </span>
                           ) : it.selisihQty > 0 ? (
-                            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/80">
+                            <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/80">
                               +{it.selisihQty}
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80">
+                            <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/80">
                               {it.selisihQty}
                             </span>
                           )}
@@ -1942,7 +1942,7 @@ export const InventoryView: React.FC = () => {
                           {it.selisihNominal >= 0 ? '+' : ''}
                           Rp {it.selisihNominal.toLocaleString('id-ID')}
                         </td>
-                        <td className="py-2 px-3 text-slate-500 text-[11px]">
+                        <td className="py-2 px-3 text-slate-500 text-xs">
                           {it.alasan || '-'}
                         </td>
                       </tr>

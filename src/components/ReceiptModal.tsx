@@ -49,16 +49,16 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
             <h2 className="text-base font-black tracking-widest text-slate-950 uppercase">
               KALIMA APPAREL
             </h2>
-            <p className="text-[10px] text-slate-600 mt-0.5">
+            <p className="text-[11px] text-slate-600 mt-0.5">
               Heavyweight & Premium Menswear Essentials
             </p>
-            <p className="text-[10px] text-slate-600">
+            <p className="text-[11px] text-slate-600">
               Channel: <span className="font-bold">{order.channel}</span>
             </p>
           </div>
 
           {/* Info Order */}
-          <div className="space-y-1 text-[11px] pb-3 border-b border-dashed border-slate-300">
+          <div className="space-y-1 text-xs pb-3 border-b border-dashed border-slate-300">
             <div className="flex justify-between">
               <span className="text-slate-500">No. Order:</span>
               <span className="font-bold">{order.noOrder}</span>
@@ -89,16 +89,16 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
 
           {/* Items Table */}
           <div className="space-y-2 pb-3 border-b border-dashed border-slate-300">
-            <div className="flex justify-between font-bold text-[11px] text-slate-900 border-b border-slate-200 pb-1">
+            <div className="flex justify-between font-bold text-xs text-slate-900 border-b border-slate-200 pb-1">
               <span>ITEM</span>
               <span>TOTAL</span>
             </div>
             {order.items.map((it, idx) => (
               <div key={idx} className="space-y-0.5">
-                <div className="font-bold text-[11px] leading-tight text-slate-950">
+                <div className="font-bold text-xs leading-tight text-slate-950">
                   {it.namaProduk}
                 </div>
-                <div className="flex justify-between text-[11px] text-slate-600">
+                <div className="flex justify-between text-xs text-slate-600">
                   <span>
                     {it.qty} x Rp {it.hargaSatuan.toLocaleString('id-ID')}
                   </span>
@@ -111,7 +111,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
           </div>
 
           {/* Payment Summary */}
-          <div className="space-y-1 text-[11px] pb-3 border-b border-dashed border-slate-300">
+          <div className="space-y-1 text-xs pb-3 border-b border-dashed border-slate-300">
             <div className="flex justify-between">
               <span className="text-slate-600">Subtotal:</span>
               <span>Rp {order.subtotal.toLocaleString('id-ID')}</span>
@@ -147,7 +147,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
               </div>
             )}
             {order.jatuhTempo && order.sisaPiutang > 0 && (
-              <div className="flex justify-between text-rose-600 text-[10px]">
+              <div className="flex justify-between text-rose-600 text-[11px]">
                 <span>Jatuh Tempo:</span>
                 <span>{order.jatuhTempo}</span>
               </div>
@@ -155,7 +155,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
           </div>
 
           {/* Footer Note */}
-          <div className="text-center space-y-1 text-[10px] text-slate-500 pt-1">
+          <div className="text-center space-y-1 text-[11px] text-slate-500 pt-1">
             <p>Terima kasih telah memilih Kalima Apparel.</p>
             <p>Barang yang sudah dibeli dapat ditukar maksimal 3 hari sejak diterima (syarat hangtag & kemasan utuh).</p>
             <p className="font-bold text-slate-700">kalima.id · @kalima.apparel</p>

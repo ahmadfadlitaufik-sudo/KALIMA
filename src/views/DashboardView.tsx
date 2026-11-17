@@ -183,7 +183,7 @@ export const DashboardView: React.FC = () => {
               </span>
             </div>
             <div
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${
                 monthCashFlow.count === 0
                   ? 'bg-slate-500/20 text-slate-300 border-slate-500/30'
                   : monthCashFlow.net >= 0
@@ -243,7 +243,7 @@ export const DashboardView: React.FC = () => {
           </div>
 
           <div className="relative z-10 max-w-[65%]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-bold text-white mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold text-white mb-2">
               <Sparkles className="w-3 h-3 text-amber-200 fill-amber-200" />
               <span>Target & Kuota Penjualan</span>
             </div>
@@ -274,14 +274,14 @@ export const DashboardView: React.FC = () => {
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-rose-500" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700">
                   {isOwner ? 'Margin Kotor' : 'Penjualan'}
                 </span>
               </div>
               <div className="text-sm font-extrabold text-slate-900 first-letter:uppercase">
                 {periodLabel}
               </div>
-              <div className="text-[11px] text-slate-600">
+              <div className="text-xs text-slate-600">
                 {isOwner
                   ? `Laba kotor Rp ${totalLabaKotor.toLocaleString('id-ID')}`
                   : `${totalQtySold.toLocaleString('id-ID')} pcs terjual`}
@@ -293,20 +293,20 @@ export const DashboardView: React.FC = () => {
               <span className="text-base font-black text-rose-600 font-mono leading-none">
                 {isOwner ? (grossMarginPercent(totalOmzet, totalLabaKotor) === null ? '–' : `${grossMarginPercent(totalOmzet, totalLabaKotor)}%`) : filteredOrders.length}
               </span>
-              <span className="text-[8px] font-bold text-slate-500 uppercase mt-0.5">{isOwner ? 'Margin' : 'Order'}</span>
+              <span className="text-[11px] font-bold text-slate-500 uppercase mt-0.5">{isOwner ? 'Margin' : 'Order'}</span>
             </div>
           </div>
 
           {/* CARD 4: SOFT PASTEL PEACH ("You Invested in Last 30 Days" Reference) */}
           <div className="card-pastel-peach p-4 flex items-center justify-between relative overflow-hidden flex-1 group">
             <div className="space-y-0.5 max-w-[62%]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
                 Total Belanja PO
               </span>
               <div className="text-base font-black text-slate-900 font-mono tracking-tight">
                 Rp {totalBelanjaPO.toLocaleString('id-ID')}
               </div>
-              <div className="text-[11px] text-slate-600 truncate">
+              <div className="text-xs text-slate-600 truncate">
                 {totalQtyPesanPO.toLocaleString('id-ID')} pcs dari {purchaseOrders.length} PO
               </div>
             </div>
@@ -534,7 +534,7 @@ export const DashboardView: React.FC = () => {
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2 font-bold text-slate-800">
                       <span>{ch.name}</span>
-                      <span className="text-[10px] text-slate-500 font-mono font-normal">
+                      <span className="text-[11px] text-slate-500 font-mono font-normal">
                         ({ch.count} order · {ch.qty} pcs)
                       </span>
                     </div>
@@ -579,11 +579,11 @@ export const DashboardView: React.FC = () => {
                 <div className="space-y-0.5 min-w-0 mr-2">
                   <div className="flex items-center gap-2">
                     <span className="font-black text-slate-900 font-mono">{ord.noOrder}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white text-slate-700 border border-slate-200 shadow-2xs">
+                    <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-white text-slate-700 border border-slate-200 shadow-2xs">
                       {ord.channel}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-500 truncate">
+                  <div className="text-xs text-slate-500 truncate">
                     {ord.customerNama || 'Customer Umum'} · {ord.tanggal}
                   </div>
                 </div>
@@ -593,7 +593,7 @@ export const DashboardView: React.FC = () => {
                     Rp {ord.totalTagihan.toLocaleString('id-ID')}
                   </div>
                   <span
-                    className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-1 ${
+                    className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full mt-1 ${
                       ord.statusBayar === 'lunas'
                         ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                         : 'bg-rose-100 text-rose-800 border border-rose-200'

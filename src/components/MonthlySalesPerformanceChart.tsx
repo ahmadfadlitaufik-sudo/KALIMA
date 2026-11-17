@@ -314,7 +314,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
             <span className="font-bold text-slate-900 text-sm">{dataPoint?.fullLabel || label}</span>
             {dataPoint?.momGrowth !== undefined && dataPoint?.momGrowth !== 0 && (
               <span
-                className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
+                className={`font-mono text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
                   dataPoint.momGrowth >= 0
                     ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-rose-100 text-rose-800'
@@ -349,7 +349,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                         {formatRupiah(dataPoint?.labaKotor || 0)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/60 text-slate-400">
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/60 text-slate-400">
                       <span>Margin Keuntungan:</span>
                       <span className="font-bold text-emerald-300 font-mono">
                         {dataPoint?.profitMargin}%
@@ -357,7 +357,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                     </div>
                   </>
                 )}
-                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-0.5">
                   <span>Transaksi / Volume:</span>
                   <span className="font-mono text-slate-200">
                     {dataPoint?.totalOrders} order · {dataPoint?.totalQty} pcs
@@ -368,7 +368,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
 
             {chartType === 'channel_composition' && (
               <>
-                <div className="text-[11px] font-semibold text-slate-400 mb-1">
+                <div className="text-xs font-semibold text-slate-400 mb-1">
                   Kontribusi per Saluran:
                 </div>
                 {activeChannels.map((ch) => {
@@ -383,7 +383,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                       </span>
                       <span className="font-mono font-semibold text-white">
                         {formatRupiah(val)}{' '}
-                        <span className="text-slate-400 text-[10px]">({pct}%)</span>
+                        <span className="text-slate-400 text-[11px]">({pct}%)</span>
                       </span>
                     </div>
                   );
@@ -415,7 +415,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                     {dataPoint?.totalOrders?.toLocaleString('id-ID')} order
                   </span>
                 </div>
-                <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[11px] text-slate-400">
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-xs text-slate-400">
                   <span>Rata-rata Qty/Order:</span>
                   <span className="font-mono text-white">
                     {dataPoint?.totalOrders > 0
@@ -608,35 +608,35 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {/* Rata-rata Bulanan */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-          <div className="text-[11px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
+          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
             <span>Rata-rata Omzet</span>
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
           </div>
           <div className="text-base sm:text-lg font-black text-slate-900 font-mono mt-1">
             {formatShortRupiah(kpiStats.avgMonthlyRevenue)}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5 font-medium">
+          <div className="text-[11px] text-slate-400 mt-0.5 font-medium">
             dari {monthlyData.length} bulan operasional
           </div>
         </div>
 
         {/* Bulan Terbaik */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-          <div className="text-[11px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
+          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
             <span>Bulan Terbaik</span>
             <Award className="w-3.5 h-3.5 text-amber-500" />
           </div>
           <div className="text-base sm:text-lg font-black text-slate-900 font-mono mt-1 truncate">
             {kpiStats.bestMonth?.fullLabel || '-'}
           </div>
-          <div className="text-[10px] text-amber-700 font-bold font-mono">
+          <div className="text-[11px] text-amber-700 font-bold font-mono">
             {kpiStats.bestMonth ? formatShortRupiah(kpiStats.bestMonth.omzet) : 'Rp 0'}
           </div>
         </div>
 
         {/* Pertumbuhan MoM Terkini */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-          <div className="text-[11px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
+          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
             <span>Tren MoM Terakhir</span>
             {kpiStats.latestMoMGrowth >= 0 ? (
               <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
@@ -652,19 +652,19 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
             {kpiStats.latestMoMGrowth >= 0 ? '+' : ''}
             {kpiStats.latestMoMGrowth}%
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5 font-medium">dibandingkan bulan lalu</div>
+          <div className="text-[11px] text-slate-400 mt-0.5 font-medium">dibandingkan bulan lalu</div>
         </div>
 
         {/* Rata-rata Order Value */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-          <div className="text-[11px] text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
+          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
             <span>Rata-rata Order (AOV)</span>
             <ShoppingBag className="w-3.5 h-3.5 text-blue-500" />
           </div>
           <div className="text-base sm:text-lg font-black text-slate-900 font-mono mt-1">
             {formatShortRupiah(kpiStats.avgAOV)}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5 font-medium">
+          <div className="text-[11px] text-slate-400 mt-0.5 font-medium">
             Total {kpiStats.totalQtyCount.toLocaleString('id-ID')} pcs terjual
           </div>
         </div>
@@ -860,11 +860,11 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
         <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-2.5">
           <span className="flex items-center gap-1.5">
             <span>Rincian Data Performa Tiap Bulan</span>
-            <span className="text-[10px] text-slate-500 font-normal">
+            <span className="text-[11px] text-slate-500 font-normal">
               ({monthlyData.length} bulan ditampilkan)
             </span>
           </span>
-          <span className="text-[11px] text-slate-500 font-mono">
+          <span className="text-xs text-slate-500 font-mono">
             Total Omzet:{' '}
             <strong className="text-amber-400 font-mono">
               {formatRupiah(kpiStats.totalRevenue)}
@@ -874,7 +874,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
 
         <div className="overflow-x-auto rounded-xl border border-slate-800">
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-900/90 text-[11px] uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-800">
+            <thead className="bg-slate-900/90 text-xs uppercase tracking-wider text-slate-400 font-semibold border-b border-slate-800">
               <tr>
                 <th className="px-3 py-2.5">Periode Bulan</th>
                 <th className="px-3 py-2.5 text-right">Omzet Penjualan</th>
@@ -899,7 +899,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                     <td className="px-3 py-2 font-sans font-medium text-white flex items-center gap-1.5">
                       <span>{m.fullLabel}</span>
                       {kpiStats.bestMonth?.yearMonth === m.yearMonth && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 font-sans font-semibold">
+                        <span className="text-[11px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 font-sans font-semibold">
                           Top
                         </span>
                       )}
@@ -923,10 +923,10 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                     <td className="px-3 py-2 text-right text-slate-300">
                       {m.totalOrders} order
                     </td>
-                    <td className="px-3 py-2 text-right text-slate-400 text-[11px]">
+                    <td className="px-3 py-2 text-right text-slate-400 text-xs">
                       Rp {m.aov.toLocaleString('id-ID')}
                     </td>
-                    <td className="px-3 py-2 text-right font-semibold text-[11px]">
+                    <td className="px-3 py-2 text-right font-semibold text-xs">
                       {m.momGrowth > 0 ? (
                         <span className="text-emerald-400">+{m.momGrowth}%</span>
                       ) : m.momGrowth < 0 ? (

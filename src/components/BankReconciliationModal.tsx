@@ -326,7 +326,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                 <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
                   Rekonsiliasi Bank & Buku Kas
                 </h2>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                   Audit & Komparasi
                 </span>
               </div>
@@ -477,7 +477,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                       <DollarSign className="w-3.5 h-3.5 text-amber-400" />
                       <span>Saldo Akhir Rekening Koran Bank</span>
                     </span>
-                    <span className="text-[10px] text-slate-400 font-normal">(e-Statement)</span>
+                    <span className="text-[11px] text-slate-400 font-normal">(e-Statement)</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-2 text-xs font-bold text-slate-400 font-mono">Rp</span>
@@ -496,33 +496,33 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* 1. Saldo Sistem (Buku Kas) */}
                 <div className="bg-[#0e1219] p-4 rounded-2xl border border-slate-800">
-                  <span className="text-[11px] font-semibold text-slate-400">Saldo Akhir Sistem (Buku)</span>
+                  <span className="text-xs font-semibold text-slate-400">Saldo Akhir Sistem (Buku)</span>
                   <div className="text-lg font-bold text-white font-mono mt-1">
                     Rp {systemClosingBalance.toLocaleString('id-ID')}
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-1">
+                  <div className="text-[11px] text-slate-500 mt-1">
                     Saldo berjalan tercatat di aplikasi
                   </div>
                 </div>
 
                 {/* 2. Saldo Bank (Rekening Koran) */}
                 <div className="bg-[#0e1219] p-4 rounded-2xl border border-slate-800">
-                  <span className="text-[11px] font-semibold text-slate-400">Saldo Rekening Koran Bank</span>
+                  <span className="text-xs font-semibold text-slate-400">Saldo Rekening Koran Bank</span>
                   <div className="text-lg font-bold text-amber-300 font-mono mt-1">
                     Rp {bankStatementBalance.toLocaleString('id-ID')}
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-1">
+                  <div className="text-[11px] text-slate-500 mt-1">
                     Mutasi fisik menurut bank
                   </div>
                 </div>
 
                 {/* 3. Mutasi Terekonsiliasi (Matched) */}
                 <div className="bg-[#0e1219] p-4 rounded-2xl border border-slate-800">
-                  <span className="text-[11px] font-semibold text-slate-400">Total Klir Dicocokkan</span>
+                  <span className="text-xs font-semibold text-slate-400">Total Klir Dicocokkan</span>
                   <div className="text-lg font-bold text-blue-400 font-mono mt-1">
                     {selectedMutationIds.size} / {accountMutations.length} Transaksi
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1 font-mono flex items-center gap-1.5">
+                  <div className="text-[11px] text-slate-400 mt-1 font-mono flex items-center gap-1.5">
                     <span className="text-emerald-400">+{totalMasukCleared.toLocaleString('id-ID')}</span>
                     <span>·</span>
                     <span className="text-rose-400">-{totalKeluarCleared.toLocaleString('id-ID')}</span>
@@ -538,13 +538,13 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold">Selisih (Discrepancy)</span>
+                    <span className="text-xs font-semibold">Selisih (Discrepancy)</span>
                     {isBalanced ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                         KLOP / SEIMBANG
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
                         ADA SELISIH
                       </span>
                     )}
@@ -552,7 +552,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                   <div className="text-lg font-black font-mono mt-1">
                     Rp {Math.abs(selisih).toLocaleString('id-ID')}
                   </div>
-                  <div className="text-[10px] opacity-80 mt-1">
+                  <div className="text-[11px] opacity-80 mt-1">
                     {isBalanced
                       ? '✓ Buku kas & bank sinkron 100%'
                       : selisih > 0
@@ -664,7 +664,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                 <div className="border border-slate-800 rounded-2xl overflow-hidden bg-[#0e1219]">
                   <div className="overflow-x-auto max-h-72">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-950 text-slate-400 uppercase text-[10px] sticky top-0 border-b border-slate-800 z-10">
+                      <thead className="bg-slate-950 text-slate-400 uppercase text-[11px] sticky top-0 border-b border-slate-800 z-10">
                         <tr>
                           <th className="py-2.5 px-3 text-center w-12">Klir</th>
                           <th className="py-2.5 px-3">Tanggal</th>
@@ -706,13 +706,13 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                                   />
                                 </td>
                                 <td className="py-2.5 px-3 font-mono text-slate-300">
-                                  {m.tanggal} {m.waktu && <span className="text-slate-500 text-[10px]">({m.waktu})</span>}
+                                  {m.tanggal} {m.waktu && <span className="text-slate-500 text-[11px]">({m.waktu})</span>}
                                 </td>
                                 <td className="py-2.5 px-3">
                                   <div className="font-semibold text-white">{m.deskripsi}</div>
-                                  <div className="text-[10px] text-slate-400">{m.kategori}</div>
+                                  <div className="text-[11px] text-slate-400">{m.kategori}</div>
                                 </td>
-                                <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">
+                                <td className="py-2.5 px-3 text-slate-400 font-mono text-xs">
                                   {m.referensi || '-'}
                                 </td>
                                 <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-400">
@@ -723,11 +723,11 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                                 </td>
                                 <td className="py-2.5 px-3 text-center">
                                   {isChecked ? (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                       <Check className="w-3 h-3" /> Klir
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
                                       Belum Klir
                                     </span>
                                   )}
@@ -816,15 +816,15 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                           <span className="font-bold text-white font-mono text-sm">
                             {session.noRekonsiliasi}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                          <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
                             {session.accountNama}
                           </span>
                           {session.status === 'seimbang' ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                               <Check className="w-3 h-3" /> KLOP / SEIMBANG
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
                               SELISIH Rp {Math.abs(session.selisih).toLocaleString('id-ID')}
                             </span>
                           )}
@@ -847,11 +847,11 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
 
                       <div className="flex items-center gap-4 shrink-0">
                         <div className="text-right font-mono">
-                          <div className="text-[11px] text-slate-400">Saldo Akhir Bank</div>
+                          <div className="text-xs text-slate-400">Saldo Akhir Bank</div>
                           <div className="text-sm font-bold text-amber-300">
                             Rp {session.saldoRekeningKoranBank.toLocaleString('id-ID')}
                           </div>
-                          <div className="text-[10px] text-slate-500">
+                          <div className="text-[11px] text-slate-500">
                             {session.totalItemTerekonsiliasi} mutasi klir
                           </div>
                         </div>

@@ -88,7 +88,7 @@ const SignInPanel: React.FC = () => {
         </button>
       </form>
 
-      <p className="pt-4 border-t border-white/10 text-[11px] text-slate-500">
+      <p className="pt-4 border-t border-white/10 text-xs text-slate-500">
         Lupa kata sandi? Minta Owner me-reset dari menu Pengguna.
       </p>
     </div>
@@ -111,7 +111,7 @@ export const LoginPage: React.FC = () => {
               <span className="font-extrabold text-base tracking-tight text-white">
                 KALIMA APPAREL
               </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 PRO ERP
               </span>
             </div>
@@ -159,7 +159,7 @@ export const LoginPage: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Kasir Kilat & Cetak Nota</h4>
-                    <p className="text-[11px] text-slate-400">Input pesanan di bawah 60 detik dengan auto cetak struk thermal.</p>
+                    <p className="text-xs text-slate-400">Input pesanan di bawah 60 detik dengan auto cetak struk thermal.</p>
                   </div>
                 </div>
 
@@ -169,7 +169,7 @@ export const LoginPage: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Akurasi Stok Real-Time</h4>
-                    <p className="text-[11px] text-slate-400">Sinkronisasi stok aman, peringatan low stock, dan alur pengadaan PO.</p>
+                    <p className="text-xs text-slate-400">Sinkronisasi stok aman, peringatan low stock, dan alur pengadaan PO.</p>
                   </div>
                 </div>
 
@@ -179,7 +179,7 @@ export const LoginPage: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-white">Audit Log & Hak Akses Berjenjang</h4>
-                    <p className="text-[11px] text-slate-400">Pemisahan wewenang Owner dan Admin/CS dengan pencatatan lengkap.</p>
+                    <p className="text-xs text-slate-400">Pemisahan wewenang Owner dan Admin/CS dengan pencatatan lengkap.</p>
                   </div>
                 </div>
               </div>
@@ -216,7 +216,7 @@ export const LoginPage: React.FC = () => {
         <div>
           © {new Date().getFullYear()} Kalima Apparel Indonesia. Hak Cipta Dilindungi Undang-Undang.
         </div>
-        <div className="flex items-center gap-4 text-[11px]">
+        <div className="flex items-center gap-4 text-xs">
           <span>Panduan Penggunaan</span>
           <span>•</span>
           <span>Bantuan Teknis</span>

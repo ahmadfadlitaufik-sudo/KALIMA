@@ -74,7 +74,7 @@ export const AuditLogView: React.FC = () => {
       <div className="bg-[#121620] rounded-2xl border border-slate-800/80 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+            <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[11px] tracking-wider">
               <tr>
                 <th className="py-3 px-4">Waktu (WIB)</th>
                 <th className="py-3 px-3">Pengguna & Peran</th>
@@ -86,7 +86,7 @@ export const AuditLogView: React.FC = () => {
             <tbody className="divide-y divide-slate-800/60 font-sans">
               {filteredLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                  <td className="py-3 px-4 font-mono text-xs text-slate-400 whitespace-nowrap">
                     {log.timestamp}
                   </td>
                   <td className="py-3 px-3 whitespace-nowrap">
@@ -97,20 +97,20 @@ export const AuditLogView: React.FC = () => {
                         <UserCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       )}
                       <span className="font-semibold text-white">{log.userName}</span>
-                      <span className="text-[9px] uppercase px-1 py-0.2 bg-slate-900 border border-slate-800 rounded font-bold text-slate-400">
+                      <span className="text-[11px] uppercase px-1 py-0.2 bg-slate-900 border border-slate-800 rounded font-bold text-slate-400">
                         {log.userRole}
                       </span>
                     </div>
                   </td>
                   <td className="py-3 px-3 whitespace-nowrap">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300">
                       {log.module}
                     </span>
                   </td>
                   <td className="py-3 px-3 font-semibold text-amber-400 whitespace-nowrap">
                     {log.action}
                   </td>
-                  <td className="py-3 px-4 text-slate-300 text-[11px] leading-relaxed">
+                  <td className="py-3 px-4 text-slate-300 text-xs leading-relaxed">
                     {log.detail}
                   </td>
                 </tr>

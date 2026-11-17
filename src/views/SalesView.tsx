@@ -439,12 +439,12 @@ export const SalesView: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 font-mono">{ord.noOrder}</span>
                       <span className="text-slate-400">·</span>
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${getChannelBadgeClass(ord.channel)}`}>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${getChannelBadgeClass(ord.channel)}`}>
                         {ord.channel}
                       </span>
                       <span className="text-slate-700 font-semibold">{ord.customerNama}</span>
                     </div>
-                    <div className="text-[11px] text-rose-700 mt-1">
+                    <div className="text-xs text-rose-700 mt-1">
                       Alasan: "{ord.cancellationReason || 'Tidak ada keterangan'}" (Diajukan oleh: {ord.cancellationRequestedBy || 'CS'})
                     </div>
                   </div>
@@ -585,7 +585,7 @@ export const SalesView: React.FC = () => {
             {periodType === 'custom' && (
               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1 rounded-2xl border border-slate-200">
                 <div className="flex items-center gap-1 text-xs text-slate-700">
-                  <span className="text-[10px] text-slate-500 font-medium">Dari:</span>
+                  <span className="text-[11px] text-slate-500 font-medium">Dari:</span>
                   <input
                     type="date"
                     value={customStartDate}
@@ -595,7 +595,7 @@ export const SalesView: React.FC = () => {
                 </div>
                 <span className="text-slate-400 text-xs">-</span>
                 <div className="flex items-center gap-1 text-xs text-slate-700">
-                  <span className="text-[10px] text-slate-500 font-medium">Sampai:</span>
+                  <span className="text-[11px] text-slate-500 font-medium">Sampai:</span>
                   <input
                     type="date"
                     value={customEndDate}
@@ -670,7 +670,7 @@ export const SalesView: React.FC = () => {
 
         {/* Row 3: Quick Channel Pills (Umum, Reseller, Shopee, TikTok, etc.) */}
         <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-slate-100">
-          <span className="text-[11px] text-slate-500 font-medium mr-1">Filter Channel:</span>
+          <span className="text-xs text-slate-500 font-medium mr-1">Filter Channel:</span>
           <button
             type="button"
             onClick={() => setSelectedChannel('ALL')}
@@ -737,26 +737,26 @@ export const SalesView: React.FC = () => {
       {/* REKAPITULASI KROSCEK RINGKAS (Hasil Filter) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
         <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
-          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Pesanan Tervalidasi</div>
+          <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Pesanan Tervalidasi</div>
           <div className="text-xl font-bold text-slate-900 font-mono mt-1">
             {summaryStats.activeOrdersCount} <span className="text-xs font-normal text-slate-500">order</span>
           </div>
           {summaryStats.totalOrders !== summaryStats.activeOrdersCount && (
-            <div className="text-[11px] text-rose-600 font-medium mt-0.5">
+            <div className="text-xs text-rose-600 font-medium mt-0.5">
               ({summaryStats.totalOrders - summaryStats.activeOrdersCount} order batal)
             </div>
           )}
         </div>
 
         <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
-          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Total Kaos Terjual</div>
+          <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Kaos Terjual</div>
           <div className="text-xl font-bold text-slate-900 font-mono mt-1">
             {summaryStats.totalPcs.toLocaleString('id-ID')} <span className="text-xs font-normal text-slate-500">pcs</span>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm">
-          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Total Omzet Penjualan</div>
+          <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Total Omzet Penjualan</div>
           <div className="text-xl font-bold text-slate-900 font-mono mt-1">
             Rp {summaryStats.totalOmzet.toLocaleString('id-ID')}
           </div>
@@ -764,7 +764,7 @@ export const SalesView: React.FC = () => {
 
         {isOwner && (
           <div className="bg-emerald-50/30 p-4 rounded-3xl border border-emerald-200/80 shadow-sm">
-            <div className="text-[11px] text-emerald-800 font-semibold uppercase tracking-wider">Laba Kotor Penjualan</div>
+            <div className="text-xs text-emerald-800 font-semibold uppercase tracking-wider">Laba Kotor Penjualan</div>
             <div className="text-xl font-bold text-emerald-700 font-mono mt-1">
               Rp {summaryStats.totalLabaKotor.toLocaleString('id-ID')}
             </div>
@@ -772,7 +772,7 @@ export const SalesView: React.FC = () => {
         )}
 
         <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm col-span-2 sm:col-span-1">
-          <div className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Piutang Belum Lunas</div>
+          <div className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Piutang Belum Lunas</div>
           <div className={`text-xl font-bold font-mono mt-1 ${summaryStats.totalPiutang > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
             Rp {summaryStats.totalPiutang.toLocaleString('id-ID')}
           </div>
@@ -817,7 +817,7 @@ export const SalesView: React.FC = () => {
 
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50/90 border-b border-slate-200/90 text-slate-500 font-semibold uppercase text-[10px] tracking-wider">
+            <thead className="bg-slate-50/90 border-b border-slate-200/90 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">
               <tr>
                 <th className="py-3.5 px-4 font-semibold">No. Order & Tgl</th>
                 <th className="py-3.5 px-3 font-semibold">Channel</th>
@@ -857,9 +857,9 @@ export const SalesView: React.FC = () => {
                         <div className="font-mono font-bold text-slate-900 whitespace-nowrap">
                           {ord.noOrder}
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">{ord.tanggal}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">{ord.tanggal}</div>
                         {ord.noResi && (
-                          <div className="text-[10px] text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200/60 font-mono mt-1 inline-block">
+                          <div className="text-[11px] text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200/60 font-mono mt-1 inline-block">
                             Resi: {ord.noResi}
                           </div>
                         )}
@@ -868,7 +868,7 @@ export const SalesView: React.FC = () => {
                       {/* Channel */}
                       <td className="py-3.5 px-3 whitespace-nowrap">
                         <span
-                          className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getChannelBadgeClass(
+                          className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${getChannelBadgeClass(
                             ord.channel
                           )}`}
                         >
@@ -881,7 +881,7 @@ export const SalesView: React.FC = () => {
                         <div className="font-semibold text-slate-900 truncate max-w-[130px]">
                           {ord.customerNama}
                         </div>
-                        <div className="text-[11px] text-slate-500 truncate max-w-[130px] mt-0.5">
+                        <div className="text-xs text-slate-500 truncate max-w-[130px] mt-0.5">
                           {ord.customerKota} · {ord.customerHp}
                         </div>
                       </td>
@@ -891,7 +891,7 @@ export const SalesView: React.FC = () => {
                         <div className="font-semibold text-slate-800">
                           {totalItemsQty} pcs kaos
                         </div>
-                        <div className="text-[11px] text-slate-500 truncate max-w-[160px] mt-0.5">
+                        <div className="text-xs text-slate-500 truncate max-w-[160px] mt-0.5">
                           {ord.items.map((i) => `${i.qty}x ${i.namaProduk}`).join(', ')}
                         </div>
                       </td>
@@ -902,7 +902,7 @@ export const SalesView: React.FC = () => {
                           Rp {ord.totalTagihan.toLocaleString('id-ID')}
                         </div>
                         {ord.diskon > 0 && (
-                          <div className="text-[10px] text-rose-600 mt-0.5 font-medium">
+                          <div className="text-[11px] text-rose-600 mt-0.5 font-medium">
                             Disc: Rp {ord.diskon.toLocaleString('id-ID')}
                           </div>
                         )}
@@ -931,24 +931,24 @@ export const SalesView: React.FC = () => {
                       {/* Status Bayar */}
                       <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         {ord.statusBayar === 'lunas' ? (
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 inline-block">
+                          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 inline-block">
                             LUNAS
                           </span>
                         ) : ord.statusBayar === 'sebagian' ? (
                           <div>
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 inline-block">
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80 inline-block">
                               DP / SEBAGIAN
                             </span>
-                            <div className="text-[10px] text-rose-600 font-mono mt-1 font-medium">
+                            <div className="text-[11px] text-rose-600 font-mono mt-1 font-medium">
                               Sisa: Rp {ord.sisaPiutang.toLocaleString('id-ID')}
                             </div>
                           </div>
                         ) : (
                           <div>
-                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 inline-block">
+                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 inline-block">
                               PIUTANG
                             </span>
-                            <div className="text-[10px] text-slate-500 font-mono mt-1">
+                            <div className="text-[11px] text-slate-500 font-mono mt-1">
                               Tempo: {ord.jatuhTempo || '-'}
                             </div>
                           </div>
@@ -958,19 +958,19 @@ export const SalesView: React.FC = () => {
                       {/* Status Order */}
                       <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         {ord.statusOrder === 'selesai' ? (
-                          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full inline-block">
+                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full inline-block">
                             Selesai
                           </span>
                         ) : ord.statusOrder === 'diproses' ? (
-                          <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full inline-block">
+                          <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full inline-block">
                             Diproses
                           </span>
                         ) : ord.statusOrder === 'menunggu_approval_batal' ? (
-                          <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200/80 inline-block">
+                          <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200/80 inline-block">
                             Req Batal
                           </span>
                         ) : (
-                          <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full inline-block">
+                          <span className="text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full inline-block">
                             Batal
                           </span>
                         )}
@@ -1036,7 +1036,7 @@ export const SalesView: React.FC = () => {
 
             <form onSubmit={handleConfirmPayment} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Nominal Dibayarkan (Rp)
                 </label>
                 <input
@@ -1051,7 +1051,7 @@ export const SalesView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Metode Pembayaran
                 </label>
                 <select
@@ -1069,7 +1069,7 @@ export const SalesView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Masuk ke Akun Kas & Bank
                 </label>
                 <select
@@ -1084,13 +1084,13 @@ export const SalesView: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-emerald-700 mt-1 font-medium">
+                <p className="text-xs text-emerald-700 mt-1 font-medium">
                   ⚡ Saldo kas/bank otomatis bertambah saat pelunasan disimpan
                 </p>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Catatan Pelunasan (Opsional)
                 </label>
                 <input
@@ -1150,7 +1150,7 @@ export const SalesView: React.FC = () => {
                   </label>
                   {refundToCustomer && (
                     <div>
-                      <label className="block text-[10px] text-amber-800 font-medium mb-1">
+                      <label className="block text-[11px] text-amber-800 font-medium mb-1">
                         Pilih Akun Kas/Bank untuk Dipotong:
                       </label>
                       <select
@@ -1164,7 +1164,7 @@ export const SalesView: React.FC = () => {
                           </option>
                         ))}
                       </select>
-                      <p className="text-[10px] text-amber-700 mt-1 font-medium">
+                      <p className="text-[11px] text-amber-700 mt-1 font-medium">
                         ⚡ Saldo akun ini akan dipotong sebesar Rp {cancelModalOrder.totalTerbayar.toLocaleString('id-ID')}
                       </p>
                     </div>
@@ -1173,7 +1173,7 @@ export const SalesView: React.FC = () => {
               )}
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Alasan Pembatalan *
                 </label>
                 <textarea

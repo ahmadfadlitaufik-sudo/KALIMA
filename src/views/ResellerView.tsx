@@ -421,7 +421,7 @@ export const ResellerView: React.FC = () => {
                 <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                   Mitra Reseller & Titip Jual (Konsinyasi)
                 </h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   Consignment Hub
                 </span>
               </div>
@@ -506,7 +506,7 @@ export const ResellerView: React.FC = () => {
             {metrics.totalMitra}{' '}
             <span className="text-xs text-slate-400 font-sans font-normal">Toko Mitra</span>
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-2">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
             <span className="font-medium text-purple-400">{metrics.platinumCount} Plat</span>
             <span>·</span>
             <span className="font-medium text-amber-400">{metrics.goldCount} Gold</span>
@@ -527,7 +527,7 @@ export const ResellerView: React.FC = () => {
             {metrics.totalTitipanPcs}{' '}
             <span className="text-xs text-slate-400 font-sans font-normal">pcs</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-2 truncate font-mono">
+          <div className="text-xs text-slate-400 mt-2 truncate font-mono">
             Aset: Rp {metrics.totalTitipanValue.toLocaleString('id-ID')}
           </div>
         </div>
@@ -543,7 +543,7 @@ export const ResellerView: React.FC = () => {
           <div className="text-xl sm:text-2xl font-bold font-mono text-rose-400 truncate">
             Rp {metrics.totalPiutang.toLocaleString('id-ID')}
           </div>
-          <div className="text-[11px] text-slate-400 mt-2">
+          <div className="text-xs text-slate-400 mt-2">
             {metrics.resellersWithPiutang > 0 ? (
               <span className="text-amber-400 font-medium">⚠️ {metrics.resellersWithPiutang} mitra ada tagihan</span>
             ) : (
@@ -563,7 +563,7 @@ export const ResellerView: React.FC = () => {
           <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400 truncate">
             Rp {metrics.totalLakuRevenue.toLocaleString('id-ID')}
           </div>
-          <div className="text-[11px] text-slate-400 mt-2">
+          <div className="text-xs text-slate-400 mt-2">
             Total {metrics.totalLakuQty} pcs terjual
           </div>
         </div>
@@ -580,7 +580,7 @@ export const ResellerView: React.FC = () => {
             {metrics.totalSuratJalan}{' '}
             <span className="text-xs text-slate-400 font-sans font-normal">Dokumen</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-2">
+          <div className="text-xs text-slate-400 mt-2">
             {returHistory.length} transaksi retur tercatat
           </div>
         </div>
@@ -613,7 +613,7 @@ export const ResellerView: React.FC = () => {
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
                 <span
-                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                  className={`text-[11px] font-mono px-1.5 py-0.5 rounded-full ${
                     isActive ? 'bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'
                   }`}
                 >
@@ -701,7 +701,7 @@ export const ResellerView: React.FC = () => {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 mb-1">
                           <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                            className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${
                               isPlatinum
                                 ? 'bg-purple-950/80 text-purple-300 border-purple-800'
                                 : isGold
@@ -711,7 +711,7 @@ export const ResellerView: React.FC = () => {
                           >
                             ⭐ {res.level || 'Silver'}
                           </span>
-                          <span className="text-[10px] font-semibold text-slate-400">
+                          <span className="text-[11px] font-semibold text-slate-400">
                             Diskon: {res.diskonPersen ?? 20}%
                           </span>
                         </div>
@@ -764,7 +764,7 @@ export const ResellerView: React.FC = () => {
                         </a>
                       </div>
                       {res.alamat && (
-                        <div className="pt-1 border-t border-slate-800/80 text-[11px] text-slate-400 truncate">
+                        <div className="pt-1 border-t border-slate-800/80 text-xs text-slate-400 truncate">
                           {res.alamat}
                         </div>
                       )}
@@ -773,8 +773,8 @@ export const ResellerView: React.FC = () => {
                     {/* Plafon Kredit Konsinyasi Bar */}
                     <div className="space-y-1.5 pt-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-400 text-[11px] font-semibold">Plafon Konsinyasi:</span>
-                        <span className="font-mono text-[11px] text-slate-300">
+                        <span className="text-slate-400 text-xs font-semibold">Plafon Konsinyasi:</span>
+                        <span className="font-mono text-xs text-slate-300">
                           <strong>Rp {totalTitipanValue.toLocaleString('id-ID')}</strong> / Rp {plafonLimit.toLocaleString('id-ID')}
                         </span>
                       </div>
@@ -790,7 +790,7 @@ export const ResellerView: React.FC = () => {
                           style={{ width: `${plafonUsagePercent}%` }}
                         />
                       </div>
-                      <div className="flex items-center justify-between text-[10px] text-slate-500">
+                      <div className="flex items-center justify-between text-[11px] text-slate-500">
                         <span>Terpakai {plafonUsagePercent}%</span>
                         <span>Jadwal: {res.jadwalSetoran || 'Tiap Senin'}</span>
                       </div>
@@ -799,17 +799,17 @@ export const ResellerView: React.FC = () => {
                     {/* Metrics 2-column box */}
                     <div className="grid grid-cols-2 gap-2 text-xs pt-1">
                       <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
-                        <span className="text-slate-400 text-[11px] block">Stok Aktif</span>
+                        <span className="text-slate-400 text-xs block">Stok Aktif</span>
                         <div className="text-base font-bold text-blue-400 font-mono mt-0.5">
                           {totalTitipanPcs} pcs
                         </div>
-                        <div className="text-[10px] text-slate-500 font-mono truncate mt-0.5">
+                        <div className="text-[11px] text-slate-500 font-mono truncate mt-0.5">
                           Rp {totalTitipanValue.toLocaleString('id-ID')}
                         </div>
                       </div>
 
                       <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
-                        <span className="text-slate-400 text-[11px] block">Piutang Tagihan</span>
+                        <span className="text-slate-400 text-xs block">Piutang Tagihan</span>
                         <div
                           className={`text-base font-bold font-mono mt-0.5 truncate ${
                             totalPiutang > 0 ? 'text-rose-400' : 'text-emerald-400'
@@ -817,7 +817,7 @@ export const ResellerView: React.FC = () => {
                         >
                           Rp {totalPiutang.toLocaleString('id-ID')}
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-0.5">
+                        <div className="text-[11px] text-slate-500 mt-0.5">
                           {totalPiutang > 0 ? 'Belum disetor' : 'Lunas tertib'}
                         </div>
                       </div>
@@ -923,7 +923,7 @@ export const ResellerView: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-white text-sm">{res.nama}</h4>
-                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-slate-400 font-semibold">
+                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-slate-400 font-semibold">
                             {res.kota}
                           </span>
                         </div>
@@ -936,7 +936,7 @@ export const ResellerView: React.FC = () => {
                         <span className="text-xs font-mono font-bold text-blue-300 bg-blue-950/80 px-3 py-1 rounded-xl border border-blue-800 inline-block">
                           {totalPcs} pcs
                         </span>
-                        <div className="text-[11px] font-mono text-slate-400 mt-0.5">
+                        <div className="text-xs font-mono text-slate-400 mt-0.5">
                           Rp {totalValue.toLocaleString('id-ID')}
                         </div>
                       </div>
@@ -961,11 +961,11 @@ export const ResellerView: React.FC = () => {
                                   {skuObj?.name || skuCode}
                                 </div>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="font-mono text-[10px] text-amber-400 font-bold">
+                                  <span className="font-mono text-[11px] text-amber-400 font-bold">
                                     {skuCode}
                                   </span>
                                   {skuObj && (
-                                    <span className="text-[10px] text-slate-400">
+                                    <span className="text-[11px] text-slate-400">
                                       Size: <strong className="text-slate-200">{skuObj.size}</strong> · {skuObj.colorName}
                                     </span>
                                   )}
@@ -1036,7 +1036,7 @@ export const ResellerView: React.FC = () => {
 
           <div className="overflow-x-auto rounded-2xl border border-slate-800">
             <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-[#0e1219] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+              <thead className="bg-[#0e1219] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[11px]">
                 <tr>
                   <th className="py-3 px-4">No. Surat & Tgl</th>
                   <th className="py-3 px-3">Mitra Reseller</th>
@@ -1059,7 +1059,7 @@ export const ResellerView: React.FC = () => {
                     <tr key={st.id} className="hover:bg-slate-900/60 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="font-mono font-bold text-amber-400 text-xs">{st.noSurat}</div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">{st.tanggal}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">{st.tanggal}</div>
                       </td>
                       <td className="py-3.5 px-3">
                         <div className="font-bold text-white">{st.resellerNama}</div>
@@ -1069,7 +1069,7 @@ export const ResellerView: React.FC = () => {
                           {st.items.map((it) => `${it.qty}x ${it.sku}`).join(', ')}
                         </div>
                         {st.catatan && (
-                          <div className="text-[11px] text-slate-500 italic mt-0.5">
+                          <div className="text-xs text-slate-500 italic mt-0.5">
                             {st.catatan}
                           </div>
                         )}
@@ -1081,7 +1081,7 @@ export const ResellerView: React.FC = () => {
                         Rp {st.totalNilai.toLocaleString('id-ID')}
                       </td>
                       <td className="py-3.5 px-3 text-center">
-                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase">
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 uppercase">
                           {st.status}
                         </span>
                       </td>
@@ -1129,7 +1129,7 @@ export const ResellerView: React.FC = () => {
 
           <div className="overflow-x-auto rounded-2xl border border-slate-800">
             <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-[#0e1219] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+              <thead className="bg-[#0e1219] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[11px]">
                 <tr>
                   <th className="py-3 px-4">No. Laporan & Tgl</th>
                   <th className="py-3 px-3">Periode</th>
@@ -1155,10 +1155,10 @@ export const ResellerView: React.FC = () => {
                       <tr key={lt.id} className="hover:bg-slate-900/60 transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="font-mono font-bold text-white text-xs">{lt.noLaporan}</div>
-                          <div className="text-[11px] text-slate-500 mt-0.5">{lt.tanggal}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">{lt.tanggal}</div>
                         </td>
                         <td className="py-3.5 px-3">
-                          <span className="font-medium text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded-md border border-amber-800 text-[11px]">
+                          <span className="font-medium text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded-md border border-amber-800 text-xs">
                             {lt.periode}
                           </span>
                         </td>
@@ -1181,7 +1181,7 @@ export const ResellerView: React.FC = () => {
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           <span
-                            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border uppercase ${
+                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border uppercase ${
                               lt.statusBayar === 'lunas'
                                 ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
                                 : 'bg-rose-950 text-rose-300 border-rose-800'
@@ -1214,7 +1214,7 @@ export const ResellerView: React.FC = () => {
                 </span>
                 <div>
                   <h4 className="font-bold text-white text-sm">Riwayat Retur Konsinyasi</h4>
-                  <p className="text-[11px] text-slate-400">Barang ditarik kembali dari toko mitra</p>
+                  <p className="text-xs text-slate-400">Barang ditarik kembali dari toko mitra</p>
                 </div>
               </div>
               <button
@@ -1238,7 +1238,7 @@ export const ResellerView: React.FC = () => {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-white">{rh.referensi}</span>
-                      <span className="text-[11px] text-slate-500 font-mono">{rh.tanggal}</span>
+                      <span className="text-xs text-slate-500 font-mono">{rh.tanggal}</span>
                     </div>
                     <div className="flex items-center justify-between text-slate-300">
                       <span className="font-mono font-bold text-amber-400">{rh.sku}</span>
@@ -1247,7 +1247,7 @@ export const ResellerView: React.FC = () => {
                       </span>
                     </div>
                     {rh.catatan && (
-                      <p className="text-[11px] text-slate-400 italic pt-1 border-t border-slate-800">
+                      <p className="text-xs text-slate-400 italic pt-1 border-t border-slate-800">
                         {rh.catatan}
                       </p>
                     )}
@@ -1266,7 +1266,7 @@ export const ResellerView: React.FC = () => {
                 </span>
                 <div>
                   <h4 className="font-bold text-white text-sm">Riwayat Penerimaan Setoran Uang</h4>
-                  <p className="text-[11px] text-slate-400">Mutasi kas masuk pelunasan piutang mitra</p>
+                  <p className="text-xs text-slate-400">Mutasi kas masuk pelunasan piutang mitra</p>
                 </div>
               </div>
               <button
@@ -1290,7 +1290,7 @@ export const ResellerView: React.FC = () => {
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-white">{sh.referensi || 'Setoran Reseller'}</span>
-                      <span className="text-[11px] text-slate-500 font-mono">{sh.tanggal}</span>
+                      <span className="text-xs text-slate-500 font-mono">{sh.tanggal}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">
@@ -1301,7 +1301,7 @@ export const ResellerView: React.FC = () => {
                       </span>
                     </div>
                     {sh.deskripsi && (
-                      <p className="text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                      <p className="text-xs text-slate-400 pt-1 border-t border-slate-800">
                         {sh.deskripsi}
                       </p>
                     )}
@@ -1326,7 +1326,7 @@ export const ResellerView: React.FC = () => {
                 </span>
                 <div>
                   <h3 className="text-sm font-bold text-white">Buat Surat Jalan Titip (Kirim Konsinyasi)</h3>
-                  <p className="text-[11px] text-slate-400">Kirim stok dari Gudang Utama ke rak toko mitra.</p>
+                  <p className="text-xs text-slate-400">Kirim stok dari Gudang Utama ke rak toko mitra.</p>
                 </div>
               </div>
               <button
@@ -1403,7 +1403,7 @@ export const ResellerView: React.FC = () => {
                               </option>
                             ))}
                           </select>
-                          <div className="text-[10px] text-slate-500 mt-1">
+                          <div className="text-[11px] text-slate-500 mt-1">
                             Stok Gudang: <strong className={stockAvail > 0 ? 'text-emerald-400' : 'text-rose-400'}>{stockAvail} pcs</strong>
                           </div>
                         </div>
@@ -1422,7 +1422,7 @@ export const ResellerView: React.FC = () => {
                             placeholder="Qty"
                             className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-white font-mono text-center font-bold"
                           />
-                          <span className="text-[10px] text-slate-500 block text-center mt-1">Qty (Pcs)</span>
+                          <span className="text-[11px] text-slate-500 block text-center mt-1">Qty (Pcs)</span>
                         </div>
 
                         <div className="w-28">
@@ -1438,7 +1438,7 @@ export const ResellerView: React.FC = () => {
                             placeholder="Harga Titip"
                             className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-white font-mono text-right font-bold"
                           />
-                          <span className="text-[10px] text-slate-500 block text-right mt-1">Harga Titip (Rp)</span>
+                          <span className="text-[11px] text-slate-500 block text-right mt-1">Harga Titip (Rp)</span>
                         </div>
 
                         {suratItems.length > 1 && (
@@ -1511,7 +1511,7 @@ export const ResellerView: React.FC = () => {
                 </span>
                 <div>
                   <h3 className="text-sm font-bold text-white">Catat Penjualan Titip Laku Konsinyasi</h3>
-                  <p className="text-[11px] text-slate-400">Barang terjual otomatis memotong stok di toko reseller.</p>
+                  <p className="text-xs text-slate-400">Barang terjual otomatis memotong stok di toko reseller.</p>
                 </div>
               </div>
               <button
@@ -1699,7 +1699,7 @@ export const ResellerView: React.FC = () => {
                 </span>
                 <div>
                   <h3 className="text-sm font-bold text-white">Retur Barang Titipan dari Mitra</h3>
-                  <p className="text-[11px] text-slate-400">Tarik barang kembali ke Gudang Utama atau Reject.</p>
+                  <p className="text-xs text-slate-400">Tarik barang kembali ke Gudang Utama atau Reject.</p>
                 </div>
               </div>
               <button
@@ -1821,7 +1821,7 @@ export const ResellerView: React.FC = () => {
                 </span>
                 <div>
                   <h3 className="text-sm font-bold text-white">Penerimaan Setoran Uang Reseller</h3>
-                  <p className="text-[11px] text-slate-400">Saldo akun kas/bank akan bertambah seketika.</p>
+                  <p className="text-xs text-slate-400">Saldo akun kas/bank akan bertambah seketika.</p>
                 </div>
               </div>
               <button
@@ -1895,7 +1895,7 @@ export const ResellerView: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <div className="text-[11px] text-amber-400 mt-1 flex items-center gap-1">
+                <div className="text-xs text-amber-400 mt-1 flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-amber-400" />
                   <span>Saldo akun tujuan akan otomatis terisi dan piutang terpotong</span>
                 </div>
@@ -1948,7 +1948,7 @@ export const ResellerView: React.FC = () => {
                   <h3 className="text-sm font-bold text-white">
                     {editingReseller ? 'Edit Profil Mitra Konsinyasi' : 'Tambah Mitra Reseller Baru'}
                   </h3>
-                  <p className="text-[11px] text-slate-400">Atur level kemitraan, plafon titipan, dan kontak toko.</p>
+                  <p className="text-xs text-slate-400">Atur level kemitraan, plafon titipan, dan kontak toko.</p>
                 </div>
               </div>
               <button
@@ -2175,7 +2175,7 @@ export const ResellerView: React.FC = () => {
                   <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800/80 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-bold text-white">{deleteModalReseller.nama}</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-300 border border-amber-800">
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-950/80 text-amber-300 border border-amber-800">
                         {deleteModalReseller.level || 'Silver'} ({deleteModalReseller.diskonPersen || 20}%)
                       </span>
                     </div>
@@ -2184,7 +2184,7 @@ export const ResellerView: React.FC = () => {
                       <span className="font-mono text-emerald-400">{deleteModalReseller.noHp}</span>
                     </div>
                     {deleteModalReseller.alamat && (
-                      <p className="text-[11px] text-slate-400 border-t border-slate-900 pt-1.5">
+                      <p className="text-xs text-slate-400 border-t border-slate-900 pt-1.5">
                         {deleteModalReseller.alamat}, {deleteModalReseller.kota}
                       </p>
                     )}
@@ -2197,7 +2197,7 @@ export const ResellerView: React.FC = () => {
                         <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                         <div>
                           <strong className="block">Perhatian: Masih Ada Stok Konsinyasi Aktif</strong>
-                          <p className="text-slate-300 text-[11px] mt-0.5 leading-relaxed">
+                          <p className="text-slate-300 text-xs mt-0.5 leading-relaxed">
                             Tercatat masih ada <strong>{totalStockPcs} pcs</strong> barang (estimasi nilai Rp {totalStockVal.toLocaleString('id-ID')}) di rak toko mitra ini.
                           </p>
                         </div>
@@ -2212,7 +2212,7 @@ export const ResellerView: React.FC = () => {
                         />
                         <div className="text-xs">
                           <span className="font-bold text-white block">Tarik otomatis sisa stok ({totalStockPcs} pcs) ke Gudang Utama</span>
-                          <span className="text-slate-400 text-[11px] block mt-0.5 leading-normal">
+                          <span className="text-slate-400 text-xs block mt-0.5 leading-normal">
                             Sistem otomatis mencatat mutasi pengembalian barang (*retur titip*) sehingga stok fisik Gudang Utama bertambah sesuai fisik riil.
                           </span>
                         </div>
@@ -2235,7 +2235,7 @@ export const ResellerView: React.FC = () => {
                     </div>
                   )}
 
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <p className="text-xs text-slate-400 leading-relaxed">
                     Menghapus mitra ini akan mencopot profil konsinyasi toko. Pelanggan terkait di database customer akan dikembalikan ke status pelanggan Retail biasa.
                   </p>
                 </div>
@@ -2303,7 +2303,7 @@ export const ResellerView: React.FC = () => {
                   <p className="text-xs text-slate-600 font-medium">
                     Premium Heavyweight & Oversize Blank T-Shirt Specialist
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     Gudang Pusat Kalima Apparel, Bandung, Jawa Barat
                     <br />
                     WhatsApp: 0812-8899-7711 | Email: logistics@kalima.id
@@ -2325,7 +2325,7 @@ export const ResellerView: React.FC = () => {
               {/* Destination Shop */}
               <div className="grid grid-cols-2 gap-6 my-6 text-xs">
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                  <span className="text-[11px] uppercase font-bold text-slate-400 block mb-1">
                     Toko Mitra Penerima Konsinyasi:
                   </span>
                   <div className="font-bold text-slate-900 text-sm">{selectedSuratForPrint.resellerNama}</div>
@@ -2339,13 +2339,13 @@ export const ResellerView: React.FC = () => {
                 </div>
 
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                  <span className="text-[11px] uppercase font-bold text-slate-400 block mb-1">
                     Keterangan Pengiriman:
                   </span>
                   <div className="text-slate-700">
                     {selectedSuratForPrint.catatan || 'Pengiriman stok konsinyasi'}
                   </div>
-                  <div className="text-slate-500 mt-2 text-[11px]">
+                  <div className="text-slate-500 mt-2 text-xs">
                     Status: <strong className="uppercase text-emerald-700">{selectedSuratForPrint.status}</strong>
                   </div>
                 </div>
@@ -2402,12 +2402,12 @@ export const ResellerView: React.FC = () => {
                 <div>
                   <p className="font-medium text-slate-500 mb-14">Diserahkan Oleh (Gudang Kalima)</p>
                   <p className="font-bold text-slate-900 underline">Petugas Logistik</p>
-                  <p className="text-[11px] text-slate-500">Divisi Pengiriman & Gudang</p>
+                  <p className="text-xs text-slate-500">Divisi Pengiriman & Gudang</p>
                 </div>
                 <div>
                   <p className="font-medium text-slate-500 mb-14">Diterima Oleh (Toko Mitra Reseller)</p>
                   <p className="font-bold text-slate-900 underline">{selectedSuratForPrint.resellerNama}</p>
-                  <p className="text-[11px] text-slate-500">Tanda Tangan & Cap Toko</p>
+                  <p className="text-xs text-slate-500">Tanda Tangan & Cap Toko</p>
                 </div>
               </div>
             </div>

@@ -191,7 +191,7 @@ export const Sidebar: React.FC = () => {
                   <div className="font-extrabold text-slate-900 text-base tracking-tight leading-none">
                     KALIMA
                   </div>
-                  <span className="text-[10px] text-slate-400 font-medium">Apparel ERP</span>
+                  <span className="text-[11px] text-slate-400 font-medium">Apparel ERP</span>
                 </div>
               )}
             </button>
@@ -230,7 +230,7 @@ export const Sidebar: React.FC = () => {
                     <Icon className="w-5 h-5" />
                     {item.badge !== undefined && (
                       <span
-                        className={`absolute -top-1.5 -right-2 text-[9px] font-bold px-1.5 py-0.2 rounded-full ring-2 ring-white tabular-nums ${
+                        className={`absolute -top-1.5 -right-2 text-[11px] font-bold px-1.5 py-0.2 rounded-full ring-2 ring-white tabular-nums ${
                           item.badgeColor || 'bg-rose-500 text-white'
                         }`}
                       >
@@ -244,7 +244,7 @@ export const Sidebar: React.FC = () => {
                       <div className="text-xs font-semibold truncate leading-tight">
                         {item.label}
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
+                      <div className="text-[11px] text-slate-400 truncate">
                         {item.description}
                       </div>
                     </div>
@@ -255,7 +255,7 @@ export const Sidebar: React.FC = () => {
                 {!expanded && !mobileMenuOpen && (
                   <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 pointer-events-none hidden group-hover:flex flex-col bg-slate-900 text-white text-xs px-3 py-1.5 rounded-xl shadow-xl whitespace-nowrap animate-in fade-in slide-in-from-left-2">
                     <span className="font-semibold">{item.label}</span>
-                    <span className="text-[10px] text-slate-400">{item.description}</span>
+                    <span className="text-[11px] text-slate-400">{item.description}</span>
                   </div>
                 )}
               </div>
@@ -298,7 +298,7 @@ export const Sidebar: React.FC = () => {
                   <div className="text-xs font-bold text-slate-900 truncate">
                     {currentUser.name}
                   </div>
-                  <span className="text-[10px] uppercase font-semibold text-slate-400">
+                  <span className="text-[11px] uppercase font-semibold text-slate-400">
                     {currentUser.role}
                   </span>
                 </div>

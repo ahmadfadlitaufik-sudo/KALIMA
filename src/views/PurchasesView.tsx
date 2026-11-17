@@ -205,7 +205,7 @@ export const PurchasesView: React.FC = () => {
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
             <span className="font-bold">Diterima</span>
           </button>
-          <span className="text-[10px] text-emerald-700/80 font-mono">
+          <span className="text-[11px] text-emerald-700/80 font-mono">
             {po.tanggalDiterima ? `Tiba: ${po.tanggalDiterima}` : 'Gudang Utama'}
           </span>
         </div>
@@ -226,7 +226,7 @@ export const PurchasesView: React.FC = () => {
             <Truck className="w-3.5 h-3.5 text-blue-600 animate-pulse shrink-0" />
             <span className="font-bold">Dalam Perjalanan</span>
           </button>
-          <span className="text-[10px] text-blue-700/80 font-mono max-w-[140px] truncate text-center">
+          <span className="text-[11px] text-blue-700/80 font-mono max-w-[140px] truncate text-center">
             {po.ekspedisi || 'Kargo'} {po.noResi ? `· ${po.noResi}` : ''}
           </span>
         </div>
@@ -246,7 +246,7 @@ export const PurchasesView: React.FC = () => {
           <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           <span className="font-bold">Diproses</span>
         </button>
-        <span className="text-[10px] text-amber-700/80 font-normal">
+        <span className="text-[11px] text-amber-700/80 font-normal">
           Vendor Pabrik / CMT
         </span>
       </div>
@@ -394,7 +394,7 @@ export const PurchasesView: React.FC = () => {
             {kpiStats.activePOCount}{' '}
             <span className="text-xs text-slate-400 font-sans font-normal">pesanan</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Dalam proses pabrik & kargo</div>
+          <div className="text-xs text-slate-400 mt-1">Dalam proses pabrik & kargo</div>
         </div>
 
         {/* Sedang Dikirim (In-Transit) */}
@@ -409,7 +409,7 @@ export const PurchasesView: React.FC = () => {
             {kpiStats.inTransitQty.toLocaleString('id-ID')}{' '}
             <span className="text-xs text-slate-400 font-sans font-normal">pcs</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">
+          <div className="text-xs text-slate-400 mt-1">
             {kpiStats.inTransitCount} resi pengiriman kargo aktif
           </div>
         </div>
@@ -425,7 +425,7 @@ export const PurchasesView: React.FC = () => {
           <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-600">
             Rp {kpiStats.currentMonthSpend.toLocaleString('id-ID')}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Total pengadaan bahan & CMT</div>
+          <div className="text-xs text-slate-400 mt-1">Total pengadaan bahan & CMT</div>
         </div>
 
         {/* Sisa Hutang Vendor */}
@@ -439,7 +439,7 @@ export const PurchasesView: React.FC = () => {
           <div className="text-xl sm:text-2xl font-bold font-mono text-rose-600">
             Rp {kpiStats.totalUnpaidDebt.toLocaleString('id-ID')}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Kewajiban pelunasan PO berjalan</div>
+          <div className="text-xs text-slate-400 mt-1">Kewajiban pelunasan PO berjalan</div>
         </div>
       </div>
 
@@ -535,7 +535,7 @@ export const PurchasesView: React.FC = () => {
                 <span className="text-slate-900 font-bold block">
                   Ringkasan Kinerja & Tingkat Keterlambatan Pengiriman Vendor
                 </span>
-                <span className="text-slate-600 text-[11px]">
+                <span className="text-slate-600 text-xs">
                   Tingkat Ketepatan Waktu: <strong className="text-emerald-700 font-mono">92% On-Time</strong> · Rata-rata Terlambat: <strong className="text-amber-700 font-mono">0.6 Hari</strong> · Lead Time: <strong className="text-blue-700 font-mono">4.8 Hari</strong>
                 </span>
               </div>
@@ -628,7 +628,7 @@ export const PurchasesView: React.FC = () => {
           {/* Orders Table */}
           <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50/90 text-[11px] uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
+              <thead className="bg-slate-50/90 text-xs uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3.5">No. PO & Tanggal</th>
                   <th className="px-4 py-3.5">Vendor / Pabrik</th>
@@ -663,7 +663,7 @@ export const PurchasesView: React.FC = () => {
                           <div className="font-mono font-bold text-slate-900 text-xs flex items-center gap-1.5">
                             <span>{po.noPO}</span>
                           </div>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                          <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
                             <Calendar className="w-3 h-3 text-slate-400" />
                             <span>{po.tanggalPO}</span>
                           </div>
@@ -672,7 +672,7 @@ export const PurchasesView: React.FC = () => {
                         {/* Vendor */}
                         <td className="px-4 py-3.5">
                           <div className="font-semibold text-slate-900">{po.vendorNama}</div>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                          <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
                             <MapPin className="w-3 h-3 text-slate-400" />
                             <span>{po.vendorKota}</span>
                           </div>
@@ -683,7 +683,7 @@ export const PurchasesView: React.FC = () => {
                           <div className="font-medium text-slate-800">
                             {po.totalQtyPesan} pcs ({po.items.length} artikel SKU)
                           </div>
-                          <div className="text-[11px] text-slate-400 line-clamp-1 max-w-[220px]">
+                          <div className="text-xs text-slate-400 line-clamp-1 max-w-[220px]">
                             {po.items.map((it) => `${it.qtyPesan}x ${it.size} ${it.colorName}`).join(', ')}
                           </div>
                         </td>
@@ -709,7 +709,7 @@ export const PurchasesView: React.FC = () => {
                               style={{ width: `${receivedPct}%` }}
                             />
                           </div>
-                          <div className="text-[10px] text-slate-400 mt-0.5 font-mono">{receivedPct}% diterima</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5 font-mono">{receivedPct}% diterima</div>
                         </td>
 
                         {/* Total Tagihan */}
@@ -718,7 +718,7 @@ export const PurchasesView: React.FC = () => {
                             Rp {po.totalTagihan.toLocaleString('id-ID')}
                           </div>
                           {po.biayaEkspedisi > 0 && (
-                            <div className="text-[10px] text-slate-400">
+                            <div className="text-[11px] text-slate-400">
                               +Ongkir Rp {po.biayaEkspedisi.toLocaleString('id-ID')}
                             </div>
                           )}
@@ -741,7 +741,7 @@ export const PurchasesView: React.FC = () => {
                                   )
                                 }
                                 title="Ubah Status Pengiriman Langsung"
-                                className={`text-[11px] font-semibold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer transition-colors ${
+                                className={`text-xs font-semibold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer transition-colors ${
                                   shipStatus === 'diterima'
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:border-emerald-300'
                                     : shipStatus === 'dalam_perjalanan'
@@ -766,7 +766,7 @@ export const PurchasesView: React.FC = () => {
                                   setIsTrackingModalOpen(true);
                                 }}
                                 title="Buka Modal Detail Tracking Pesanan Vendor"
-                                className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-lg text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
+                                className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
                               >
                                 <Eye className="w-3 h-3 text-slate-500" />
                                 <span>Lacak</span>
@@ -785,7 +785,7 @@ export const PurchasesView: React.FC = () => {
                                   setSelectedPOForPayment(po);
                                   setIsPaymentModalOpen(true);
                                 }}
-                                className="px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
+                                className="px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
                                 title="Buka form pelunasan utang vendor"
                               >
                                 <DollarSign className="w-3 h-3 text-amber-600" />
@@ -910,12 +910,12 @@ export const PurchasesView: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-mono font-bold text-slate-900 text-sm">{po.noPO}</span>
-                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-200">
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[11px] font-bold rounded border border-blue-200">
                             IN-TRANSIT
                           </span>
                         </div>
                         <div className="text-xs font-bold text-slate-900 mt-1">{po.vendorNama}</div>
-                        <div className="text-[11px] text-slate-500">{po.vendorKota}</div>
+                        <div className="text-xs text-slate-500">{po.vendorKota}</div>
                       </div>
 
                       <button
@@ -933,7 +933,7 @@ export const PurchasesView: React.FC = () => {
                     {/* Logistics Card Grid */}
                     <div className="grid grid-cols-2 gap-2.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
                       <div>
-                        <span className="text-slate-400 text-[11px] block">Jasa Ekspedisi / Kargo</span>
+                        <span className="text-slate-400 text-xs block">Jasa Ekspedisi / Kargo</span>
                         <span className="font-semibold text-slate-800 flex items-center gap-1 mt-0.5">
                           <Truck className="w-3.5 h-3.5 text-blue-600" />
                           {po.ekspedisi || 'Kargo Rekanan'}
@@ -941,19 +941,19 @@ export const PurchasesView: React.FC = () => {
                       </div>
 
                       <div>
-                        <span className="text-slate-400 text-[11px] block">Nomor Resi / AWB</span>
+                        <span className="text-slate-400 text-xs block">Nomor Resi / AWB</span>
                         <span className="font-mono font-bold text-amber-700 mt-0.5 block">
                           {po.noResi || 'Menunggu Resi'}
                         </span>
                       </div>
 
                       <div>
-                        <span className="text-slate-400 text-[11px] block">Tanggal Pengiriman</span>
+                        <span className="text-slate-400 text-xs block">Tanggal Pengiriman</span>
                         <span className="text-slate-700 mt-0.5 block font-mono">{po.tanggalKirim || '-'}</span>
                       </div>
 
                       <div>
-                        <span className="text-slate-400 text-[11px] block">Estimasi Tiba di Gudang</span>
+                        <span className="text-slate-400 text-xs block">Estimasi Tiba di Gudang</span>
                         <span className="font-semibold text-emerald-700 mt-0.5 block font-mono">
                           {po.estimasiTiba || '1-3 Hari Kerja'}
                         </span>
@@ -962,14 +962,14 @@ export const PurchasesView: React.FC = () => {
 
                     {/* Items payload breakdown */}
                     <div className="border-t border-slate-100 pt-3">
-                      <div className="text-[11px] font-semibold text-slate-500 mb-1.5">
+                      <div className="text-xs font-semibold text-slate-500 mb-1.5">
                         Muatan Kaos ({po.totalQtyPesan} pcs total):
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {po.items.map((it) => (
                           <span
                             key={it.sku}
-                            className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 font-mono"
+                            className="text-xs px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 font-mono"
                           >
                             <strong>{it.qtyPesan} pcs</strong> · {it.size} {it.colorName}
                           </span>
@@ -978,7 +978,7 @@ export const PurchasesView: React.FC = () => {
                     </div>
 
                     {po.catatanPengiriman && (
-                      <div className="text-[11px] bg-slate-50 p-2.5 rounded-xl text-slate-600 border border-slate-200/60">
+                      <div className="text-xs bg-slate-50 p-2.5 rounded-xl text-slate-600 border border-slate-200/60">
                         <span className="font-semibold text-slate-700">Catatan Driver/Kurir:</span>{' '}
                         {po.catatanPengiriman}
                       </div>
@@ -1090,7 +1090,7 @@ export const PurchasesView: React.FC = () => {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80">
+                    <span className="text-[11px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200/80">
                       {ven.kategori}
                     </span>
                     <h4 className="text-base font-bold text-slate-900 mt-1.5">{ven.nama}</h4>
@@ -1139,7 +1139,7 @@ export const PurchasesView: React.FC = () => {
                       href={`https://wa.me/${ven.noHp.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold hover:underline flex items-center gap-0.5 ml-1"
+                      className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold hover:underline flex items-center gap-0.5 ml-1"
                     >
                       <span>Chat WA</span>
                       <ExternalLink className="w-2.5 h-2.5" />
@@ -1154,7 +1154,7 @@ export const PurchasesView: React.FC = () => {
                   </div>
 
                   {ven.rekeningBank && (
-                    <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+                    <div className="flex items-center gap-2 text-slate-500 text-xs">
                       <CreditCard className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="font-mono">{ven.rekeningBank}</span>
                     </div>
@@ -1162,7 +1162,7 @@ export const PurchasesView: React.FC = () => {
                 </div>
 
                 {ven.catatan && (
-                  <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
+                  <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200/60">
                     {ven.catatan}
                   </div>
                 )}
@@ -1587,7 +1587,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
 
             <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-[11px]">
+                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-xs">
                   <tr>
                     <th className="px-3.5 py-2.5">Artikel SKU Kaos</th>
                     <th className="px-3.5 py-2.5 w-28 text-center">Qty (Pcs)</th>
@@ -1671,7 +1671,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
               </h4>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-500 text-[11px] mb-1 font-medium">Jasa Kargo / Ekspedisi</label>
+                  <label className="block text-slate-500 text-xs mb-1 font-medium">Jasa Kargo / Ekspedisi</label>
                   <input
                     type="text"
                     placeholder="e.g. Dakota, Indah Kargo, Baraka"
@@ -1681,7 +1681,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 text-[11px] mb-1 font-medium">Nomor Resi / AWB</label>
+                  <label className="block text-slate-500 text-xs mb-1 font-medium">Nomor Resi / AWB</label>
                   <input
                     type="text"
                     placeholder="e.g. DKT-109283"
@@ -1692,7 +1692,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                 </div>
               </div>
               <div>
-                <label className="block text-slate-500 text-[11px] mb-1 font-medium">Estimasi Tanggal Tiba</label>
+                <label className="block text-slate-500 text-xs mb-1 font-medium">Estimasi Tanggal Tiba</label>
                 <input
                   type="date"
                   value={estimasiTiba}
@@ -1711,7 +1711,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-500 text-[11px] mb-1 font-medium">Ongkos Kirim Kargo (Rp)</label>
+                  <label className="block text-slate-500 text-xs mb-1 font-medium">Ongkos Kirim Kargo (Rp)</label>
                   <input
                     type="number"
                     min="0"
@@ -1722,7 +1722,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-500 text-[11px] mb-1 font-medium">Biaya Tambahan / Packing (Rp)</label>
+                  <label className="block text-slate-500 text-xs mb-1 font-medium">Biaya Tambahan / Packing (Rp)</label>
                   <input
                     type="number"
                     min="0"
@@ -1744,7 +1744,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
 
               {/* Payment Option */}
               <div className="space-y-2 pt-1">
-                <label className="block text-slate-600 text-[11px] font-semibold">
+                <label className="block text-slate-600 text-xs font-semibold">
                   Termin Pembayaran Awal:
                 </label>
                 <div className="flex gap-2">
@@ -1786,7 +1786,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                 {paymentOption !== 'belum_bayar' && (
                   <div className="grid grid-cols-2 gap-2.5 pt-1">
                     <div>
-                      <label className="block text-slate-500 text-[10px] mb-0.5 font-medium">Nominal Bayar Sekarang (Rp)</label>
+                      <label className="block text-slate-500 text-[11px] mb-0.5 font-medium">Nominal Bayar Sekarang (Rp)</label>
                       <input
                         type="number"
                         min="1"
@@ -1797,7 +1797,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-500 text-[10px] mb-0.5 font-medium">Debit dari Akun Kas/Bank</label>
+                      <label className="block text-slate-500 text-[11px] mb-0.5 font-medium">Debit dari Akun Kas/Bank</label>
                       <select
                         value={accountId}
                         onChange={(e) => setAccountId(e.target.value)}
@@ -1813,7 +1813,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                   </div>
                 )}
                 {paymentOption !== 'belum_bayar' && jumlahTerbayar > 0 && (
-                  <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200/80 text-[10px] text-blue-700 flex items-center gap-1.5">
+                  <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200/80 text-[11px] text-blue-700 flex items-center gap-1.5">
                     <Scale className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                     <span>⚡ Terjurnal otomatis ke Neraca: <strong>Debit Utang/DP</strong> & <strong>Kredit Kas/Bank</strong> Rp {jumlahTerbayar.toLocaleString('id-ID')}</span>
                   </div>
@@ -1914,7 +1914,7 @@ const ShipPOModal: React.FC<ShipPOModalProps> = ({ isOpen, onClose, po, onSave }
             </span>
             <div>
               <h3 className="font-bold text-slate-900 text-sm">Update Resi & Ekspedisi Pengiriman</h3>
-              <p className="text-[11px] text-slate-500">{po.noPO} · Vendor: {po.vendorNama}</p>
+              <p className="text-xs text-slate-500">{po.noPO} · Vendor: {po.vendorNama}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors">
@@ -2164,7 +2164,7 @@ const ReceivePOModal: React.FC<ReceivePOModalProps> = ({
               <button
                 type="button"
                 onClick={handleFullFillAll}
-                className="text-[11px] text-blue-600 hover:text-blue-700 font-semibold cursor-pointer underline"
+                className="text-xs text-blue-600 hover:text-blue-700 font-semibold cursor-pointer underline"
               >
                 Isi Sesuai Sisa PO
               </button>
@@ -2172,7 +2172,7 @@ const ReceivePOModal: React.FC<ReceivePOModalProps> = ({
 
             <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-2xs">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-[11px]">
+                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-xs">
                   <tr>
                     <th className="px-3.5 py-2.5">Artikel SKU Kaos</th>
                     <th className="px-3.5 py-2.5 text-center">Total Order</th>
@@ -2190,7 +2190,7 @@ const ReceivePOModal: React.FC<ReceivePOModalProps> = ({
                       <tr key={it.sku} className="hover:bg-slate-50/60">
                         <td className="px-3.5 py-2.5">
                           <div className="font-mono font-bold text-slate-900">{it.sku}</div>
-                          <div className="text-[11px] text-slate-500">{it.namaProduk}</div>
+                          <div className="text-xs text-slate-500">{it.namaProduk}</div>
                         </td>
                         <td className="px-3.5 py-2.5 text-center font-mono text-slate-700">
                           {it.qtyPesan} pcs
@@ -2338,7 +2338,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-slate-900 text-base">Pembayaran / Pelunasan Utang Vendor</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-50 text-amber-700 border border-amber-200">
                   {po.noPO}
                 </span>
               </div>
@@ -2359,29 +2359,29 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
         {/* 3 Metric Cards Summary */}
         <div className="grid grid-cols-3 gap-2.5">
           <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
-            <span className="text-[11px] text-slate-500 block mb-0.5">Total Tagihan PO</span>
+            <span className="text-xs text-slate-500 block mb-0.5">Total Tagihan PO</span>
             <div className="font-mono font-bold text-slate-900 text-xs sm:text-sm">
               Rp {po.totalTagihan.toLocaleString('id-ID')}
             </div>
-            <span className="text-[10px] text-slate-400 block mt-0.5">{po.totalQtyPesan} pcs kaos</span>
+            <span className="text-[11px] text-slate-400 block mt-0.5">{po.totalQtyPesan} pcs kaos</span>
           </div>
 
           <div className="bg-emerald-50/70 p-3 rounded-2xl border border-emerald-200/80">
-            <span className="text-[11px] text-emerald-700 block mb-0.5">Sudah Terbayar</span>
+            <span className="text-xs text-emerald-700 block mb-0.5">Sudah Terbayar</span>
             <div className="font-mono font-bold text-emerald-800 text-xs sm:text-sm">
               Rp {po.jumlahTerbayar.toLocaleString('id-ID')}
             </div>
-            <span className="text-[10px] text-emerald-600 block mt-0.5">
+            <span className="text-[11px] text-emerald-600 block mt-0.5">
               {po.totalTagihan > 0 ? Math.round((po.jumlahTerbayar / po.totalTagihan) * 100) : 0}% terbayar
             </span>
           </div>
 
           <div className="bg-rose-50/70 p-3 rounded-2xl border border-rose-200/80">
-            <span className="text-[11px] text-rose-700 block mb-0.5 font-medium">Sisa Utang Saat Ini</span>
+            <span className="text-xs text-rose-700 block mb-0.5 font-medium">Sisa Utang Saat Ini</span>
             <div className="font-mono font-bold text-rose-800 text-xs sm:text-sm">
               Rp {po.sisaHutang.toLocaleString('id-ID')}
             </div>
-            <span className="text-[10px] text-rose-600 block mt-0.5 font-semibold">Kewajiban berjalan</span>
+            <span className="text-[11px] text-rose-600 block mt-0.5 font-semibold">Kewajiban berjalan</span>
           </div>
         </div>
 
@@ -2398,7 +2398,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-600 font-semibold">
               <label>Nominal Pembayaran *</label>
-              <span className="text-[11px] text-slate-400">Pilihan Cepat:</span>
+              <span className="text-xs text-slate-400">Pilihan Cepat:</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -2460,7 +2460,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
             </div>
 
             {/* Sisa Hutang Pasca Pembayaran Preview */}
-            <div className="flex items-center justify-between px-1 text-[11px]">
+            <div className="flex items-center justify-between px-1 text-xs">
               <span className="text-slate-500">
                 Terbilang: <strong className="font-mono text-slate-800">Rp {(jumlahBayar || 0).toLocaleString('id-ID')}</strong>
               </span>
@@ -2496,7 +2496,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
                 ))}
               </select>
               {isBalanceLow && (
-                <p className="text-[10px] text-amber-700 mt-1 flex items-center gap-1 font-medium">
+                <p className="text-[11px] text-amber-700 mt-1 flex items-center gap-1 font-medium">
                   <AlertCircle className="w-3 h-3 shrink-0" />
                   <span>Saldo akun tidak mencukupi (Rp {selectedAccount?.saldo.toLocaleString('id-ID')})</span>
                 </p>
@@ -2541,7 +2541,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
                   Simulasi Penjurnalan Akuntansi Otomatis:
                 </span>
               </div>
-              <span className="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-mono font-bold flex items-center gap-1">
+              <span className="text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-mono font-bold flex items-center gap-1">
                 <Check className="w-2.5 h-2.5" /> 100% Balans
               </span>
             </div>
@@ -2550,12 +2550,12 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
               {/* Debit Line */}
               <div className="flex items-center justify-between text-emerald-700 pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-sans uppercase">
+                  <span className="font-bold text-[11px] px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-sans uppercase">
                     DEBET
                   </span>
                   <div>
                     <span className="font-semibold text-slate-900">2-10100 Utang Dagang</span>
-                    <span className="text-slate-500 text-[10px] block font-sans">
+                    <span className="text-slate-500 text-[11px] block font-sans">
                       Vendor {po.vendorNama} (Kewajiban Pasiva ↓)
                     </span>
                   </div>
@@ -2570,14 +2570,14 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
               {/* Credit Line (Indented) */}
               <div className="flex items-center justify-between text-rose-700 pt-1.5 pl-4">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-[10px] px-1.5 py-0.5 bg-rose-50 text-rose-800 border border-rose-200 rounded font-sans uppercase">
+                  <span className="font-bold text-[11px] px-1.5 py-0.5 bg-rose-50 text-rose-800 border border-rose-200 rounded font-sans uppercase">
                     KREDIT
                   </span>
                   <div>
                     <span className="font-semibold text-slate-900">
                       1-10100 {selectedAccount?.nama || 'Kas/Bank'}
                     </span>
-                    <span className="text-slate-500 text-[10px] block font-sans">
+                    <span className="text-slate-500 text-[11px] block font-sans">
                       Kas Keluar (Aktiva Lancar ↓)
                     </span>
                   </div>
@@ -2590,7 +2590,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
               </div>
             </div>
 
-            <div className="flex items-start gap-1.5 text-[11px] text-slate-600 bg-white/80 p-2.5 rounded-xl border border-blue-200/60 leading-relaxed font-sans">
+            <div className="flex items-start gap-1.5 text-xs text-slate-600 bg-white/80 p-2.5 rounded-xl border border-blue-200/60 leading-relaxed font-sans">
               <Info className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
               <span>
                 <strong>Dampak Neraca:</strong> Mengurangi saldo Kas/Bank di <strong>Aktiva</strong> dan memotong pos Utang Vendor di <strong>Pasiva</strong> dengan nominal yang sama persis sehingga Neraca Keuangan tetap 100% klop.
@@ -2668,7 +2668,7 @@ const PODocumentModal: React.FC<PODocumentModalProps> = ({ isOpen, onClose, po }
               <p className="text-xs text-slate-600 font-medium">
                 Premium Heavyweight & Oversize Blank T-Shirt Specialist
               </p>
-              <p className="text-[11px] text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Kawasan Industri & Pergudangan Kalima, Bandung, Jawa Barat
                 <br />
                 WhatsApp: 0812-8899-7711 | Email: procurement@kalima.id
@@ -2690,7 +2690,7 @@ const PODocumentModal: React.FC<PODocumentModalProps> = ({ isOpen, onClose, po }
           {/* Supplier Info & Delivery Destination */}
           <div className="grid grid-cols-2 gap-6 my-6 text-xs">
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+              <span className="text-[11px] uppercase font-bold text-slate-400 block mb-1">
                 Kepada Vendor / Pabrik Supplier:
               </span>
               <div className="font-bold text-slate-900 text-sm">{po.vendorNama}</div>
@@ -2699,7 +2699,7 @@ const PODocumentModal: React.FC<PODocumentModalProps> = ({ isOpen, onClose, po }
             </div>
 
             <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+              <span className="text-[11px] uppercase font-bold text-slate-400 block mb-1">
                 Alamat Tujuan Pengiriman (Gudang):
               </span>
               <div className="font-bold text-slate-900 text-sm">{po.gudangTujuan || 'Gudang Utama'}</div>
@@ -2734,7 +2734,7 @@ const PODocumentModal: React.FC<PODocumentModalProps> = ({ isOpen, onClose, po }
                     <td className="px-3 py-2 font-mono font-bold text-slate-900">{it.sku}</td>
                     <td className="px-3 py-2">
                       <div className="font-medium text-slate-900">{it.namaProduk}</div>
-                      {it.catatan && <div className="text-[10px] text-slate-500">{it.catatan}</div>}
+                      {it.catatan && <div className="text-[11px] text-slate-500">{it.catatan}</div>}
                     </td>
                     <td className="px-3 py-2 text-center font-bold text-slate-800">{it.size}</td>
                     <td className="px-3 py-2 text-center text-slate-700">{it.colorName}</td>
@@ -2755,7 +2755,7 @@ const PODocumentModal: React.FC<PODocumentModalProps> = ({ isOpen, onClose, po }
 
           {/* Totals & Financials */}
           <div className="flex justify-between items-start text-xs border-t border-slate-200 pt-4">
-            <div className="max-w-xs space-y-1 text-[11px] text-slate-600">
+            <div className="max-w-xs space-y-1 text-xs text-slate-600">
               <p className="font-bold text-slate-900">Syarat & Ketentuan Pengadaan:</p>
               <ul className="list-disc pl-3.5 space-y-0.5">
                 <li>Bahan dan gramasi harus sesuai standar toleransi kalibrasi Kalima (+/- 5 GSM).</li>
@@ -2793,12 +2793,12 @@ const PODocumentModal: React.FC<PODocumentModalProps> = ({ isOpen, onClose, po }
             <div>
               <p className="font-medium text-slate-500 mb-14">Diterbitkan Oleh (Kalima Apparel)</p>
               <p className="font-bold text-slate-900 underline">{po.createdBy}</p>
-              <p className="text-[11px] text-slate-500">Divisi Pengadaan & Logistik</p>
+              <p className="text-xs text-slate-500">Divisi Pengadaan & Logistik</p>
             </div>
             <div>
               <p className="font-medium text-slate-500 mb-14">Dikonfirmasi & Disetujui (Vendor Pabrik)</p>
               <p className="font-bold text-slate-900 underline">{po.vendorNama}</p>
-              <p className="text-[11px] text-slate-500">Tanda Tangan & Cap Perusahaan</p>
+              <p className="text-xs text-slate-500">Tanda Tangan & Cap Perusahaan</p>
             </div>
           </div>
         </div>
@@ -2870,7 +2870,7 @@ const VendorFormModal: React.FC<VendorFormModalProps> = ({
               <h3 className="font-bold text-slate-900 text-sm">
                 {editingVendor ? 'Edit Profil Vendor' : 'Tambah Vendor / Supplier Baru'}
               </h3>
-              <p className="text-[11px] text-slate-500">Pabrik rajut, garmen konveksi CMT, atau sablon rekanan.</p>
+              <p className="text-xs text-slate-500">Pabrik rajut, garmen konveksi CMT, atau sablon rekanan.</p>
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-colors cursor-pointer">
@@ -3078,11 +3078,11 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
           {/* Quick Change Status Selector Bar */}
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-slate-600 text-[11px] font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-slate-600 text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 Pilih Status Pengiriman Cepat:
               </span>
-              <span className="text-[11px] text-slate-500 font-mono">
+              <span className="text-xs text-slate-500 font-mono">
                 Status Saat Ini:{' '}
                 <strong
                   className={
@@ -3156,11 +3156,11 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                   <Building2 className="w-4 h-4" />
                 </span>
                 <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block font-semibold">
                     Asal Pengiriman (Pabrik / Vendor)
                   </span>
                   <div className="font-bold text-slate-900 text-xs mt-0.5">{po.vendorNama}</div>
-                  <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                  <div className="text-xs text-slate-500 flex items-center gap-1">
                     <MapPin className="w-3 h-3 text-slate-400" />
                     <span>{po.vendorKota}</span>
                   </div>
@@ -3169,7 +3169,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
 
               {/* Route Indicator & Cargo Status */}
               <div className="flex-1 px-2 py-1 flex flex-col items-center">
-                <div className="flex items-center justify-center gap-1.5 text-[11px] font-mono font-semibold text-blue-700 mb-1.5">
+                <div className="flex items-center justify-center gap-1.5 text-xs font-mono font-semibold text-blue-700 mb-1.5">
                   <Truck className={`w-3.5 h-3.5 text-blue-600 ${currentStep === 2 ? 'animate-bounce' : ''}`} />
                   <span>{po.ekspedisi || 'Kargo Rekanan'}</span>
                   {po.noResi && <span className="text-slate-500">· {po.noResi}</span>}
@@ -3187,7 +3187,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                     }`}
                   />
                 </div>
-                <div className="text-[10px] text-slate-500 mt-1 font-mono">
+                <div className="text-[11px] text-slate-500 mt-1 font-mono">
                   {currentStep === 3
                     ? '100% Selesai Diterima'
                     : currentStep === 2
@@ -3199,11 +3199,11 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
               {/* Destination Gudang */}
               <div className="flex items-center gap-3 sm:text-right">
                 <div className="sm:order-1">
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-semibold">
+                  <span className="text-[11px] text-slate-500 uppercase tracking-wider block font-semibold">
                     Tujuan Pengiriman (Gudang)
                   </span>
                   <div className="font-bold text-slate-900 text-xs mt-0.5">{po.gudangTujuan || 'Gudang Utama Kalima'}</div>
-                  <div className="text-[11px] text-slate-500 flex items-center sm:justify-end gap-1">
+                  <div className="text-xs text-slate-500 flex items-center sm:justify-end gap-1">
                     <MapPin className="w-3 h-3 text-slate-400" />
                     <span>{po.alamatTujuanGudang || 'Bandung, Jawa Barat'}</span>
                   </div>
@@ -3226,7 +3226,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
               {/* STEP 1: PO DITERBITKAN / PROSES PABRIK */}
               <div className="relative">
                 <span
-                  className={`absolute -left-6 top-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${
+                  className={`absolute -left-6 top-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold border ${
                     currentStep >= 1
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-xs'
                       : 'bg-slate-200 text-slate-500 border-slate-300'
@@ -3239,11 +3239,11 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 text-xs">1. Pesanan Diterbitkan & Diproses Pabrik</span>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                         {po.statusPO === 'draft' ? 'Draf' : 'Terkonfirmasi'}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
+                    <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-slate-400" />
                       {po.tanggalPO}
                     </span>
@@ -3255,7 +3255,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                   </p>
 
                   {po.catatanPO && (
-                    <div className="text-[11px] text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/80">
+                    <div className="text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/80">
                       <span className="font-semibold text-slate-800">Catatan PO:</span> {po.catatanPO}
                     </div>
                   )}
@@ -3265,7 +3265,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
               {/* STEP 2: PENGIRIMAN EKSPEDISI / KARGO (IN-TRANSIT) */}
               <div className="relative">
                 <span
-                  className={`absolute -left-6 top-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${
+                  className={`absolute -left-6 top-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold border ${
                     currentStep >= 2
                       ? 'bg-blue-500 text-white border-blue-400 shadow-xs'
                       : 'bg-slate-200 text-slate-500 border-slate-300'
@@ -3285,13 +3285,13 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 text-xs">2. Pengiriman Ekspedisi & Kargo Logistik</span>
                       {currentStep === 2 && (
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
                           IN-TRANSIT
                         </span>
                       )}
                     </div>
                     {po.tanggalKirim && (
-                      <span className="text-[11px] text-slate-500 font-mono flex items-center gap-1">
+                      <span className="text-xs text-slate-500 font-mono flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-slate-400" />
                         Dikirim: {po.tanggalKirim}
                       </span>
@@ -3301,7 +3301,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                   {/* Shipment Info Cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                     <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-500 block">Jasa Ekspedisi</span>
+                      <span className="text-[11px] text-slate-500 block">Jasa Ekspedisi</span>
                       <div className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1.5">
                         <Truck className="w-3.5 h-3.5 text-blue-600" />
                         <span>{po.ekspedisi || 'Menunggu Penyerahan'}</span>
@@ -3309,7 +3309,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                     </div>
 
                     <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-500 block">Nomor Resi / AWB</span>
+                      <span className="text-[11px] text-slate-500 block">Nomor Resi / AWB</span>
                       <div className="font-mono font-bold text-amber-700 mt-0.5 flex items-center justify-between">
                         <span>{po.noResi || 'Belum Ada Resi'}</span>
                         {po.noResi && (
@@ -3330,7 +3330,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                     </div>
 
                     <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-500 block">Estimasi Tiba di Gudang</span>
+                      <span className="text-[11px] text-slate-500 block">Estimasi Tiba di Gudang</span>
                       <div className="font-medium text-emerald-700 mt-0.5">
                         {po.estimasiTiba || (po.statusPO === 'dikirim' ? '1-3 Hari Kerja' : '-')}
                       </div>
@@ -3338,7 +3338,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                   </div>
 
                   {po.catatanPengiriman && (
-                    <div className="text-[11px] text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/80">
+                    <div className="text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/80">
                       <span className="font-semibold text-slate-800">Catatan Driver/Koli:</span>{' '}
                       {po.catatanPengiriman}
                     </div>
@@ -3360,7 +3360,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
               {/* STEP 3: PENERIMAAN BARANG & QC GUDANG */}
               <div className="relative">
                 <span
-                  className={`absolute -left-6 top-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${
+                  className={`absolute -left-6 top-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold border ${
                     currentStep === 3
                       ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
                       : 'bg-slate-200 text-slate-500 border-slate-300'
@@ -3380,20 +3380,20 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 text-xs">3. Penerimaan & Quality Control Gudang</span>
                       {currentStep === 3 ? (
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                           SELESAI DITERIMA
                         </span>
                       ) : po.statusPO === 'diterima_sebagian' ? (
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
                           TIBA SEBAGIAN ({receivedPct}%)
                         </span>
                       ) : (
-                        <span className="text-[10px] text-slate-500">Menunggu Paket Tiba</span>
+                        <span className="text-[11px] text-slate-500">Menunggu Paket Tiba</span>
                       )}
                     </div>
 
                     {po.tanggalDiterima && (
-                      <span className="text-[11px] text-emerald-700 font-mono flex items-center gap-1">
+                      <span className="text-xs text-emerald-700 font-mono flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                         Tiba: {po.tanggalDiterima}
                       </span>
@@ -3403,7 +3403,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                   {/* Receipt Stats */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-500 block">Progres Fisik Masuk</span>
+                      <span className="text-[11px] text-slate-500 block">Progres Fisik Masuk</span>
                       <div className="font-mono font-bold text-slate-900 mt-0.5">
                         <span className={po.totalQtyDiterima > 0 ? 'text-emerald-600' : 'text-slate-500'}>
                           {po.totalQtyDiterima || 0}
@@ -3414,7 +3414,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                     </div>
 
                     <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                      <span className="text-[10px] text-slate-500 block">Penerima & Kondisi QC</span>
+                      <span className="text-[11px] text-slate-500 block">Penerima & Kondisi QC</span>
                       <div className="font-medium text-slate-800 mt-0.5">
                         {po.penerimaGudang ? `${po.penerimaGudang} · ${po.kondisiPenerimaan || 'Lolos QC'}` : 'Menunggu QC Inbound'}
                       </div>
@@ -3422,7 +3422,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                   </div>
 
                   {po.catatanPenerimaan && (
-                    <div className="text-[11px] text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/80">
+                    <div className="text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/80">
                       <span className="font-semibold text-slate-800">Catatan Penerimaan:</span>{' '}
                       {po.catatanPenerimaan}
                     </div>
@@ -3452,14 +3452,14 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                 <Box className="w-3.5 h-3.5 text-blue-600" />
                 Manifest Muatan Kaos ({po.totalQtyPesan} pcs)
               </h4>
-              <span className="text-[11px] text-slate-500 font-mono">
+              <span className="text-xs text-slate-500 font-mono">
                 Total Tagihan: <strong className="text-slate-900">Rp {po.totalTagihan.toLocaleString('id-ID')}</strong>
               </span>
             </div>
 
             <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
               <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 text-[10px] uppercase font-semibold text-slate-600 border-b border-slate-200/80">
+                <thead className="bg-slate-50 text-[11px] uppercase font-semibold text-slate-600 border-b border-slate-200/80">
                   <tr>
                     <th className="px-3.5 py-2.5">SKU & Artikel Kaos</th>
                     <th className="px-3.5 py-2.5 text-center">Ukuran</th>
@@ -3475,7 +3475,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                     <tr key={it.sku} className="hover:bg-slate-50/80">
                       <td className="px-3.5 py-2.5">
                         <div className="font-mono font-bold text-slate-900">{it.sku}</div>
-                        <div className="text-[11px] text-slate-500">{it.namaProduk}</div>
+                        <div className="text-xs text-slate-500">{it.namaProduk}</div>
                       </td>
                       <td className="px-3.5 py-2.5 text-center font-bold text-slate-800">
                         {it.size}

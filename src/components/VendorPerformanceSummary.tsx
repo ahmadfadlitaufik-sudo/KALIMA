@@ -324,7 +324,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   Analisis & Ringkasan Performa Vendor
-                  <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
                     Vendor Intelligence
                   </span>
                 </h2>
@@ -387,7 +387,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
           <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-700">
             {globalKPIs.avgOnTimeRate}%
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Pesanan tiba tepat estimasi</div>
+          <div className="text-xs text-slate-400 mt-1">Pesanan tiba tepat estimasi</div>
         </div>
 
         {/* 2. Avg Delay Days */}
@@ -402,7 +402,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             {globalKPIs.avgDelayDays}{' '}
             <span className="text-xs text-slate-500 font-sans font-normal">Hari / PO</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Rata-rata deviasi tiba di gudang</div>
+          <div className="text-xs text-slate-400 mt-1">Rata-rata deviasi tiba di gudang</div>
         </div>
 
         {/* 3. Avg Lead Time Total */}
@@ -417,7 +417,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             {globalKPIs.avgLeadTime}{' '}
             <span className="text-xs text-slate-500 font-sans font-normal">Hari Total</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Waktu order s/d masuk stok</div>
+          <div className="text-xs text-slate-400 mt-1">Waktu order s/d masuk stok</div>
         </div>
 
         {/* 4. Total Volume Pengadaan */}
@@ -432,7 +432,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             {globalKPIs.totalQty.toLocaleString('id-ID')}{' '}
             <span className="text-xs text-slate-500 font-sans font-normal">pcs</span>
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">Total bahan & CMT dipesan</div>
+          <div className="text-xs text-slate-400 mt-1">Total bahan & CMT dipesan</div>
         </div>
 
         {/* 5. Total Belanja Pengadaan */}
@@ -446,7 +446,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
           <div className="text-base sm:text-lg font-bold font-mono text-slate-900 truncate">
             Rp {globalKPIs.totalSpend.toLocaleString('id-ID')}
           </div>
-          <div className="text-[11px] text-slate-500 mt-1 truncate">
+          <div className="text-xs text-slate-500 mt-1 truncate">
             Vendor Utama: <strong className="text-slate-700">{globalKPIs.bestVendor.split(' ')[0]}</strong>
           </div>
         </div>
@@ -494,7 +494,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             </button>
           </div>
 
-          <div className="text-[11px] text-slate-500 flex items-center gap-1">
+          <div className="text-xs text-slate-500 flex items-center gap-1">
             <Info className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             <span>Visualisasi data real-time logistik PO Kalima</span>
           </div>
@@ -510,12 +510,12 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
                 <h3 className="font-bold text-slate-900 text-sm">
                   Tingkat Ketepatan Waktu (OTD %) vs Rata-Rata Keterlambatan (Hari)
                 </h3>
-                <p className="text-slate-500 text-[11px]">
+                <p className="text-slate-500 text-xs">
                   Bilah hijau menunjukkan persentase tepat waktu, sedangkan garis amber menunjukkan deviasi rata-rata hari keterlambatan kargo.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 text-[11px] text-slate-600 pt-1">
+              <div className="flex items-center gap-3 text-xs text-slate-600 pt-1">
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded bg-emerald-500" /> Tepat Waktu (%)
                 </span>
@@ -625,12 +625,12 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
                 <h3 className="font-bold text-slate-900 text-sm">
                   Komposisi Durasi Lead Time Pengadaan per Vendor (Hari)
                 </h3>
-                <p className="text-slate-500 text-[11px]">
+                <p className="text-slate-500 text-xs">
                   Rata-rata waktu yang dibutuhkan mulai dari penerbitan PO, penjahitan pabrik/CMT, hingga pengiriman kargo tiba di gudang.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 text-[11px] text-slate-600 pt-1">
+              <div className="flex items-center gap-3 text-xs text-slate-600 pt-1">
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded bg-amber-500" /> Proses Pabrik/CMT (Hari)
                 </span>
@@ -712,7 +712,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
               <h3 className="font-bold text-slate-900 text-sm">
                 Pangsa Belanja (Spend Share) & Kontribusi Volume Kaos per Supplier
               </h3>
-              <p className="text-slate-500 text-[11px]">
+              <p className="text-slate-500 text-xs">
                 Distribusi alokasi modal pengadaan bahan baku kain combed 210/290 GSM dan CMT rekanan.
               </p>
             </div>
@@ -760,7 +760,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
                   </ResponsiveContainer>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1.5 text-[11px] pt-1">
+                <div className="grid grid-cols-2 gap-1.5 text-xs pt-1">
                   {spendShareData.map((item, idx) => (
                     <div key={item.name} className="flex items-center gap-1.5 text-slate-700">
                       <span
@@ -815,7 +815,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
                   </ResponsiveContainer>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1.5 text-[11px] pt-1">
+                <div className="grid grid-cols-2 gap-1.5 text-xs pt-1">
                   {spendShareData.map((item, idx) => (
                     <div key={item.name} className="flex items-center gap-1.5 text-slate-700">
                       <span
@@ -852,7 +852,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
 
         <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
           <table className="w-full text-left text-xs text-slate-600">
-            <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-600 font-semibold border-b border-slate-200/80">
+            <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-600 font-semibold border-b border-slate-200/80">
               <tr>
                 <th className="px-4 py-3">Nama Vendor & Kota</th>
                 <th className="px-4 py-3">Kategori</th>
@@ -882,11 +882,11 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
                   <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-4 py-3.5">
                       <div className="font-semibold text-slate-900">{v.nama}</div>
-                      <div className="text-[11px] text-slate-500">{v.kota}</div>
+                      <div className="text-xs text-slate-500">{v.kota}</div>
                     </td>
 
                     <td className="px-4 py-3.5">
-                      <span className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200/80 text-slate-700 font-medium">
+                      <span className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200/80 text-slate-700 font-medium">
                         {v.kategori}
                       </span>
                     </td>
@@ -926,7 +926,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
                     </td>
 
                     <td className="px-4 py-3.5 text-center">
-                      <span className={`inline-block px-2.5 py-1 rounded-xl text-[10px] font-bold border ${badgeStyle}`}>
+                      <span className={`inline-block px-2.5 py-1 rounded-xl text-[11px] font-bold border ${badgeStyle}`}>
                         {statusText}
                       </span>
                     </td>

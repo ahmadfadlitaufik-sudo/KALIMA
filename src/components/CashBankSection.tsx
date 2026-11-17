@@ -477,14 +477,14 @@ export const CashBankSection: React.FC = () => {
               <DollarSign className="w-3.5 h-3.5 text-rose-500" />
               Total Likuiditas
             </span>
-            <span className="text-[10px] bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full font-mono font-bold">
+            <span className="text-[11px] bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full font-mono font-bold">
               {cashAccounts.length} Akun
             </span>
           </div>
           <div className="text-xl sm:text-2xl font-black text-slate-900 font-mono tracking-tight mt-1">
             Rp {totalLikuiditas.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">
+          <div className="text-[11px] text-slate-400 mt-1">
             Seluruh kas tunai, bank & e-wallet
           </div>
         </div>
@@ -496,14 +496,14 @@ export const CashBankSection: React.FC = () => {
               <Wallet className="w-3.5 h-3.5 text-emerald-600" />
               Kas Tunai Fisik
             </span>
-            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
               Laci Kasir
             </span>
           </div>
           <div className="text-xl sm:text-2xl font-black text-emerald-600 font-mono tracking-tight mt-1">
             Rp {totalKasTunai.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">
+          <div className="text-[11px] text-slate-400 mt-1">
             Uang fisik di kasir toko & COD
           </div>
         </div>
@@ -515,14 +515,14 @@ export const CashBankSection: React.FC = () => {
               <Building2 className="w-3.5 h-3.5 text-blue-600" />
               Saldo Rekening Bank
             </span>
-            <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold">
               BCA, Mandiri, BSI
             </span>
           </div>
           <div className="text-xl sm:text-2xl font-black text-blue-600 font-mono tracking-tight mt-1">
             Rp {totalBank.toLocaleString('id-ID')}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">
+          <div className="text-[11px] text-slate-400 mt-1">
             Rekening operasional & transfer mitra
           </div>
         </div>
@@ -534,11 +534,11 @@ export const CashBankSection: React.FC = () => {
               <TrendingUp className="w-3.5 h-3.5 text-slate-600" />
               Arus Kas Bulan Ini
             </span>
-            <span className="text-[10px] text-slate-400 font-mono font-bold">{todayMonth}</span>
+            <span className="text-[11px] text-slate-400 font-mono font-bold">{todayMonth}</span>
           </div>
           <div className="flex items-center justify-between mt-1 pt-1">
             <div className="text-xs">
-              <div className="text-[10px] text-emerald-600 font-bold flex items-center gap-0.5">
+              <div className="text-[11px] text-emerald-600 font-bold flex items-center gap-0.5">
                 <ArrowDownRight className="w-3 h-3" /> Masuk
               </div>
               <div className="font-black text-slate-900 font-mono text-sm">
@@ -546,7 +546,7 @@ export const CashBankSection: React.FC = () => {
               </div>
             </div>
             <div className="text-xs text-right">
-              <div className="text-[10px] text-rose-600 font-bold flex items-center justify-end gap-0.5">
+              <div className="text-[11px] text-rose-600 font-bold flex items-center justify-end gap-0.5">
                 <ArrowUpRight className="w-3 h-3" /> Keluar
               </div>
               <div className="font-black text-slate-900 font-mono text-sm">
@@ -565,7 +565,7 @@ export const CashBankSection: React.FC = () => {
               <span>Daftar Akun Kas & Bank Aktif</span>
               <span className="text-xs font-bold text-rose-600 font-mono">({cashAccounts.length} Akun Terdaftar)</span>
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Saldo masing-masing akun ter-update secara real-time dari seluruh transaksi penjualan, pelunasan, dan beban operasional.
             </p>
           </div>
@@ -641,12 +641,12 @@ export const CashBankSection: React.FC = () => {
                         <div className="font-bold text-sm text-white flex items-center gap-1.5">
                           <span>{acc.nama}</span>
                           {acc.isDefault && (
-                            <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 rounded font-normal">
+                            <span className="text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 rounded font-normal">
                               Utama
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                        <div className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
                           {acc.tipe === 'tunai'
                             ? 'Kas Tunai / Kasir'
                             : acc.tipe === 'bank'
@@ -681,11 +681,11 @@ export const CashBankSection: React.FC = () => {
                   {/* Card Middle: Account Number & Atas Nama */}
                   <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800/80 mb-4 space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-[11px] text-slate-400">No. Rekening / ID:</span>
+                      <span className="text-xs text-slate-400">No. Rekening / ID:</span>
                       <button
                         type="button"
                         onClick={() => handleCopyRekening(acc)}
-                        className="flex items-center gap-1 text-[11px] font-mono font-bold text-white hover:text-amber-400 transition-colors cursor-pointer"
+                        className="flex items-center gap-1 text-xs font-mono font-bold text-white hover:text-amber-400 transition-colors cursor-pointer"
                       >
                         <span>{acc.nomorRekening || '-'}</span>
                         {isCopied ? (
@@ -696,7 +696,7 @@ export const CashBankSection: React.FC = () => {
                       </button>
                     </div>
                     {acc.atasNama && (
-                      <div className="flex items-center justify-between text-[11px]">
+                      <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">Atas Nama:</span>
                         <span className="text-slate-200 font-medium truncate max-w-[180px]">
                           {acc.atasNama}
@@ -707,21 +707,21 @@ export const CashBankSection: React.FC = () => {
 
                   {/* Card Balance */}
                   <div className="mb-4">
-                    <div className="text-[10px] text-slate-400 uppercase font-semibold">
+                    <div className="text-[11px] text-slate-400 uppercase font-semibold">
                       Saldo Real-Time
                     </div>
                     <div className="text-2xl font-black font-mono text-white tracking-tight mt-0.5">
                       Rp {acc.saldo.toLocaleString('id-ID')}
                     </div>
                     {acc.keterangan && (
-                      <div className="text-[10px] text-slate-400 italic mt-0.5 truncate">
+                      <div className="text-[11px] text-slate-400 italic mt-0.5 truncate">
                         {acc.keterangan}
                       </div>
                     )}
                   </div>
 
                   {/* Card Bottom Quick Actions */}
-                  <div className="space-y-1.5 pt-3 border-t border-slate-800/80 text-[11px]">
+                  <div className="space-y-1.5 pt-3 border-t border-slate-800/80 text-xs">
                     <div className="grid grid-cols-3 gap-1.5">
                       <button
                         type="button"
@@ -775,14 +775,14 @@ export const CashBankSection: React.FC = () => {
                 <CreditCard className="w-3.5 h-3.5 text-amber-400" />
                 <span>Rincian Saldo Real-Time Seluruh Rekening & Kas Tunai</span>
               </h4>
-              <span className="text-[11px] text-slate-400 font-mono">
+              <span className="text-xs text-slate-400 font-mono">
                 Total Likuiditas: <strong className="text-amber-400 font-bold">Rp {totalLikuiditas.toLocaleString('id-ID')}</strong>
               </span>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-slate-800">
               <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[11px]">
                   <tr>
                     <th className="py-2.5 px-3">Akun & Tipe</th>
                     <th className="py-2.5 px-3">Nomor Rekening / ID</th>
@@ -809,18 +809,18 @@ export const CashBankSection: React.FC = () => {
                               <div className="font-bold text-white flex items-center gap-1">
                                 <span>{acc.nama}</span>
                                 {acc.isDefault && (
-                                  <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 rounded font-normal">
+                                  <span className="text-[11px] bg-amber-500/20 text-amber-300 px-1 rounded font-normal">
                                     Utama
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-slate-400 uppercase font-semibold">
+                              <div className="text-[11px] text-slate-400 uppercase font-semibold">
                                 {acc.tipe}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-[11px] text-slate-200">
+                        <td className="py-2.5 px-3 font-mono text-xs text-slate-200">
                           <button
                             type="button"
                             onClick={() => handleCopyRekening(acc)}
@@ -849,10 +849,10 @@ export const CashBankSection: React.FC = () => {
                                 style={{ width: `${Math.min(100, Number(percent))}%` }}
                               />
                             </div>
-                            <span className="font-mono text-[11px] text-slate-400">{percent}%</span>
+                            <span className="font-mono text-xs text-slate-400">{percent}%</span>
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 text-[11px] text-slate-400 max-w-xs truncate">
+                        <td className="py-2.5 px-3 text-xs text-slate-400 max-w-xs truncate">
                           {acc.keterangan || '-'}
                         </td>
                         <td className="py-2.5 px-3 text-center">
@@ -860,7 +860,7 @@ export const CashBankSection: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenTrx('masuk', acc.id)}
-                              className="px-2 py-0.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 text-[10px] font-bold rounded border border-emerald-500/30 cursor-pointer"
+                              className="px-2 py-0.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 text-[11px] font-bold rounded border border-emerald-500/30 cursor-pointer"
                               title="Catat Kas Masuk"
                             >
                               + Masuk
@@ -868,7 +868,7 @@ export const CashBankSection: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenTrx('keluar', acc.id)}
-                              className="px-2 py-0.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 text-[10px] font-bold rounded border border-rose-500/30 cursor-pointer"
+                              className="px-2 py-0.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 text-[11px] font-bold rounded border border-rose-500/30 cursor-pointer"
                               title="Catat Kas Keluar"
                             >
                               - Keluar
@@ -876,7 +876,7 @@ export const CashBankSection: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleOpenTransfer(acc.id)}
-                              className="px-2 py-0.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-[10px] font-bold rounded border border-blue-500/30 cursor-pointer"
+                              className="px-2 py-0.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-[11px] font-bold rounded border border-blue-500/30 cursor-pointer"
                               title="Pindah Saldo"
                             >
                               ⇄ Trf
@@ -968,7 +968,7 @@ export const CashBankSection: React.FC = () => {
         {/* Table of Mutations */}
         <div className="overflow-x-auto rounded-xl border border-slate-800/80">
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+            <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[11px]">
               <tr>
                 <th className="py-2.5 px-3">Tgl & Jam</th>
                 <th className="py-2.5 px-3">Akun Kas / Bank</th>
@@ -995,40 +995,40 @@ export const CashBankSection: React.FC = () => {
 
                   return (
                     <tr key={m.id} className="hover:bg-slate-850/50 transition-colors">
-                      <td className="py-2.5 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                      <td className="py-2.5 px-3 font-mono text-xs text-slate-400 whitespace-nowrap">
                         <div>{m.tanggal}</div>
-                        <div className="text-[10px] text-slate-500">{m.waktu || '12:00'}</div>
+                        <div className="text-[11px] text-slate-500">{m.waktu || '12:00'}</div>
                       </td>
                       <td className="py-2.5 px-3 font-semibold text-white whitespace-nowrap">
                         {m.accountNama}
                       </td>
                       <td className="py-2.5 px-3 whitespace-nowrap">
                         {isMasuk && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                             <ArrowDownRight className="w-3 h-3" /> MASUK
                           </span>
                         )}
                         {isKeluar && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
                             <ArrowUpRight className="w-3 h-3" /> KELUAR
                           </span>
                         )}
                         {isTransfer && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
                             <ArrowRightLeft className="w-3 h-3" /> PINDAH SALDO
                           </span>
                         )}
                       </td>
                       <td className="py-2.5 px-3 min-w-[200px]">
                         <div className="font-semibold text-slate-200">{m.deskripsi}</div>
-                        <div className="text-[10px] text-slate-400">
+                        <div className="text-[11px] text-slate-400">
                           {m.kategori}
                           {m.targetAccountNama && (
                             <span className="text-blue-300"> → Ke: {m.targetAccountNama}</span>
                           )}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-xs font-mono text-slate-400 whitespace-nowrap">
                         {m.referensi || '-'}
                       </td>
                       <td
@@ -1041,7 +1041,7 @@ export const CashBankSection: React.FC = () => {
                       <td className="py-2.5 px-3 text-right font-mono text-slate-300 whitespace-nowrap">
                         Rp {m.saldoSetelah.toLocaleString('id-ID')}
                       </td>
-                      <td className="py-2.5 px-3 text-[11px] text-slate-400 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-xs text-slate-400 whitespace-nowrap">
                         {m.dicatatOleh}
                       </td>
                     </tr>
@@ -1075,7 +1075,7 @@ export const CashBankSection: React.FC = () => {
               {/* Quick Templates / Presets */}
               {!editingAccount && (
                 <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1.5">
-                  <label className="block text-slate-400 font-semibold text-[11px]">
+                  <label className="block text-slate-400 font-semibold text-xs">
                     Pilih Cepat Template Rekening / Kas:
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -1101,7 +1101,7 @@ export const CashBankSection: React.FC = () => {
                             atasNama: preset.an || prev.atasNama,
                           }))
                         }
-                        className="px-2 py-1 bg-slate-900 hover:bg-amber-500/20 hover:text-amber-300 text-slate-300 border border-slate-700/80 hover:border-amber-500/40 rounded-lg text-[10px] font-medium transition-colors cursor-pointer"
+                        className="px-2 py-1 bg-slate-900 hover:bg-amber-500/20 hover:text-amber-300 text-slate-300 border border-slate-700/80 hover:border-amber-500/40 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
                       >
                         + {preset.label}
                       </button>
@@ -1207,7 +1207,7 @@ export const CashBankSection: React.FC = () => {
                     placeholder="0"
                     className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm"
                   />
-                  <span className="text-[10px] text-slate-400">
+                  <span className="text-[11px] text-slate-400">
                     Saldo awal saat akun pertama kali dicatat ke pembukuan
                   </span>
                 </div>

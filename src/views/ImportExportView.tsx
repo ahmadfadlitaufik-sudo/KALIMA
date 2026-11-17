@@ -784,7 +784,7 @@ export const ImportExportView: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-white">1. Master SKU & Harga</h4>
-                  <p className="text-[11px] text-slate-400">Untuk katalog varian kaos, harga jual & HPP</p>
+                  <p className="text-xs text-slate-400">Untuk katalog varian kaos, harga jual & HPP</p>
                 </div>
                 <button
                   onClick={() => downloadTemplate('sku')}
@@ -795,7 +795,7 @@ export const ImportExportView: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-[11px] font-mono text-slate-300 overflow-x-auto">
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
                 <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
                 <div className="text-slate-200">sku, name, seriesCode, colorCode, colorName, size, price, hpp, minStock</div>
                 <div className="text-slate-500 mt-1">Contoh data:</div>
@@ -809,7 +809,7 @@ export const ImportExportView: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-white">2. Saldo Awal Stok Gudang</h4>
-                  <p className="text-[11px] text-slate-400">Untuk memasukkan stok fisik saat cut-off Excel</p>
+                  <p className="text-xs text-slate-400">Untuk memasukkan stok fisik saat cut-off Excel</p>
                 </div>
                 <button
                   onClick={() => downloadTemplate('stock')}
@@ -820,7 +820,7 @@ export const ImportExportView: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-[11px] font-mono text-slate-300 overflow-x-auto">
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
                 <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
                 <div className="text-slate-200">sku, qty, lokasi, catatan</div>
                 <div className="text-slate-500 mt-1">Contoh data:</div>
@@ -834,7 +834,7 @@ export const ImportExportView: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-white">3. Riwayat Transaksi Order</h4>
-                  <p className="text-[11px] text-slate-400">Untuk rekap penjualan harian / bulanan</p>
+                  <p className="text-xs text-slate-400">Untuk rekap penjualan harian / bulanan</p>
                 </div>
                 <button
                   onClick={() => downloadTemplate('orders')}
@@ -845,7 +845,7 @@ export const ImportExportView: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-[11px] font-mono text-slate-300 overflow-x-auto">
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
                 <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
                 <div className="text-slate-200">noOrder, tanggal, channel, customerNama, customerHp, customerKota, sku, qty, hargaSatuan, diskon, statusBayar, noResi</div>
                 <div className="text-slate-500 mt-1">Contoh data:</div>
@@ -858,7 +858,7 @@ export const ImportExportView: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-white">4. Daftar Toko Mitra / Reseller</h4>
-                  <p className="text-[11px] text-slate-400">Untuk data toko konsinyasi titip jual</p>
+                  <p className="text-xs text-slate-400">Untuk data toko konsinyasi titip jual</p>
                 </div>
                 <button
                   onClick={() => downloadTemplate('reseller')}
@@ -869,7 +869,7 @@ export const ImportExportView: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-[11px] font-mono text-slate-300 overflow-x-auto">
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
                 <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
                 <div className="text-slate-200">nama, kontakPerson, noHp, kota, alamat, diskonPersen</div>
                 <div className="text-slate-500 mt-1">Contoh data:</div>
@@ -882,7 +882,7 @@ export const ImportExportView: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-white">5. Biaya Pengeluaran (Beban Operasional & Iklan)</h4>
-                  <p className="text-[11px] text-slate-400">Untuk pencatatan kas keluar & laporan laba-rugi bersih</p>
+                  <p className="text-xs text-slate-400">Untuk pencatatan kas keluar & laporan laba-rugi bersih</p>
                 </div>
                 <button
                   onClick={() => downloadTemplate('expenses')}
@@ -893,7 +893,7 @@ export const ImportExportView: React.FC = () => {
                 </button>
               </div>
 
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-[11px] font-mono text-slate-300 overflow-x-auto">
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
                 <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
                 <div className="text-slate-200">tanggal, kategori, deskripsi, jumlah</div>
                 <div className="text-slate-500 mt-1">Contoh data:</div>
@@ -908,7 +908,7 @@ export const ImportExportView: React.FC = () => {
             <div className="font-bold flex items-center gap-2">
               💡 Cara Penggunaan di Microsoft Excel atau Google Sheets:
             </div>
-            <ol className="list-decimal list-inside space-y-0.5 text-slate-300 text-[11px] pl-1">
+            <ol className="list-decimal list-inside space-y-0.5 text-slate-300 text-xs pl-1">
               <li>Klik tombol <strong>"Unduh .CSV"</strong> di atas.</li>
               <li>Buka file tersebut di Excel, lalu copy-paste atau isi data riil Kalima Apparel milik Anda.</li>
               <li>Simpan (Save As) dengan format <strong>CSV (Comma Delimited) (*.csv)</strong>.</li>
@@ -971,11 +971,11 @@ export const ImportExportView: React.FC = () => {
               <div className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">
                 {uploadedFileName ? `File Terpilih: ${uploadedFileName}` : 'Klik untuk Pilih File Excel (.xlsx, .xls) atau .CSV'}
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 max-w-xs">
+              <p className="text-xs text-slate-400 mt-1 max-w-xs">
                 Mendukung file Excel langsung (.xlsx, .xls) maupun file .csv dari Excel/Google Sheets/Marketplace
               </p>
               {uploadedFileName && (
-                <span className="mt-2 text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-md border border-emerald-500/30">
+                <span className="mt-2 text-[11px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-md border border-emerald-500/30">
                   ✓ Siap diproses
                 </span>
               )}
@@ -987,7 +987,7 @@ export const ImportExportView: React.FC = () => {
                 <ClipboardCheck className="w-4 h-4" />
                 Cara Copy Teks Langsung dari Excel / Google Sheets:
               </div>
-              <ol className="list-decimal list-inside space-y-1 text-[11px] text-slate-400">
+              <ol className="list-decimal list-inside space-y-1 text-xs text-slate-400">
                 <li>Buka file Excel atau Google Sheets Anda.</li>
                 <li>
                   Blok / seleksi baris judul dan isi data (misal: sel <code className="text-amber-300 bg-slate-900 px-1 rounded">A1</code> sampai <code className="text-amber-300 bg-slate-900 px-1 rounded">H10</code>).
@@ -1011,7 +1011,7 @@ export const ImportExportView: React.FC = () => {
                   />
                   <span>⚠️ Timpa / Kosongkan data OPEX lama sebelum mengimpor data ini</span>
                 </label>
-                <p className="text-[11px] text-slate-400 pl-6">
+                <p className="text-xs text-slate-400 pl-6">
                   Centang opsi ini agar data pengeluaran lama tidak terduplikasi (misal jika terbaca 83 juta padahal seharusnya 30 jutaan).
                 </p>
               </div>
@@ -1057,7 +1057,7 @@ export const ImportExportView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setCurrentView('sales')}
-                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-[11px] shrink-0 transition-colors cursor-pointer flex items-center gap-1 self-start sm:self-auto"
+                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs shrink-0 transition-colors cursor-pointer flex items-center gap-1 self-start sm:self-auto"
                 >
                   <span>Buka Menu Order & Penjualan →</span>
                 </button>
@@ -1066,7 +1066,7 @@ export const ImportExportView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setCurrentView('finance')}
-                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-[11px] shrink-0 transition-colors cursor-pointer flex items-center gap-1 self-start sm:self-auto"
+                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs shrink-0 transition-colors cursor-pointer flex items-center gap-1 self-start sm:self-auto"
                 >
                   <span>Buka Buku Kas & Laba Rugi →</span>
                 </button>
@@ -1086,7 +1086,7 @@ export const ImportExportView: React.FC = () => {
                     setImportText('');
                     setUploadedFileName(null);
                   }}
-                  className="text-[11px] text-rose-400 hover:underline cursor-pointer"
+                  className="text-xs text-rose-400 hover:underline cursor-pointer"
                 >
                   Bersihkan Teks
                 </button>
@@ -1110,7 +1110,7 @@ export const ImportExportView: React.FC = () => {
             />
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <span className="text-[11px] text-slate-400">
+              <span className="text-xs text-slate-400">
                 Data akan langsung disimpan ke browser Anda (`localStorage`) secara otomatis.
               </span>
               <button
@@ -1159,7 +1159,7 @@ export const ImportExportView: React.FC = () => {
             >
               <div>
                 <div className="font-bold text-white text-xs">Laporan Penjualan</div>
-                <div className="text-[11px] text-slate-400">{orders.length} order tercatat</div>
+                <div className="text-xs text-slate-400">{orders.length} order tercatat</div>
               </div>
               <ArrowDownToLine className="w-4 h-4 text-slate-400" />
             </button>
@@ -1185,7 +1185,7 @@ export const ImportExportView: React.FC = () => {
             >
               <div>
                 <div className="font-bold text-white text-xs">Kartu Stok & Mutasi</div>
-                <div className="text-[11px] text-slate-400">
+                <div className="text-xs text-slate-400">
                   {stockMovements.length} transaksi stok
                 </div>
               </div>
@@ -1212,7 +1212,7 @@ export const ImportExportView: React.FC = () => {
             >
               <div>
                 <div className="font-bold text-white text-xs">Katalog Master SKU</div>
-                <div className="text-[11px] text-slate-400">{skus.length} SKU terdaftar</div>
+                <div className="text-xs text-slate-400">{skus.length} SKU terdaftar</div>
               </div>
               <ArrowDownToLine className="w-4 h-4 text-slate-400" />
             </button>
@@ -1240,7 +1240,7 @@ export const ImportExportView: React.FC = () => {
             >
               <div>
                 <div className="font-bold text-white text-xs">Buku Kas & Mutasi Bank</div>
-                <div className="text-[11px] text-slate-400">
+                <div className="text-xs text-slate-400">
                   {cashMutations.length} catatan mutasi kas
                 </div>
               </div>
@@ -1276,7 +1276,7 @@ export const ImportExportView: React.FC = () => {
                 <div className="font-bold text-amber-400 text-xs">
                   Backup Seluruh Database Sistem (JSON)
                 </div>
-                <div className="text-[11px] text-slate-300">
+                <div className="text-xs text-slate-300">
                   Menyimpan seluruh master SKU, order, kartu stok, kas & bank, reseller, dan OPEX dalam 1 file cadangan
                 </div>
               </div>
@@ -1292,7 +1292,7 @@ export const ImportExportView: React.FC = () => {
           <div className="text-xs font-bold text-slate-300">
             Reset ke Data Snapshot Bawaan Kalima
           </div>
-          <div className="text-[11px] text-slate-400">
+          <div className="text-xs text-slate-400">
             Gunakan tombol ini jika Anda ingin mengembalikan sampel data awal untuk demonstrasi
           </div>
         </div>

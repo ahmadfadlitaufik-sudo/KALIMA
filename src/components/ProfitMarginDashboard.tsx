@@ -401,7 +401,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
               String(entry.name).toLowerCase().includes('margin') ||
               String(entry.name).includes('%');
             return (
-              <div key={`item-${index}`} className="flex items-center justify-between gap-3 text-[11px]">
+              <div key={`item-${index}`} className="flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-1.5">
                   <span
                     className="w-2.5 h-2.5 rounded-full inline-block shrink-0"
@@ -446,7 +446,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
             <h2 className="text-base font-bold text-white tracking-tight">
               Dashboard Analisis Margin Profit
             </h2>
-            <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded font-mono font-semibold">
+            <span className="text-[11px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded font-mono font-semibold">
               Recharts Analytics
             </span>
           </div>
@@ -509,7 +509,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
           <div className="text-xl sm:text-2xl font-black text-amber-400 font-mono">
             {overallSummary.overallMargin}%
           </div>
-          <div className="text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="text-xs text-slate-400 flex items-center justify-between">
             <span>Laba Kotor Total:</span>
             <span className="font-mono text-emerald-400 font-semibold">
               Rp {overallSummary.totalLabaKotor.toLocaleString('id-ID')}
@@ -526,7 +526,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
           <div className="text-base sm:text-lg font-bold text-white truncate">
             {overallSummary.highestMarginSeries?.name || '-'}
           </div>
-          <div className="text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="text-xs text-slate-400 flex items-center justify-between">
             <span>Margin:</span>
             <span className="font-mono text-emerald-400 font-bold">
               {overallSummary.highestMarginSeries?.marginPercent || 0}%
@@ -543,7 +543,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
           <div className="text-base sm:text-lg font-bold text-white truncate">
             {overallSummary.highestMarginChannel?.channel || '-'}
           </div>
-          <div className="text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="text-xs text-slate-400 flex items-center justify-between">
             <span>Margin Bersih:</span>
             <span className="font-mono text-blue-400 font-bold">
               {overallSummary.highestMarginChannel?.marginPercent || 0}%
@@ -560,7 +560,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
           <div className="text-xl sm:text-2xl font-black text-rose-400 font-mono">
             Rp {overallSummary.totalAdminFee.toLocaleString('id-ID')}
           </div>
-          <div className="text-[11px] text-slate-400 flex items-center justify-between">
+          <div className="text-xs text-slate-400 flex items-center justify-between">
             <span>Beban ke Omzet:</span>
             <span className="font-mono text-rose-300 font-semibold">
               {overallSummary.feeImpact}% dari penjualan
@@ -640,7 +640,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                     ? 'Grafik Profitabilitas Berdasarkan Lini Produk (Series)'
                     : 'Grafik Profitabilitas Top SKU Produk Terjual'}
                 </h3>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-xs text-slate-400">
                   {metricMode === 'nominal'
                     ? 'Menampilkan perbandingan Omzet Penjualan, Biaya Modal (HPP), dan Laba Kotor'
                     : 'Menampilkan margin keuntungan kotor (%) per varian'}
@@ -748,7 +748,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
               <span className="text-xs font-bold text-white">
                 Rincian Kalkulasi Unit Economics per {productViewMode === 'series' ? 'Seri' : 'SKU'}
               </span>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-xs text-slate-400">
                 Formula: Laba Kotor = Omzet Bersih - HPP (Bahan + Sablon + Aksesoris)
               </span>
             </div>
@@ -772,7 +772,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                     <tr key={item.id} className="hover:bg-slate-900/50 transition-colors">
                       <td className="py-2.5 px-3">
                         <div className="font-semibold text-slate-100">{item.name}</div>
-                        <div className="text-[10px] text-amber-400/80 font-mono">
+                        <div className="text-[11px] text-amber-400/80 font-mono">
                           {item.subLabel}
                         </div>
                       </td>
@@ -796,7 +796,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                             item.marginPercent >= 50
                               ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
                               : item.marginPercent >= 35
@@ -831,7 +831,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                   <h3 className="text-xs font-bold text-white tracking-wide uppercase">
                     Komparasi Margin Bersih per Channel Penjualan
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-xs text-slate-400">
                     Laba Bersih Kanal = Omzet - HPP Kaos - Biaya Potongan Admin Marketplace
                   </p>
                 </div>
@@ -914,7 +914,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                   <PieChartIcon className="w-4 h-4 text-amber-400" />
                   <span>Kontribusi Laba Bersih Kanal</span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 mt-0.5">
                   Porsi nominal rupiah laba kotor yang dihasilkan per kanal
                 </p>
               </div>
@@ -954,7 +954,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                 {channelMarginData.slice(0, 4).map((c) => (
                   <div
                     key={c.channel}
-                    className="p-1.5 bg-slate-900 rounded-lg flex items-center justify-between text-[11px]"
+                    className="p-1.5 bg-slate-900 rounded-lg flex items-center justify-between text-xs"
                   >
                     <div className="flex items-center gap-1.5 min-w-0">
                       <span
@@ -978,7 +978,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
               <span className="text-xs font-bold text-white">
                 Tabel Analisis Struktur Biaya & Margin Tiap Channel
               </span>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-xs text-slate-400">
                 Memperhitungkan komisi Shopee (7.5%), TikTok (8.0%), TAPADA (2.5%), & Direct WhatsApp
               </span>
             </div>
@@ -1053,7 +1053,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                 <span className="text-xs font-bold text-white uppercase tracking-wide">
                   Peringkat Efisiensi Margin Seri Kaos
                 </span>
-                <span className="text-[11px] text-amber-400 font-mono">Sorted by Margin %</span>
+                <span className="text-xs text-amber-400 font-mono">Sorted by Margin %</span>
               </div>
 
               <div className="space-y-2">
@@ -1065,12 +1065,12 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                       className="p-3 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 font-bold flex items-center justify-center text-[10px]">
+                        <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 font-bold flex items-center justify-center text-[11px]">
                           {idx + 1}
                         </span>
                         <div>
                           <div className="font-bold text-white">{s.name}</div>
-                          <div className="text-[11px] text-slate-400">
+                          <div className="text-xs text-slate-400">
                             Harga Jual Rata-rata: Rp {s.avgSellingPrice.toLocaleString('id-ID')} ·
                             HPP: Rp {s.avgUnitHpp.toLocaleString('id-ID')}
                           </div>
@@ -1081,7 +1081,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                         <div className="text-base font-black text-amber-400 font-mono">
                           {s.marginPercent}%
                         </div>
-                        <div className="text-[10px] text-emerald-400 font-mono">
+                        <div className="text-[11px] text-emerald-400 font-mono">
                           +Rp {s.profitPerPcs.toLocaleString('id-ID')} / pcs
                         </div>
                       </div>
@@ -1096,7 +1096,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                 <span className="text-xs font-bold text-white uppercase tracking-wide">
                   Peringkat Efisiensi Saluran Penjualan
                 </span>
-                <span className="text-[11px] text-emerald-400 font-mono">Net Profit Contribution</span>
+                <span className="text-xs text-emerald-400 font-mono">Net Profit Contribution</span>
               </div>
 
               <div className="space-y-2">
@@ -1108,12 +1108,12 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                       className="p-3 bg-slate-900 rounded-lg border border-slate-800 flex items-center justify-between text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="w-5 h-5 rounded-full bg-slate-800 text-emerald-400 font-bold flex items-center justify-center text-[10px]">
+                        <span className="w-5 h-5 rounded-full bg-slate-800 text-emerald-400 font-bold flex items-center justify-center text-[11px]">
                           {idx + 1}
                         </span>
                         <div>
                           <div className="font-bold text-white">{ch.channel}</div>
-                          <div className="text-[11px] text-slate-400">
+                          <div className="text-xs text-slate-400">
                             Fee Admin: {ch.feePercent}% · Terjual {ch.qty} pcs ({ch.ordersCount}{' '}
                             order)
                           </div>
@@ -1124,7 +1124,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
                         <div className="text-sm font-bold text-emerald-400 font-mono">
                           Rp {ch.labaKotor.toLocaleString('id-ID')}
                         </div>
-                        <div className="text-[10px] text-amber-400 font-mono">
+                        <div className="text-[11px] text-amber-400 font-mono">
                           Margin: {ch.marginPercent}%
                         </div>
                       </div>
@@ -1143,7 +1143,7 @@ export const ProfitMarginDashboard: React.FC<ProfitMarginDashboardProps> = ({
               <div className="font-bold text-amber-300">
                 Insight & Rekomendasi Optimasi Margin Kalima:
               </div>
-              <p className="text-slate-300 leading-relaxed text-[11px]">
+              <p className="text-slate-300 leading-relaxed text-xs">
                 • <strong>Kanal Langsung & Konsinyasi:</strong> Penjualan melalui kanal{' '}
                 <span className="text-white font-semibold">TAPADA</span> dan{' '}
                 <span className="text-white font-semibold">Umum (Direct WhatsApp)</span> menghasilkan

@@ -285,7 +285,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
                 <h3 className="text-base font-bold text-slate-900 tracking-tight">
                   Edit Detail Order #{order.noOrder}
                 </h3>
-                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono font-semibold border border-slate-200">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono font-semibold border border-slate-200">
                   {order.channel}
                 </span>
               </div>
@@ -325,7 +325,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
           {/* Section 1: Tanggal, Channel & Pelanggan */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Tanggal Transaksi *
               </label>
               <input
@@ -338,7 +338,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Sales Channel *
               </label>
               <select
@@ -355,7 +355,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Status Pesanan
               </label>
               <select
@@ -371,7 +371,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Nama Customer / Pembeli *
               </label>
               <input
@@ -384,7 +384,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Nomor WhatsApp / HP
               </label>
               <input
@@ -397,7 +397,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Kota / Domisili
               </label>
               <input
@@ -416,7 +416,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
               <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                 <span>Daftar Produk Dipesan ({cartItems.reduce((a, b) => a + b.qty, 0)} Pcs)</span>
               </h4>
-              <span className="text-[11px] text-slate-700 font-mono font-bold">
+              <span className="text-xs text-slate-700 font-mono font-bold">
                 Subtotal Produk: Rp {subtotal.toLocaleString('id-ID')}
               </span>
             </div>
@@ -424,7 +424,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             {/* Current Items List */}
             <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 text-[10px] uppercase font-semibold border-b border-slate-200/80">
+                <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase font-semibold border-b border-slate-200/80">
                   <tr>
                     <th className="py-3 px-3.5">Produk & SKU</th>
                     <th className="py-3 px-2 text-center w-20">Qty (Pcs)</th>
@@ -452,7 +452,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
                             <div className="font-semibold text-slate-900">
                               {skuObj?.name || item.sku}
                             </div>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono mt-0.5">
+                            <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono mt-0.5">
                               <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 border border-slate-200 font-bold">
                                 {item.sku}
                               </span>
@@ -565,11 +565,11 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
                       >
                         <div className="space-y-1">
                           <div className="flex items-center justify-between gap-1.5">
-                            <span className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200 truncate">
+                            <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded-md border border-slate-200 truncate">
                               {s.sku}
                             </span>
                             <span
-                              className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold font-mono ${
+                              className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold font-mono ${
                                 isOutOfStock
                                   ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                   : stockGudang <= s.minStock
@@ -581,11 +581,11 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
                             </span>
                           </div>
 
-                          <div className="font-semibold text-slate-900 text-[11px] leading-tight line-clamp-2" title={s.name}>
+                          <div className="font-semibold text-slate-900 text-xs leading-tight line-clamp-2" title={s.name}>
                             {s.name}
                           </div>
 
-                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
                             {s.size && (
                               <span className="bg-slate-100 px-1.5 rounded text-slate-600 font-mono">
                                 Size: {s.size}
@@ -600,14 +600,14 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
                         </div>
 
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                          <div className="text-[11px] font-bold text-slate-900 font-mono">
+                          <div className="text-xs font-bold text-slate-900 font-mono">
                             Rp {s.price.toLocaleString('id-ID')}
                           </div>
 
                           <button
                             type="button"
                             onClick={() => handleAddItem(s.sku)}
-                            className={`px-3 py-1 rounded-xl text-[11px] font-semibold shrink-0 transition-colors cursor-pointer ${
+                            className={`px-3 py-1 rounded-xl text-xs font-semibold shrink-0 transition-colors cursor-pointer ${
                               isAdded
                                 ? 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-200'
                                 : 'bg-slate-900 hover:bg-slate-800 text-white'
@@ -627,7 +627,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
           {/* Section 3: Ongkir, Diskon & Keuangan */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Diskon Potongan (Rp)
               </label>
               <input
@@ -646,7 +646,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Ongkir (Rp)
               </label>
               <input
@@ -665,7 +665,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 No. Resi Pengiriman
               </label>
               <input
@@ -678,7 +678,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                 Catatan Transaksi
               </label>
               <input
@@ -721,7 +721,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Total Terbayar (Rp)
                 </label>
                 <input
@@ -740,7 +740,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                   Sisa Piutang (Rp)
                 </label>
                 <input
@@ -753,7 +753,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
 
               {statusBayar !== 'lunas' && (
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                     Jatuh Tempo Piutang
                   </label>
                   <input
@@ -786,13 +786,13 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
               </div>
             )}
             {adminFeeAmount > 0 && (
-              <div className="flex justify-between items-center text-slate-500 text-[11px]">
+              <div className="flex justify-between items-center text-slate-500 text-xs">
                 <span>Biaya Admin Marketplace ({channel} {adminFeePct}%):</span>
                 <span className="font-mono">- Rp {adminFeeAmount.toLocaleString('id-ID')}</span>
               </div>
             )}
             {isOwner && (
-              <div className="flex justify-between items-center text-slate-500 text-[11px]">
+              <div className="flex justify-between items-center text-slate-500 text-xs">
                 <span>Total HPP Modal Bahan & BOM:</span>
                 <span className="font-mono">Rp {totalHpp.toLocaleString('id-ID')}</span>
               </div>
@@ -822,7 +822,7 @@ export const EditOrderModal = React.memo<EditOrderModalProps>(function EditOrder
 
         {/* Modal Footer */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-50/80 border-t border-slate-200/80">
-          <div className="text-[11px] text-slate-500 hidden sm:block">
+          <div className="text-xs text-slate-500 hidden sm:block">
             Perubahan stok & laba rugi disinkronkan secara real-time.
           </div>
 

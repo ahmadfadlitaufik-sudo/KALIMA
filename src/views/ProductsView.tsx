@@ -378,16 +378,16 @@ export const ProductsView: React.FC = () => {
                       <span className="bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-mono font-bold text-amber-300 border border-amber-500/40 shadow-md">
                         KL-{ser.code}
                       </span>
-                      <span className="bg-amber-500/90 text-slate-950 px-2 py-0.5 rounded-lg text-[11px] font-bold shadow-md">
+                      <span className="bg-amber-500/90 text-slate-950 px-2 py-0.5 rounded-lg text-xs font-bold shadow-md">
                         {ser.gsm} GSM
                       </span>
                     </div>
 
-                    <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[11px] font-semibold text-slate-200 border border-slate-700">
+                    <div className="absolute top-3 right-3 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-200 border border-slate-700">
                       {ser.fit} Fit
                     </div>
 
-                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-[11px] text-slate-200 bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800/80">
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-slate-200 bg-black/75 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800/80">
                       <span className="font-semibold text-white">
                         {colorPalette.length} Warna Pilihan
                       </span>
@@ -423,7 +423,7 @@ export const ProductsView: React.FC = () => {
 
                     {/* Varian Warna (Color Swatches) */}
                     <div className="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2">
-                      <div className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
+                      <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                         <Palette className="w-3.5 h-3.5 text-amber-400" />
                         <span>Katalog Varian Warna ({colorPalette.length}):</span>
                       </div>
@@ -431,7 +431,7 @@ export const ProductsView: React.FC = () => {
                         {colorPalette.map((col) => (
                           <div
                             key={col.code}
-                            className="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800 text-[10px] text-slate-300"
+                            className="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded-lg border border-slate-800 text-[11px] text-slate-300"
                             title={`${col.name} (${col.code})`}
                           >
                             <span
@@ -481,7 +481,7 @@ export const ProductsView: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 bg-slate-950 p-2 rounded-xl">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-950 p-2 rounded-xl">
                           <EyeOff className="w-3.5 h-3.5" />
                           <span>HPP Modal & Margin disembunyikan (Akses Admin)</span>
                         </div>
@@ -502,7 +502,7 @@ export const ProductsView: React.FC = () => {
                           </span>
                         </div>
                         {isOwner && (
-                          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-850">
+                          <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-850">
                             <span>Valuasi Aset Stok:</span>
                             <span className="font-mono font-bold text-amber-300">
                               Rp {totalValuasiAset.toLocaleString('id-ID')}
@@ -542,25 +542,25 @@ export const ProductsView: React.FC = () => {
           {/* Quick Metrics Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-[#121620] p-3 rounded-2xl border border-slate-800/80">
-              <span className="text-[11px] text-slate-400">Total SKU Aktif</span>
+              <span className="text-xs text-slate-400">Total SKU Aktif</span>
               <p className="text-sm font-mono font-bold text-white mt-0.5">
                 {skuStats.totalSkus} SKU
               </p>
             </div>
             <div className="bg-[#121620] p-3 rounded-2xl border border-slate-800/80">
-              <span className="text-[11px] text-slate-400">Total Stok Fisik Gudang</span>
+              <span className="text-xs text-slate-400">Total Stok Fisik Gudang</span>
               <p className="text-sm font-mono font-bold text-emerald-400 mt-0.5">
                 {skuStats.totalStockGudang} pcs
               </p>
             </div>
             <div className="bg-[#121620] p-3 rounded-2xl border border-slate-800/80">
-              <span className="text-[11px] text-slate-400">Rata-rata Margin Kotor</span>
+              <span className="text-xs text-slate-400">Rata-rata Margin Kotor</span>
               <p className="text-sm font-mono font-bold text-amber-300 mt-0.5">
                 {skuStats.avgMargin}%
               </p>
             </div>
             <div className="bg-[#121620] p-3 rounded-2xl border border-slate-800/80">
-              <span className="text-[11px] text-slate-400">Total Nilai Valuasi HPP</span>
+              <span className="text-xs text-slate-400">Total Nilai Valuasi HPP</span>
               <p className="text-sm font-mono font-bold text-white mt-0.5">
                 Rp {skuStats.totalValuasiHpp.toLocaleString('id-ID')}
               </p>
@@ -624,7 +624,7 @@ export const ProductsView: React.FC = () => {
           <div className="bg-[#121620] rounded-2xl border border-slate-800/80 overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Format Kode SKU</th>
                     <th className="py-3 px-3">Lini & Nama Produk</th>
@@ -672,7 +672,7 @@ export const ProductsView: React.FC = () => {
                             <div className="font-semibold text-slate-100 line-clamp-1" title={sku.name}>
                               {sku.name}
                             </div>
-                            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                            <div className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
                               <span className="text-amber-300 font-medium">
                                 Lini: {sku.seriesCode}
                               </span>
@@ -690,7 +690,7 @@ export const ProductsView: React.FC = () => {
                                 />
                               )}
                               <span className="text-slate-300 font-medium">{sku.colorName || '-'}</span>
-                              <span className="font-bold text-amber-400 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800 font-mono text-[11px]">
+                              <span className="font-bold text-amber-400 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800 font-mono text-xs">
                                 {sku.size || '-'}
                               </span>
                             </div>
@@ -708,7 +708,7 @@ export const ProductsView: React.FC = () => {
                               <span className="text-emerald-400 font-semibold">
                                 Rp {margin.toLocaleString('id-ID')}
                               </span>
-                              <span className="text-[10px] text-slate-400 ml-1">
+                              <span className="text-[11px] text-slate-400 ml-1">
                                 ({marginPct}%)
                               </span>
                             </td>
@@ -721,15 +721,15 @@ export const ProductsView: React.FC = () => {
                           </td>
                           <td className="py-3 px-3 text-center whitespace-nowrap">
                             {isOutOfStock ? (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800">
+                              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-800">
                                 HABIS
                               </span>
                             ) : isLowStock ? (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
+                              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
                                 MENIPIS
                               </span>
                             ) : (
-                              <span className="text-[10px] font-semibold text-emerald-400">
+                              <span className="text-[11px] font-semibold text-emerald-400">
                                 Aman
                               </span>
                             )}
@@ -783,7 +783,7 @@ export const ProductsView: React.FC = () => {
               </p>
             </div>
             <div className="text-right">
-              <span className="text-[11px] text-slate-400">Total Aksesoris:</span>
+              <span className="text-xs text-slate-400">Total Aksesoris:</span>
               <div className="text-base font-mono font-bold text-amber-400">
                 Rp {totalAksesoris.toLocaleString('id-ID')} / pcs
               </div>
@@ -826,7 +826,7 @@ export const ProductsView: React.FC = () => {
                       );
                     }}
                     placeholder="Spesifikasi / keterangan"
-                    className="w-full bg-transparent text-[11px] text-slate-400 focus:outline-none mt-0.5"
+                    className="w-full bg-transparent text-xs text-slate-400 focus:outline-none mt-0.5"
                   />
                 </div>
 

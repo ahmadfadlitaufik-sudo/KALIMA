@@ -158,7 +158,7 @@ export const UsersView: React.FC = () => {
       <div className="bg-[#121620] rounded-2xl border border-slate-800/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+            <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 font-semibold uppercase text-[11px] tracking-wider">
               <tr>
                 <th className="py-3 px-4">Pengguna</th>
                 <th className="py-3 px-3">Peran</th>
@@ -173,7 +173,7 @@ export const UsersView: React.FC = () => {
                   <tr key={user.id}>
                     <td className="py-3 px-4">
                       <div className="font-semibold text-white">{user.name}</div>
-                      <div className="text-[10px] text-slate-500">{user.email}</div>
+                      <div className="text-[11px] text-slate-500">{user.email}</div>
                     </td>
                     <td className="py-3 px-3">
                       <select

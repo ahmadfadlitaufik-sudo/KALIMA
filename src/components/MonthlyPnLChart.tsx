@@ -220,7 +220,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             <Calendar className="w-3.5 h-3.5 text-amber-400" />
             <span>{data.label}</span>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+          <span className="text-[11px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
             {data.orderCount} pesanan
           </span>
         </div>
@@ -241,7 +241,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             </span>
             <span className="font-bold">
               {formatRupiah(data.hpp)}
-              <span className="text-[10px] text-slate-400 font-sans ml-1">({data.hppRatio}%)</span>
+              <span className="text-[11px] text-slate-400 font-sans ml-1">({data.hppRatio}%)</span>
             </span>
           </div>
 
@@ -252,7 +252,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             </span>
             <span className="font-bold">
               {formatRupiah(data.opex)}
-              <span className="text-[10px] text-slate-400 font-sans ml-1">({data.opexRatio}%)</span>
+              <span className="text-[11px] text-slate-400 font-sans ml-1">({data.opexRatio}%)</span>
             </span>
           </div>
 
@@ -270,7 +270,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+          <div className="flex items-center justify-between text-xs text-slate-400 pt-0.5">
             <span className="font-sans">Nett Profit Margin:</span>
             <span
               className={`font-bold font-mono ${
@@ -283,7 +283,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
         </div>
 
         {onSelectMonth && (
-          <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[10px] text-center text-amber-400/90 font-sans">
+          <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[11px] text-center text-amber-400/90 font-sans">
             💡 Klik bar untuk memfilter detail rincian bulan ini
           </div>
         )}
@@ -303,7 +303,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             <div>
               <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                 <span>Tren Laporan Laba Rugi Bulanan</span>
-                <span className="text-[10px] font-mono font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-mono font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                   Recharts Visual
                 </span>
               </h3>
@@ -409,7 +409,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
           <div className="text-lg sm:text-xl font-black text-white font-mono">
             {formatRupiah(overallSummary.totalPendapatan)}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
             <span>Net Sales setelah diskon</span>
           </div>
         </div>
@@ -423,7 +423,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
           <div className="text-lg sm:text-xl font-black text-rose-400 font-mono">
             {formatRupiah(overallSummary.totalHpp)}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
             <span>Rasio HPP:</span>
             <strong className="text-rose-300 font-mono">{overallSummary.avgHppRatio.toFixed(1)}%</strong>
           </div>
@@ -442,7 +442,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
           >
             {formatRupiah(overallSummary.totalLabaBersih)}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
             <span>Rata-rata Margin:</span>
             <strong className="text-emerald-300 font-mono">
               {overallSummary.avgMarginBersih.toFixed(1)}%
@@ -461,7 +461,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
               <div className="text-lg sm:text-xl font-black text-amber-300 font-mono truncate">
                 {overallSummary.bestMonth.label}
               </div>
-              <div className="text-[10px] text-slate-400 mt-1 truncate">
+              <div className="text-[11px] text-slate-400 mt-1 truncate">
                 Laba: <span className="text-emerald-400 font-mono font-semibold">{formatRupiah(overallSummary.bestMonth.labaBersih)}</span> ({overallSummary.bestMonth.marginBersih}%)
               </div>
             </>
@@ -667,7 +667,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
       {/* Mini Interactive Month Selector Pills */}
       {monthlyData.length > 1 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-800/80">
-          <span className="text-[11px] text-slate-400 font-medium mr-1 flex items-center gap-1">
+          <span className="text-xs text-slate-400 font-medium mr-1 flex items-center gap-1">
             <Calendar className="w-3 h-3 text-amber-400" />
             <span>Pilih Bulan Spesifik:</span>
           </span>
@@ -700,11 +700,11 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
               <TableIcon className="w-3.5 h-3.5 text-amber-400" />
               <span>Tabel Rincian Kinerja Finansial Bulanan Kalima</span>
             </h4>
-            <span className="text-[10px] text-slate-400">Semua nominal dalam Rupiah (Rp)</span>
+            <span className="text-[11px] text-slate-400">Semua nominal dalam Rupiah (Rp)</span>
           </div>
 
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+            <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[11px]">
               <tr>
                 <th className="py-2.5 px-3">Periode Bulan</th>
                 <th className="py-2.5 px-2.5 text-center">Pesanan</th>
@@ -732,7 +732,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
                     <td className="py-2.5 px-3 font-sans font-semibold text-white flex items-center gap-1.5">
                       <span>{row.label}</span>
                       {isSelected && (
-                        <span className="text-[10px] bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded font-sans">
+                        <span className="text-[11px] bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded font-sans">
                           Dipilih
                         </span>
                       )}
