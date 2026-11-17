@@ -16,11 +16,6 @@ export default defineConfig(() => {
       host: '0.0.0.0',
       strictPort: true,
       proxy: { '/api': 'http://localhost:8787' },
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
-      hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
-      watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
     preview: {
       port: Number(process.env.PORT) || 3000,
@@ -49,11 +44,7 @@ export default defineConfig(() => {
               if (id.includes('recharts') || id.includes('d3-') || id.includes('victory')) {
                 return 'vendor-charts';
               }
-              // Priority 4: Firebase Client SDK
-              if (id.includes('firebase') || id.includes('@firebase')) {
-                return 'vendor-firebase';
-              }
-              // Priority 5: React Core
+              // Priority 4: React Core
               if (
                 id.includes('/react/') ||
                 id.includes('/react-dom/') ||

@@ -164,7 +164,7 @@ export const Header: React.FC = () => {
             }}
             title={
               cloudSyncStatus === 'connected'
-                ? `Cloud Firebase Terhubung (Live Multi-User). Terakhir sinkron: ${lastSyncedAt || 'Baru saja'}. Klik untuk tarik data terbaru dari tim.`
+                ? `Server Terhubung (Multi-User). Terakhir sinkron: ${lastSyncedAt || 'Baru saja'}. Klik untuk tarik data terbaru dari tim.`
                 : cloudSyncStatus === 'syncing'
                 ? 'Sedang menyinkronkan data dengan server...'
                 : '⚠️ Cloud Terputus/Offline. Klik untuk sambungkan & sinkronkan data sekarang.'

@@ -1,8 +1,0 @@
-{
-  "firestore": [
-    {
-      "database": "ai-studio-kalimawebapp-0da35a25-fc24-4f91-9980-01ff3e98c824",
-      "rules": "firestore.rules"
-    }
-  ]
-}

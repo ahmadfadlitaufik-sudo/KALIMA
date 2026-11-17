@@ -151,7 +151,6 @@ interface AppContextType {
   
   // Cloud & Multi-User Realtime Sync
   cloudSyncStatus: 'connecting' | 'connected' | 'syncing' | 'offline' | 'error';
-  isFirebaseConnected: boolean;
   lastSyncedAt: string | null;
   syncToCloudNow: () => Promise<{ success: boolean; message?: string }>;
 
@@ -697,7 +696,7 @@ export const AppProvider: React.FC<{
   };
 
   /**
-   * Gabungkan satu dokumen dari server ke state lokal (logika gabung sama dengan versi Firestore lama).
+   * Gabungkan satu dokumen dari server ke state lokal (logika gabung sama untuk semua perangkat).
    * `fresh` = browser baru: pakai data server apa adanya tanpa data contoh.
    */
   const applyRemoteDoc = (id: WorkspaceDocId, data: Record<string, any>, fresh: boolean) => {
@@ -4054,7 +4053,6 @@ export const AppProvider: React.FC<{
       setTheme,
       toggleTheme,
       cloudSyncStatus,
-      isFirebaseConnected: true,
       lastSyncedAt,
       syncToCloudNow,
       series,

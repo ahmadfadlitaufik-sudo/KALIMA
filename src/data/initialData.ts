@@ -12,7 +12,6 @@ import {
   AuditLog,
   SuratTitip,
   LaporanTitipLaku,
-  User,
   CashAccount,
   CashMutation,
   StockOpnameSession,
@@ -23,30 +22,6 @@ import {
   FixedAssetItem,
   BalanceSheetConfig,
 } from '../types';
-
-export const INITIAL_USERS: User[] = [
-  {
-    id: 'usr-1',
-    name: 'Ahmad Fadli (Owner)',
-    email: 'fadli.owner@kalima.id',
-    role: 'owner',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'usr-2',
-    name: 'Siti Rahma (Admin & CS)',
-    email: 'siti.cs@kalima.id',
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'usr-3',
-    name: 'Budi Santoso (Gudang & Logistik)',
-    email: 'budi.ops@kalima.id',
-    role: 'admin',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  },
-];
 
 export const INITIAL_SERIES: ProductSeries[] = [
   {

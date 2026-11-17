@@ -1,6 +1,0 @@
-{
-  "name": "Kalima Web App",
-  "description": "Sistem manajemen stok, penjualan multi-channel, konsinyasi reseller, dan keuangan Kalima Apparel.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
