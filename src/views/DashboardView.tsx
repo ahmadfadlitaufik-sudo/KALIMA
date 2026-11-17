@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowDownRight,
+  ArrowRight,
   ArrowUpRight,
   Ban,
   CheckCircle2,
@@ -56,47 +57,58 @@ const ACTION_META: Record<ActionItemId, { label: string; hint: string; view: App
 
 const ChangeBadge: React.FC<{ change: number | null; previousLabel: string }> = ({ change, previousLabel }) => {
   if (change === null) {
-    return <span className="text-xs text-slate-500">Belum ada data {previousLabel}</span>;
+    return <span className="hero-muted text-xs text-slate-500">Belum ada data {previousLabel}</span>;
   }
   const up = change >= 0;
   const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${up ? 'text-emerald-700' : 'text-rose-700'}`}>
-      <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-      {up ? '+' : ''}
-      {change}% <span className="font-normal text-slate-500">vs {previousLabel}</span>
+    <span className="inline-flex flex-wrap items-center gap-1.5 text-xs">
+      <span
+        className={`hero-chip inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full font-semibold tabular-nums ${
+          up ? 'bg-indigo-100 text-indigo-800' : 'bg-rose-50 text-rose-700'
+        }`}
+      >
+        {up ? '+' : ''}
+        {change}%
+        <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+      </span>
+      <span className="hero-muted text-slate-500">vs {previousLabel}</span>
     </span>
   );
 };
 
-const KpiCard: React.FC<{ icon: React.ElementType; label: string; value: string; children?: React.ReactNode; onClick?: () => void }> = ({
-  icon: Icon,
-  label,
-  value,
-  children,
-  onClick,
-}) => {
-  const body = (
-    <>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold text-slate-600">{label}</span>
-        <span className="p-2 rounded-xl bg-indigo-50 text-indigo-700">
+const KpiCard: React.FC<{
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  linkLabel: string;
+  onClick: () => void;
+  highlight?: boolean;
+  children?: React.ReactNode;
+}> = ({ icon: Icon, label, value, linkLabel, onClick, highlight = false, children }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`${
+      highlight ? 'card-hero' : 'bg-white border-slate-200 hover:border-slate-300'
+    } group flex flex-col rounded-[20px] border text-left w-full cursor-pointer transition-colors`}
+  >
+    <span className="flex-1 w-full p-5 space-y-3">
+      <span className="flex items-center gap-2.5">
+        <span className={`hero-chip p-2 rounded-xl border ${highlight ? 'border-transparent' : 'bg-white border-slate-200 text-slate-700'}`}>
           <Icon className="w-4 h-4" aria-hidden="true" />
         </span>
-      </div>
-      <div className="text-2xl font-bold text-slate-900 tabular-nums whitespace-nowrap">{value}</div>
-      <div className="space-y-1">{children}</div>
-    </>
-  );
-  const className = 'bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-2 text-left w-full';
-  return onClick ? (
-    <button type="button" onClick={onClick} className={`${className} hover:border-indigo-300 transition-colors cursor-pointer`}>
-      {body}
-    </button>
-  ) : (
-    <div className={className}>{body}</div>
-  );
-};
+        <span className="text-sm font-semibold text-slate-900">{label}</span>
+      </span>
+      <span className="block text-2xl font-bold text-slate-900 tabular-nums whitespace-nowrap">{value}</span>
+      <span className="block space-y-1.5">{children}</span>
+    </span>
+    <span className="hero-divider w-full flex items-center justify-between px-5 py-3 border-t border-slate-200 text-xs font-semibold text-slate-700">
+      {linkLabel}
+      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+    </span>
+  </button>
+);
 
 export const DashboardView: React.FC = () => {
   const { isOwner, orders, skus, channels, calculateStockSummary, getLowStockSKUs, setCurrentView, cashAccounts, cashMutations, purchaseOrders } = useApp();
@@ -189,55 +201,61 @@ export const DashboardView: React.FC = () => {
 
       {/* 4 angka utama */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <KpiCard icon={TrendingUp} label="Omzet" value={rupiah(current.omzet)} onClick={() => setCurrentView('sales')}>
+        <KpiCard icon={TrendingUp} label="Omzet" value={rupiah(current.omzet)} linkLabel="Lihat penjualan" onClick={() => setCurrentView('sales')} highlight>
           <ChangeBadge change={percentChange(current.omzet, previous.omzet)} previousLabel={labels.previous} />
-          <p className="text-xs text-slate-500">{current.count} order</p>
+          <span className="hero-muted block text-xs text-slate-500">{current.count} order</span>
         </KpiCard>
 
         {isOwner ? (
-          <KpiCard icon={CheckCircle2} label="Laba Kotor" value={rupiah(current.laba)}>
+          <KpiCard icon={CheckCircle2} label="Laba Kotor" value={rupiah(current.laba)} linkLabel="Lihat keuangan" onClick={() => setCurrentView('finance')}>
             <ChangeBadge change={percentChange(current.laba, previous.laba)} previousLabel={labels.previous} />
-            <p className="text-xs text-slate-500">Margin {margin === null ? '–' : `${margin}%`}</p>
+            <span className="block text-xs text-slate-500">Margin {margin === null ? '–' : `${margin}%`}</span>
           </KpiCard>
         ) : (
-          <KpiCard icon={ShoppingBag} label="Jumlah Order" value={`${current.count}`}>
+          <KpiCard icon={ShoppingBag} label="Jumlah Order" value={`${current.count}`} linkLabel="Lihat penjualan" onClick={() => setCurrentView('sales')}>
             <ChangeBadge change={percentChange(current.count, previous.count)} previousLabel={labels.previous} />
           </KpiCard>
         )}
 
-        <KpiCard icon={Target} label={isMonthPeriod ? 'Pcs Terjual vs Kuota' : 'Pcs Terjual'} value={`${current.qty.toLocaleString('id-ID')} pcs`}>
+        <KpiCard
+          icon={Target}
+          label={isMonthPeriod ? 'Pcs Terjual vs Kuota' : 'Pcs Terjual'}
+          value={`${current.qty.toLocaleString('id-ID')} pcs`}
+          linkLabel="Lihat stok"
+          onClick={() => setCurrentView('inventory')}
+        >
           {isMonthPeriod ? (
             <>
-              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow={quotaPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Pencapaian kuota">
-                <div className="bg-indigo-600 h-full rounded-full" style={{ width: `${quotaPercent}%` }} />
-              </div>
-              <p className="text-xs text-slate-500">
+              <span className="block w-full bg-slate-100 rounded-full h-2 overflow-hidden" role="progressbar" aria-valuenow={quotaPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Pencapaian kuota">
+                <span className="block bg-indigo-600 h-full rounded-full" style={{ width: `${quotaPercent}%` }} />
+              </span>
+              <span className="block text-xs text-slate-500">
                 {quotaPercent}% dari kuota {MONTHLY_QUOTA_PCS.toLocaleString('id-ID')} pcs
-              </p>
+              </span>
             </>
           ) : (
             <ChangeBadge change={percentChange(current.qty, previous.qty)} previousLabel={labels.previous} />
           )}
         </KpiCard>
 
-        <KpiCard icon={Wallet} label="Total Kas & Bank" value={rupiah(totalCash)} onClick={() => setCurrentView('finance')}>
-          <p className="text-xs text-slate-500">
+        <KpiCard icon={Wallet} label="Total Kas & Bank" value={rupiah(totalCash)} linkLabel="Lihat kas & bank" onClick={() => setCurrentView('finance')}>
+          <span className="block text-xs text-slate-500">
             {cashAccounts.length} rekening ·{' '}
             {monthCashFlow.count === 0 ? (
               'belum ada mutasi bulan ini'
             ) : (
-              <span className={monthCashFlow.net >= 0 ? 'text-emerald-700' : 'text-rose-700'}>
+              <span className={monthCashFlow.net >= 0 ? 'text-indigo-700' : 'text-rose-700'}>
                 arus bersih bulan ini {monthCashFlow.net >= 0 ? '+' : '−'}
                 {rupiah(Math.abs(monthCashFlow.net))}
               </span>
             )}
-          </p>
+          </span>
         </KpiCard>
       </div>
 
       {/* Perlu tindakan + order terbaru */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <section className="lg:col-span-2 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-3" aria-labelledby="dashboard-actions">
+        <section className="lg:col-span-2 bg-white p-5 rounded-[20px] border border-slate-200 space-y-3" aria-labelledby="dashboard-actions">
           <h3 id="dashboard-actions" className="text-sm font-bold text-slate-900">
             Perlu Tindakan
           </h3>
@@ -277,7 +295,7 @@ export const DashboardView: React.FC = () => {
           )}
         </section>
 
-        <section className="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-3" aria-labelledby="dashboard-recent">
+        <section className="lg:col-span-3 bg-white p-5 rounded-[20px] border border-slate-200 space-y-3" aria-labelledby="dashboard-recent">
           <div className="flex items-center justify-between">
             <h3 id="dashboard-recent" className="text-sm font-bold text-slate-900">
               Order Terbaru
@@ -315,7 +333,7 @@ export const DashboardView: React.FC = () => {
 
       {/* Channel + stok */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <section className="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-3" aria-labelledby="dashboard-channels">
+        <section className="lg:col-span-3 bg-white p-5 rounded-[20px] border border-slate-200 space-y-3" aria-labelledby="dashboard-channels">
           <h3 id="dashboard-channels" className="text-sm font-bold text-slate-900">
             Penjualan per Channel · {labels.label}
           </h3>
@@ -345,7 +363,7 @@ export const DashboardView: React.FC = () => {
           )}
         </section>
 
-        <section className="lg:col-span-2 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-3" aria-labelledby="dashboard-stock">
+        <section className="lg:col-span-2 bg-white p-5 rounded-[20px] border border-slate-200 space-y-3" aria-labelledby="dashboard-stock">
           <div className="flex items-center justify-between">
             <h3 id="dashboard-stock" className="text-sm font-bold text-slate-900">
               Stok & Pembelian

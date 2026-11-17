@@ -65,90 +65,71 @@ export const Sidebar: React.FC = () => {
     (po) => po.statusPO === 'dikirim' || po.statusPO === 'dipesan'
   ).length;
 
-  const navItems: {
+  type NavItem = {
     id: AppView;
     label: string;
     icon: React.ElementType;
     badge?: number;
     badgeColor?: string;
     description: string;
-  }[] = [
+  };
+
+  // Menu dikelompokkan per seksi; seksi tanpa isi (mis. Pengaturan untuk staf) tidak tampil.
+  const navSections: { title: string; items: NavItem[] }[] = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      description: 'Omzet & ringkasan operasional',
+      title: 'Operasional',
+      items: [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, description: 'Omzet & ringkasan operasional' },
+        {
+          id: 'sales',
+          label: 'Penjualan',
+          icon: ShoppingBag,
+          badge: pendingCancellations > 0 && isOwner ? pendingCancellations : undefined,
+          badgeColor: 'bg-rose-600 text-white',
+          description: 'Pesanan multi-channel & POS',
+        },
+        {
+          id: 'inventory',
+          label: 'Inventori',
+          icon: PackageCheck,
+          badge: lowStockCount > 0 ? lowStockCount : undefined,
+          badgeColor: 'bg-amber-100 text-amber-900',
+          description: 'Stok fisik & gudang',
+        },
+        {
+          id: 'purchases',
+          label: 'Pengadaan PO',
+          icon: Truck,
+          badge: activePOCount > 0 ? activePOCount : undefined,
+          badgeColor: 'bg-slate-100 text-slate-700',
+          description: 'Order vendor & resi kargo',
+        },
+        { id: 'products', label: 'Master SKU', icon: Tag, description: '210, 290, 185 GSM Kaos Polos' },
+      ],
     },
     {
-      id: 'sales',
-      label: 'Penjualan',
-      icon: ShoppingBag,
-      badge: pendingCancellations > 0 && isOwner ? pendingCancellations : undefined,
-      badgeColor: 'bg-rose-500 text-white',
-      description: 'Pesanan multi-channel & POS',
+      title: 'Pelanggan',
+      items: [
+        { id: 'customers', label: 'Customer CRM', icon: Users, description: 'Data pelanggan & repeat order' },
+        { id: 'reseller', label: 'Reseller & Konsinyasi', icon: Store, description: 'Titip jual & bagi hasil' },
+      ],
     },
     {
-      id: 'inventory',
-      label: 'Inventori',
-      icon: PackageCheck,
-      badge: lowStockCount > 0 ? lowStockCount : undefined,
-      badgeColor: 'bg-amber-500 text-slate-950',
-      description: 'Stok fisik & gudang',
+      title: 'Keuangan',
+      items: [
+        { id: 'finance', label: 'Keuangan & Neraca', icon: DollarSign, description: 'Kas, bank & neraca keuangan' },
+        { id: 'audit', label: 'Jejak Audit', icon: History, description: 'Riwayat aktivitas sistem' },
+      ],
     },
     {
-      id: 'purchases',
-      label: 'Pengadaan PO',
-      icon: Truck,
-      badge: activePOCount > 0 ? activePOCount : undefined,
-      badgeColor: 'bg-blue-500 text-white',
-      description: 'Order vendor & resi kargo',
+      title: 'Pengaturan',
+      items: isOwner
+        ? [
+            { id: 'import_export', label: 'Impor & Ekspor', icon: FileSpreadsheet, description: 'Excel workbook & sinkronisasi' },
+            { id: 'users', label: 'Pengguna', icon: UserCog, description: 'Siapa yang boleh masuk & perannya' },
+          ]
+        : [],
     },
-    {
-      id: 'products',
-      label: 'Master SKU',
-      icon: Tag,
-      description: '210, 290, 185 GSM Kaos Polos',
-    },
-    {
-      id: 'customers',
-      label: 'Customer CRM',
-      icon: Users,
-      description: 'Data pelanggan & repeat order',
-    },
-    {
-      id: 'reseller',
-      label: 'Reseller & Konsinyasi',
-      icon: Store,
-      description: 'Titip jual & bagi hasil',
-    },
-    {
-      id: 'finance',
-      label: 'Keuangan & Neraca',
-      icon: DollarSign,
-      description: 'Kas, bank & neraca keuangan',
-    },
-    {
-      id: 'audit',
-      label: 'Jejak Audit',
-      icon: History,
-      description: 'Riwayat aktivitas sistem',
-    },
-    ...(isOwner
-      ? [
-          {
-            id: 'import_export' as AppView,
-            label: 'Impor & Ekspor',
-            icon: FileSpreadsheet,
-            description: 'Excel workbook & sinkronisasi',
-          },
-          {
-            id: 'users' as AppView,
-            label: 'Pengguna',
-            icon: UserCog,
-            description: 'Siapa yang boleh masuk & perannya',
-          },
-        ]
-      : []),
   ];
 
   const handleNavClick = (viewId: AppView) => {
@@ -206,58 +187,65 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Center: Navigation Icon Squircles (Exact Reference Style) */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-none">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-
-            return (
-              <div key={item.id} className="relative group">
-                <button
-                  onClick={() => handleNavClick(item.id)}
-                  aria-label={item.label}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`w-full flex items-center gap-3.5 p-2.5 rounded-2xl transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-slate-900 text-white shadow-md'
-                      : 'text-slate-400 hover:text-slate-900 hover:bg-slate-100/80'
-                  } ${!expanded && !mobileMenuOpen ? 'justify-center' : ''}`}
-                >
-                  <div className="relative shrink-0 flex items-center justify-center">
-                    <Icon className="w-5 h-5" />
-                    {item.badge !== undefined && (
-                      <span
-                        className={`absolute -top-1.5 -right-2 text-[11px] font-bold px-1.5 py-0.2 rounded-full ring-2 ring-white tabular-nums ${
-                          item.badgeColor || 'bg-rose-500 text-white'
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-
-                  {(expanded || mobileMenuOpen) && (
-                    <div className="flex-1 text-left min-w-0 animate-in fade-in">
-                      <div className="text-xs font-semibold truncate leading-tight">
-                        {item.label}
-                      </div>
-                      <div className="text-[11px] text-slate-400 truncate">
-                        {item.description}
-                      </div>
-                    </div>
-                  )}
-                </button>
-
-                {/* Floating Tooltip when dock is compact */}
-                {!expanded && !mobileMenuOpen && (
-                  <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 pointer-events-none hidden group-hover:flex flex-col bg-slate-900 text-white text-xs px-3 py-1.5 rounded-xl shadow-xl whitespace-nowrap animate-in fade-in slide-in-from-left-2">
-                    <span className="font-semibold">{item.label}</span>
-                    <span className="text-[11px] text-slate-400">{item.description}</span>
-                  </div>
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5 scrollbar-none" aria-label="Menu utama">
+          {navSections
+            .filter((section) => section.items.length > 0)
+            .map((section) => (
+              <div key={section.title} className="space-y-1">
+                {expanded || mobileMenuOpen ? (
+                  <h2 className="px-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{section.title}</h2>
+                ) : (
+                  <div className="mx-auto w-6 border-t border-slate-200" aria-hidden="true" />
                 )}
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = currentView === item.id;
+                  const showLabels = expanded || mobileMenuOpen;
+
+                  return (
+                    <div key={item.id} className="relative group">
+                      <button
+                        onClick={() => handleNavClick(item.id)}
+                        aria-label={item.badge !== undefined ? `${item.label} (${item.badge})` : item.label}
+                        aria-current={isActive ? 'page' : undefined}
+                        title={showLabels ? item.description : undefined}
+                        className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-xl transition-colors cursor-pointer ${
+                          isActive ? 'nav-item-active' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        } ${!showLabels ? 'justify-center' : ''}`}
+                      >
+                        <span className="relative shrink-0 flex items-center justify-center">
+                          <Icon className="w-5 h-5" aria-hidden="true" />
+                          {!showLabels && item.badge !== undefined && (
+                            <span className={`absolute -top-1.5 -right-2 text-[11px] font-bold px-1.5 rounded-full ring-2 ring-white tabular-nums ${item.badgeColor}`}>
+                              {item.badge}
+                            </span>
+                          )}
+                        </span>
+
+                        {showLabels && (
+                          <>
+                            <span className="flex-1 text-left text-sm font-medium truncate">{item.label}</span>
+                            {item.badge !== undefined && (
+                              <span className={`shrink-0 min-w-6 text-center text-[11px] font-bold px-1.5 py-0.5 rounded-full tabular-nums ${item.badgeColor}`}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </button>
+
+                      {/* Tooltip saat sidebar diciutkan */}
+                      {!showLabels && (
+                        <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 pointer-events-none hidden group-hover:flex flex-col bg-white border border-slate-200 text-xs px-3 py-1.5 rounded-xl shadow-xl whitespace-nowrap">
+                          <span className="font-semibold text-slate-900">{item.label}</span>
+                          <span className="text-[11px] text-slate-500">{item.description}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            ))}
         </nav>
 
         {/* Bottom: User Avatar Ring & Expand Toggle (Reference Image Style) */}

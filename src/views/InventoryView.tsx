@@ -789,7 +789,7 @@ export const InventoryView: React.FC = () => {
       {activeTab === 'barang_masuk' && (
         <div className="space-y-4 max-w-2xl mx-auto">
           {/* Link to Full Vendor PO Procurement Lifecycle */}
-          <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/40 to-white border border-blue-200/80 p-4 rounded-3xl flex items-center justify-between gap-3 shadow-xs">
+          <div className="bg-white border border-slate-200 p-4 rounded-3xl flex items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-blue-100/80 text-blue-700 border border-blue-200/80 rounded-2xl shrink-0">
                 <Truck className="w-5 h-5" />

@@ -314,7 +314,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/40 to-amber-50/50 p-5 sm:p-6 rounded-3xl border border-blue-200/60 shadow-xs relative overflow-hidden">
+      <div className="bg-white p-5 sm:p-6 rounded-3xl border border-blue-200/60 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-3">

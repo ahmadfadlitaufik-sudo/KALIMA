@@ -41,7 +41,11 @@
     --color-bg-card: #ffffff;
     --color-border: #E8E3D7;
     --color-text-main: #23211C;
-    --color-text-muted: #767169;
+    --color-text-muted: #6E6B6C;
+    /* Tiga tingkat teks: utama (Eerie Black), kedua (Davy's Grey), ketiga (Taupe Grey diperdalam agar kontras ≥ 4.5:1). */
+    --text-1: #23211C;
+    --text-2: #535456;
+    --text-3: #6E6B6C;
   }
 
   body {
@@ -73,17 +77,28 @@ body,
   color: #23211C !important;
 }
 
-/* Standard Soft Cards: Crisp White, Rounded 24px-28px, Soft Diffuse Shadow */
+/* Kartu standar: putih, border tipis, tanpa bayangan */
 .bg-\[\#121620\],
 .bg-\[\#12161f\],
 .bg-\[\#141d30\],
 .bg-\[\#161c28\],
 aside.bg-\[\#12161f\] {
   background-color: #ffffff !important;
-  border-color: rgba(232, 227, 215, 0.75) !important;
-  border-radius: 26px !important;
-  box-shadow: 0 10px 30px -4px rgba(35, 33, 28, 0.04), 0 2px 8px -2px rgba(35, 33, 28, 0.02) !important;
+  border-color: #E8E3D7 !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
   color: #23211C !important;
+}
+
+/* Kartu putih datar: bayangan dibuang, kecuali yang melayang (dropdown, toast, modal) */
+.bg-white.shadow-2xs,
+.bg-white.shadow-xs,
+.bg-white.shadow-sm,
+.bg-white.shadow,
+.bg-white.shadow-md,
+.bg-white.shadow-lg:not(.absolute):not(.fixed),
+.bg-white.shadow-xl:not(.absolute):not(.fixed) {
+  box-shadow: none !important;
 }
 
 /* Secondary Panels & Inner Containers */
@@ -117,23 +132,32 @@ aside.bg-\[\#12161f\] {
   color: #23211C !important;
 }
 
-/* Global Text Colors */
-.text-white {
-  color: #23211C !important;
-}
-
+/* Global Text Colors — dikunci ke tiga tingkat */
+.text-white,
 .text-slate-100,
+.text-slate-800,
+.text-slate-900,
+.text-slate-950 {
+  color: var(--text-1) !important;
+}
+
 .text-slate-200,
-.text-slate-300 {
-  color: #37352F !important;
+.text-slate-300,
+.text-slate-600,
+.text-slate-700 {
+  color: var(--text-2) !important;
 }
 
-.text-slate-400 {
-  color: #767169 !important;
-}
-
+.text-slate-400,
 .text-slate-500 {
-  color: #767169 !important;
+  color: var(--text-3) !important;
+}
+
+/* Hover tetap bekerja walau warna dasar dikunci */
+.hover\:text-slate-900:hover,
+.hover\:text-slate-800:hover,
+.hover\:text-white:hover {
+  color: var(--text-1) !important;
 }
 
 /* Borders */
@@ -202,147 +226,49 @@ textarea:focus {
 /* FEATURE CARDS: EXACT REFERENCE MATCHES                                    */
 /* ========================================================================= */
 
-/* 1. Dark Tech Card (Reference: "Your Balance" card) */
-.card-dark-tech {
-  background-color: #121622 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 26px !important;
-  box-shadow: 0 16px 36px -6px rgba(18, 22, 34, 0.35) !important;
-  position: relative !important;
-  overflow: hidden !important;
+/* Kartu utama: satu per halaman, hijau Dark Spring Green penuh, tanpa gradien */
+.card-hero {
+  background-color: #0E6E48 !important;
+  border-color: #0E6E48 !important;
   color: #ffffff !important;
 }
 
-.card-dark-tech,
-.card-dark-tech * {
-  color: #ffffff;
-}
-
-.card-dark-tech .text-white {
+.card-hero,
+.card-hero * {
   color: #ffffff !important;
 }
 
-.card-dark-tech .text-slate-100,
-.card-dark-tech .text-slate-200 {
-  color: #F5F1E6 !important;
+.card-hero .hero-muted {
+  color: rgba(255, 255, 255, 0.82) !important;
 }
 
-.card-dark-tech .text-slate-300 {
-  color: #D2CDC2 !important;
+.card-hero .hero-divider {
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.card-dark-tech .text-slate-400 {
-  color: #A6A19A !important;
+.card-hero .hero-chip {
+  background-color: rgba(255, 255, 255, 0.16) !important;
 }
 
-.card-dark-tech .text-slate-500 {
-  color: #767169 !important;
-}
-
-.card-dark-tech .text-emerald-300 {
-  color: #6ee7b7 !important;
-}
-
-.card-dark-tech .text-emerald-400 {
-  color: #34d399 !important;
-}
-
-.card-dark-tech .frosted-btn {
-  background-color: rgba(255, 255, 255, 0.12) !important;
-  backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  color: #ffffff !important;
-  border-radius: 16px !important;
-  transition: all 0.2s ease !important;
-}
-
-.card-dark-tech .frosted-btn,
-.card-dark-tech .frosted-btn span,
-.card-dark-tech .frosted-btn svg {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-.card-dark-tech .frosted-btn:hover {
-  background-color: rgba(255, 255, 255, 0.22) !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* 2. Kartu aksen hijau Kalima (British Green → Dark Spring Green) */
-.card-gradient-coral {
-  background: linear-gradient(135deg, #12442B 0%, #0E6E48 60%, #2F8460 100%) !important;
-  border: none !important;
-  border-radius: 26px !important;
-  box-shadow: 0 14px 32px -4px rgba(18, 68, 43, 0.3) !important;
-  position: relative !important;
-  overflow: hidden !important;
-  color: #ffffff !important;
-}
-
-.card-gradient-coral .text-white {
-  color: #ffffff !important;
-}
-
-.card-gradient-coral h1,
-.card-gradient-coral h2,
-.card-gradient-coral h3,
-.card-gradient-coral span,
-.card-gradient-coral p {
-  color: #ffffff;
-}
-
-.card-gradient-coral p {
-  color: rgba(255, 255, 255, 0.95) !important;
-}
-
-.card-gradient-coral p strong {
-  color: #ffffff !important;
-}
-
-.card-gradient-coral .text-rose-50\/90,
-.card-gradient-coral .text-rose-100 {
-  color: rgba(243, 238, 218, 0.95) !important;
-}
-
-.card-gradient-coral .btn-white-pill {
-  background-color: #ffffff !important;
-  color: #23211C !important;
-  border-radius: 9999px !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
-  font-weight: 700 !important;
-  transition: all 0.2s ease !important;
-}
-
-.card-gradient-coral .btn-white-pill,
-.card-gradient-coral .btn-white-pill *,
-.card-gradient-coral .btn-white-pill span,
-.card-gradient-coral .btn-white-pill svg {
-  color: #23211C !important;
-  stroke: #23211C !important;
-}
-
-.card-gradient-coral .btn-white-pill:hover {
-  background-color: #FDFAF3 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+.card-hero:hover {
+  background-color: #0C5A3B !important;
 }
 
 /* 3. Kartu lembut Eggshell */
 .card-pastel-pink {
   background-color: #F3EEDA !important;
   border: 1px solid rgba(99, 154, 123, 0.35) !important;
-  border-radius: 22px !important;
-  box-shadow: 0 4px 16px rgba(18, 68, 43, 0.05) !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
   color: #23211C !important;
 }
 
 /* 4. Banner lembut Floral White → Eggshell */
 .card-pastel-peach {
-  background: linear-gradient(135deg, #FDFAF3 0%, #F3EEDA 100%) !important;
+  background: #FDFAF3 !important;
   border: 1px solid rgba(99, 154, 123, 0.3) !important;
-  border-radius: 22px !important;
-  box-shadow: 0 6px 20px rgba(18, 68, 43, 0.05) !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
   color: #37352F !important;
 }
 
@@ -474,4 +400,14 @@ textarea:focus {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #A6A19A;
+}
+
+/* Menu samping aktif: blok gelap Eerie Black */
+.nav-item-active {
+  background-color: #23211C !important;
+  color: #ffffff !important;
+}
+
+.nav-item-active:hover {
+  background-color: #37352F !important;
 }

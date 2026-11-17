@@ -475,7 +475,7 @@ export const BalanceSheetSection: React.FC = () => {
       )}
 
       {/* Header & Balance Status Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-[#141d30] to-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden">
+      <div className="bg-white p-5 rounded-3xl border border-slate-800 shadow-xl relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2.5">
@@ -649,7 +649,7 @@ export const BalanceSheetSection: React.FC = () => {
       </div>
 
       {/* Visual Balance Scale Comparison Bar */}
-      <div className="bg-gradient-to-r from-slate-950 via-[#131b2e] to-slate-950 p-3.5 rounded-2xl border border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+      <div className="bg-[#FDFAF3] p-3.5 rounded-2xl border border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
             <Scale className="w-4 h-4 text-amber-400" />
@@ -1211,7 +1211,7 @@ export const BalanceSheetSection: React.FC = () => {
       {activeSubView === 'jurnal' && (
         <div className="space-y-5 animate-in fade-in">
           {/* Explanation Banner */}
-          <div className="bg-gradient-to-r from-blue-950/50 via-[#131b2e] to-emerald-950/40 p-4 rounded-2xl border border-blue-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+          <div className="bg-[#FDFAF3] p-4 rounded-2xl border border-blue-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
             <div className="flex items-start gap-3">
               <span className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0 mt-0.5">
                 <BookOpen className="w-5 h-5" />
@@ -1448,7 +1448,7 @@ export const BalanceSheetSection: React.FC = () => {
       {activeSubView === 'buku_besar' && (
         <div className="space-y-5 animate-in fade-in">
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-emerald-950/40 via-[#131b2e] to-rose-950/40 p-4 rounded-2xl border border-emerald-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+          <div className="bg-[#FDFAF3] p-4 rounded-2xl border border-emerald-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
             <div className="flex items-start gap-3">
               <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 mt-0.5">
                 <CreditCard className="w-5 h-5" />

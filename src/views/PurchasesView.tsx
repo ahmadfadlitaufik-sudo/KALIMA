@@ -527,7 +527,7 @@ export const PurchasesView: React.FC = () => {
       {activeTab === 'orders' && (
         <div className="space-y-4">
           {/* Vendor Performance Quick Insight Banner */}
-          <div className="bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-amber-50/60 p-4 rounded-2xl border border-blue-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
             <div className="flex items-center gap-3">
               <span className="p-2 rounded-xl bg-blue-100/80 text-blue-700 border border-blue-200 shrink-0">
                 <BarChart3 className="w-4 h-4" />
@@ -2532,7 +2532,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
           </div>
 
           {/* Real-Time Double-Entry Journaling Simulation Card */}
-          <div className="bg-gradient-to-br from-slate-50 via-blue-50/40 to-slate-50 p-4 rounded-2xl border border-blue-200/80 space-y-2.5 shadow-2xs">
+          <div className="bg-[#FDFAF3] p-4 rounded-2xl border border-slate-200 space-y-2.5 shadow-2xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <span className="p-1 rounded-lg bg-blue-100 text-blue-700">
@@ -3149,7 +3149,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
           </div>
 
           {/* Route Map Visual Card */}
-          <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 p-4 sm:p-5 rounded-2xl border border-blue-200/60 shadow-xs">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               {/* Origin Vendor */}
               <div className="flex items-center gap-3">
