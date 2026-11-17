@@ -183,16 +183,13 @@ export const Sidebar: React.FC = () => {
               className="flex items-center gap-3 cursor-pointer group"
               title="Kalima Apparel" aria-label="Kalima Apparel"
             >
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#f43f5e] via-[#fb7185] to-[#fb923c] text-white flex items-center justify-center font-black text-base shadow-md ring-4 ring-rose-50 transition-transform group-hover:scale-105">
-                K
-              </div>
-              {(expanded || mobileMenuOpen) && (
-                <div className="text-left animate-in fade-in">
-                  <div className="font-extrabold text-slate-900 text-base tracking-tight leading-none">
-                    KALIMA
-                  </div>
-                  <span className="text-[11px] text-slate-400 font-medium">Apparel ERP</span>
+              {expanded || mobileMenuOpen ? (
+                <div className="text-left animate-in fade-in space-y-1">
+                  <img src="/brand/kalima-logo-dark.png" alt="Kalima" className="h-7 w-auto" />
+                  <span className="block text-[11px] text-slate-500 font-medium">Apparel ERP</span>
                 </div>
+              ) : (
+                <img src="/brand/kalima-icon-dark.png" alt="Kalima" className="w-9 h-auto transition-transform group-hover:scale-105" />
               )}
             </button>
 

@@ -103,14 +103,9 @@ export const LoginPage: React.FC = () => {
       {/* Top Navigation Bar */}
       <header className="w-full px-6 py-5 flex items-center justify-between border-b border-white/5 backdrop-blur-md bg-slate-950/40">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/20 text-slate-950 font-black text-xl tracking-tight">
-            K
-          </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-base tracking-tight text-white">
-                KALIMA APPAREL
-              </span>
+              <img src="/brand/kalima-logo-light.png" alt="Kalima" className="h-7 w-auto" />
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
                 PRO ERP
               </span>

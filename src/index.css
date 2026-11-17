@@ -1,23 +1,58 @@
 @import "tailwindcss";
 
+/*
+ * Identitas Kalima (GSM): netral hangat dari Eerie Black #23211C, Davy's Grey #535456,
+ * Taupe Grey #8C8889, Floral White #FDFAF3; aksen hijau Dark Spring Green #0E6E48,
+ * British Green #12442B, Zomp #639A7B, Eggshell #F3EEDA. Huruf: Inter Tight.
+ * Skala `slate` dan `indigo` bawaan Tailwind diganti agar seluruh aplikasi ikut.
+ */
+@theme {
+  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --color-slate-50: #FDFAF3;
+  --color-slate-100: #F5F1E6;
+  --color-slate-200: #E8E3D7;
+  --color-slate-300: #D2CDC2;
+  --color-slate-400: #A6A19A;
+  --color-slate-500: #767169;
+  --color-slate-600: #5E5B55;
+  --color-slate-700: #535456;
+  --color-slate-800: #37352F;
+  --color-slate-900: #23211C;
+  --color-slate-950: #161410;
+
+  --color-indigo-50: #F3EEDA;
+  --color-indigo-100: #E3EDE5;
+  --color-indigo-200: #C2DACB;
+  --color-indigo-300: #94BEA6;
+  --color-indigo-400: #639A7B;
+  --color-indigo-500: #2F8460;
+  --color-indigo-600: #0E6E48;
+  --color-indigo-700: #0C5A3B;
+  --color-indigo-800: #12442B;
+  --color-indigo-900: #0E3522;
+  --color-indigo-950: #08200F;
+}
+
 @layer base {
   :root {
-    --color-bg-canvas: #f0f2f7;
+    --color-bg-canvas: #F5F1E6;
     --color-bg-card: #ffffff;
-    --color-border: #e2e8f0;
-    --color-text-main: #0f172a;
-    --color-text-muted: #64748b;
+    --color-border: #E8E3D7;
+    --color-text-main: #23211C;
+    --color-text-muted: #767169;
   }
 
   body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--color-bg-canvas);
     color: var(--color-text-main);
   }
 
   /* Force tabular numerals for data readability across all financial and inventory tables */
   .tabular-nums, .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-variant-numeric: tabular-nums;
   }
 }
@@ -34,8 +69,8 @@ body,
 .bg-\[\#0b0f17\],
 .bg-\[\#0e1219\],
 .bg-\[\#0e1219\]\/90 {
-  background-color: #f0f2f7 !important;
-  color: #0f172a !important;
+  background-color: #F5F1E6 !important;
+  color: #23211C !important;
 }
 
 /* Standard Soft Cards: Crisp White, Rounded 24px-28px, Soft Diffuse Shadow */
@@ -45,10 +80,10 @@ body,
 .bg-\[\#161c28\],
 aside.bg-\[\#12161f\] {
   background-color: #ffffff !important;
-  border-color: rgba(226, 232, 240, 0.75) !important;
+  border-color: rgba(232, 227, 215, 0.75) !important;
   border-radius: 26px !important;
-  box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.04), 0 2px 8px -2px rgba(15, 23, 42, 0.02) !important;
-  color: #0f172a !important;
+  box-shadow: 0 10px 30px -4px rgba(35, 33, 28, 0.04), 0 2px 8px -2px rgba(35, 33, 28, 0.02) !important;
+  color: #23211C !important;
 }
 
 /* Secondary Panels & Inner Containers */
@@ -60,45 +95,45 @@ aside.bg-\[\#12161f\] {
 .bg-slate-950\/80,
 .bg-slate-950\/60,
 .bg-slate-950\/40 {
-  background-color: #f8fafc !important;
-  border-color: rgba(226, 232, 240, 0.8) !important;
-  color: #1e293b !important;
+  background-color: #FDFAF3 !important;
+  border-color: rgba(232, 227, 215, 0.8) !important;
+  color: #37352F !important;
 }
 
 /* Modal Backdrops & Dialogs */
 .bg-black\/80,
 .bg-black\/70,
 .bg-black\/60 {
-  background-color: rgba(15, 23, 42, 0.45) !important;
+  background-color: rgba(35, 33, 28, 0.45) !important;
   backdrop-filter: blur(8px) !important;
 }
 
 /* Modal Inner Boxes */
 .bg-\[\#121622\] {
   background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
+  border-color: #E8E3D7 !important;
   border-radius: 28px !important;
-  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.18) !important;
-  color: #0f172a !important;
+  box-shadow: 0 25px 50px -12px rgba(35, 33, 28, 0.18) !important;
+  color: #23211C !important;
 }
 
 /* Global Text Colors */
 .text-white {
-  color: #0f172a !important;
+  color: #23211C !important;
 }
 
 .text-slate-100,
 .text-slate-200,
 .text-slate-300 {
-  color: #1e293b !important;
+  color: #37352F !important;
 }
 
 .text-slate-400 {
-  color: #64748b !important;
+  color: #767169 !important;
 }
 
 .text-slate-500 {
-  color: #64748b !important;
+  color: #767169 !important;
 }
 
 /* Borders */
@@ -110,25 +145,25 @@ aside.bg-\[\#12161f\] {
 .border-slate-750,
 .border-slate-700,
 .border-slate-700\/80 {
-  border-color: #e2e8f0 !important;
+  border-color: #E8E3D7 !important;
 }
 
 .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
 .divide-slate-850 > :not([hidden]) ~ :not([hidden]),
 .divide-slate-800\/80 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #f1f5f9 !important;
+  border-color: #F5F1E6 !important;
 }
 
 /* Table Headers & Alternating Row Hover */
 thead.bg-slate-900\/90,
 thead.bg-slate-950\/60,
 thead.bg-slate-900 {
-  background-color: #f8fafc !important;
-  color: #64748b !important;
+  background-color: #FDFAF3 !important;
+  color: #767169 !important;
 }
 
 tbody tr:hover {
-  background-color: #f8fafc !important;
+  background-color: #FDFAF3 !important;
 }
 
 /* Form Controls (Inputs, Selects, Textareas) */
@@ -139,9 +174,9 @@ input[type="email"],
 input[type="search"],
 select,
 textarea {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
+  background-color: #FDFAF3 !important;
+  border-color: #E8E3D7 !important;
+  color: #23211C !important;
   border-radius: 14px !important;
 }
 
@@ -149,9 +184,9 @@ input:focus,
 select:focus,
 textarea:focus {
   background-color: #ffffff !important;
-  border-color: #0f172a !important;
+  border-color: #23211C !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 0 0 2px rgba(35, 33, 28, 0.08) !important;
 }
 
 /* Hover States for Buttons & Navigation */
@@ -159,8 +194,8 @@ textarea:focus {
 .hover\:bg-slate-850:hover,
 .hover\:bg-slate-900:hover,
 .group-hover\:bg-slate-800:hover {
-  background-color: #f1f5f9 !important;
-  color: #0f172a !important;
+  background-color: #F5F1E6 !important;
+  color: #23211C !important;
 }
 
 /* ========================================================================= */
@@ -189,19 +224,19 @@ textarea:focus {
 
 .card-dark-tech .text-slate-100,
 .card-dark-tech .text-slate-200 {
-  color: #f1f5f9 !important;
+  color: #F5F1E6 !important;
 }
 
 .card-dark-tech .text-slate-300 {
-  color: #cbd5e1 !important;
+  color: #D2CDC2 !important;
 }
 
 .card-dark-tech .text-slate-400 {
-  color: #94a3b8 !important;
+  color: #A6A19A !important;
 }
 
 .card-dark-tech .text-slate-500 {
-  color: #64748b !important;
+  color: #767169 !important;
 }
 
 .card-dark-tech .text-emerald-300 {
@@ -234,12 +269,12 @@ textarea:focus {
   transform: translateY(-1px) !important;
 }
 
-/* 2. Vibrant Coral-to-Orange Gradient Card (Reference: "Retire on your terms") */
+/* 2. Kartu aksen hijau Kalima (British Green → Dark Spring Green) */
 .card-gradient-coral {
-  background: linear-gradient(135deg, #f43f5e 0%, #fb7185 45%, #fb923c 100%) !important;
+  background: linear-gradient(135deg, #12442B 0%, #0E6E48 60%, #2F8460 100%) !important;
   border: none !important;
   border-radius: 26px !important;
-  box-shadow: 0 14px 32px -4px rgba(244, 63, 94, 0.3) !important;
+  box-shadow: 0 14px 32px -4px rgba(18, 68, 43, 0.3) !important;
   position: relative !important;
   overflow: hidden !important;
   color: #ffffff !important;
@@ -267,12 +302,12 @@ textarea:focus {
 
 .card-gradient-coral .text-rose-50\/90,
 .card-gradient-coral .text-rose-100 {
-  color: rgba(255, 241, 242, 0.95) !important;
+  color: rgba(243, 238, 218, 0.95) !important;
 }
 
 .card-gradient-coral .btn-white-pill {
   background-color: #ffffff !important;
-  color: #0f172a !important;
+  color: #23211C !important;
   border-radius: 9999px !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
   font-weight: 700 !important;
@@ -283,32 +318,32 @@ textarea:focus {
 .card-gradient-coral .btn-white-pill *,
 .card-gradient-coral .btn-white-pill span,
 .card-gradient-coral .btn-white-pill svg {
-  color: #0f172a !important;
-  stroke: #0f172a !important;
+  color: #23211C !important;
+  stroke: #23211C !important;
 }
 
 .card-gradient-coral .btn-white-pill:hover {
-  background-color: #f8fafc !important;
+  background-color: #FDFAF3 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* 3. Soft Pastel Pink Card (Reference: "Net Growth Score") */
+/* 3. Kartu lembut Eggshell */
 .card-pastel-pink {
-  background-color: #fdf2f4 !important;
-  border: 1px solid rgba(251, 207, 216, 0.7) !important;
+  background-color: #F3EEDA !important;
+  border: 1px solid rgba(99, 154, 123, 0.35) !important;
   border-radius: 22px !important;
-  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.04) !important;
-  color: #0f172a !important;
+  box-shadow: 0 4px 16px rgba(18, 68, 43, 0.05) !important;
+  color: #23211C !important;
 }
 
-/* 4. Soft Pastel Peach/Rose Banner (Reference: "You Invest in Last 30 Days") */
+/* 4. Banner lembut Floral White → Eggshell */
 .card-pastel-peach {
-  background: linear-gradient(135deg, #fce7f3 0%, #ffe4e6 50%, #fed7aa 100%) !important;
-  border: 1px solid rgba(254, 215, 226, 0.8) !important;
+  background: linear-gradient(135deg, #FDFAF3 0%, #F3EEDA 100%) !important;
+  border: 1px solid rgba(99, 154, 123, 0.3) !important;
   border-radius: 22px !important;
-  box-shadow: 0 6px 20px rgba(251, 113, 133, 0.06) !important;
-  color: #1e293b !important;
+  box-shadow: 0 6px 20px rgba(18, 68, 43, 0.05) !important;
+  color: #37352F !important;
 }
 
 /* ========================================================================= */
@@ -318,7 +353,7 @@ textarea:focus {
 /* Segmented Pill Tabs Container */
 .segmented-pill-bar {
   background-color: #ffffff !important;
-  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border: 1px solid rgba(232, 227, 215, 0.8) !important;
   border-radius: 9999px !important;
   padding: 4px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
@@ -335,11 +370,11 @@ textarea:focus {
 
 /* Active Segmented Pill */
 .segmented-pill-active {
-  background-color: #0f172a !important;
+  background-color: #23211C !important;
   color: #ffffff !important;
   border-radius: 9999px !important;
   font-weight: 600 !important;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 2px 6px rgba(35, 33, 28, 0.12) !important;
 }
 
 /* Circular Icon Action Button */
@@ -348,7 +383,7 @@ textarea:focus {
   height: 40px !important;
   border-radius: 9999px !important;
   background-color: #ffffff !important;
-  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border: 1px solid rgba(232, 227, 215, 0.8) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
   display: flex !important;
   align-items: center !important;
@@ -358,9 +393,9 @@ textarea:focus {
 }
 
 .btn-circle-action:hover {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-  border-color: #cbd5e1 !important;
+  background-color: #FDFAF3 !important;
+  color: #23211C !important;
+  border-color: #D2CDC2 !important;
   transform: translateY(-1px) !important;
 }
 
@@ -394,24 +429,24 @@ textarea:focus {
 
 /* Primary Dual CTAs (Reference: Sell / Buy buttons) */
 .btn-primary-dark {
-  background-color: #0f172a !important;
+  background-color: #23211C !important;
   color: #ffffff !important;
   border-radius: 9999px !important;
   padding: 10px 24px !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15) !important;
+  box-shadow: 0 4px 14px rgba(35, 33, 28, 0.15) !important;
   transition: all 0.2s ease !important;
 }
 
 .btn-primary-dark:hover {
-  background-color: #1e293b !important;
+  background-color: #37352F !important;
   transform: translateY(-1px) !important;
 }
 
 .btn-secondary-white {
   background-color: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #e2e8f0 !important;
+  color: #23211C !important;
+  border: 1px solid #E8E3D7 !important;
   border-radius: 9999px !important;
   padding: 10px 24px !important;
   font-weight: 600 !important;
@@ -420,8 +455,8 @@ textarea:focus {
 }
 
 .btn-secondary-white:hover {
-  background-color: #f8fafc !important;
-  border-color: #cbd5e1 !important;
+  background-color: #FDFAF3 !important;
+  border-color: #D2CDC2 !important;
   transform: translateY(-1px) !important;
 }
 
@@ -434,9 +469,9 @@ textarea:focus {
   background: #f1f3f7;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #D2CDC2;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #A6A19A;
 }

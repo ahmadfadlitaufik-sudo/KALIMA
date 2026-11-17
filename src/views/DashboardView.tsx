@@ -171,7 +171,7 @@ export const DashboardView: React.FC = () => {
         {/* CARD 1: DARK TECH CARD ("Your Balance" Reference Card) - col-span-12 lg:col-span-5 */}
         <div className="card-dark-tech lg:col-span-5 p-6 flex flex-col justify-between relative min-h-[250px] overflow-hidden group">
           {/* Subtle Ambient Glow */}
-          <div className="absolute -top-16 -right-16 w-44 h-44 bg-rose-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-rose-500/30 transition-all duration-700" />
+          <div className="absolute -top-16 -right-16 w-44 h-44 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/30 transition-all duration-700" />
           <div className="absolute -bottom-16 -left-16 w-44 h-44 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
           {/* Top Row: Title & Net Growth Pill */}
@@ -250,7 +250,7 @@ export const DashboardView: React.FC = () => {
             <h3 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight mt-1">
               Target Omzet Bulanan
             </h3>
-            <p className="text-xs text-rose-50/90 mt-2 font-medium leading-relaxed">
+            <p className="text-xs text-indigo-50/90 mt-2 font-medium leading-relaxed">
               Bulan ini terjual <strong>{qtySoldThisMonth.toLocaleString('id-ID')} pcs</strong> dari kuota {MONTHLY_QUOTA_PCS.toLocaleString('id-ID')} pcs ({Math.round((qtySoldThisMonth / MONTHLY_QUOTA_PCS) * 100)}%).
             </p>
           </div>
@@ -273,8 +273,8 @@ export const DashboardView: React.FC = () => {
           <div className="card-pastel-pink p-4 flex items-center justify-between relative overflow-hidden flex-1">
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-rose-500" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700">
+                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
                   {isOwner ? 'Margin Kotor' : 'Penjualan'}
                 </span>
               </div>
@@ -290,7 +290,7 @@ export const DashboardView: React.FC = () => {
 
             {/* Circular Gauge / Badge */}
             <div className="w-13 h-13 rounded-full bg-white shadow-sm border border-rose-200 flex flex-col items-center justify-center shrink-0">
-              <span className="text-base font-black text-rose-600 font-mono leading-none">
+              <span className="text-base font-black text-indigo-600 font-mono leading-none">
                 {isOwner ? (grossMarginPercent(totalOmzet, totalLabaKotor) === null ? '–' : `${grossMarginPercent(totalOmzet, totalLabaKotor)}%`) : filteredOrders.length}
               </span>
               <span className="text-[11px] font-bold text-slate-500 uppercase mt-0.5">{isOwner ? 'Margin' : 'Order'}</span>
@@ -370,7 +370,7 @@ export const DashboardView: React.FC = () => {
         <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all">
           <div className="flex items-start justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Omzet Penjualan</span>
-            <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100">
+            <div className="p-2.5 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100">
               <ShoppingBag className="w-4 h-4" />
             </div>
           </div>
@@ -379,7 +379,7 @@ export const DashboardView: React.FC = () => {
               Rp {totalOmzet.toLocaleString('id-ID')}
             </div>
             <div className="flex items-center gap-2 mt-1 text-xs text-slate-500 font-medium">
-              <span className="font-bold text-rose-600 font-mono">{filteredOrders.length}</span> order
+              <span className="font-bold text-indigo-600 font-mono">{filteredOrders.length}</span> order
               <span>·</span>
               <span className="font-bold text-slate-900 font-mono">{totalQtySold}</span> pcs
             </div>
@@ -519,7 +519,7 @@ export const DashboardView: React.FC = () => {
             </div>
             <button
               onClick={() => setCurrentView('sales')}
-              className="text-xs text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+              className="text-xs text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 cursor-pointer"
             >
               <span>Lihat Detail</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -544,7 +544,7 @@ export const DashboardView: React.FC = () => {
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-rose-500 to-amber-500 h-full rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-indigo-600 to-indigo-400 h-full rounded-full transition-all duration-500"
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -563,7 +563,7 @@ export const DashboardView: React.FC = () => {
             </div>
             <button
               onClick={() => setCurrentView('sales')}
-              className="text-xs text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 cursor-pointer"
+              className="text-xs text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 cursor-pointer"
             >
               <span>Semua Pesanan</span>
               <ChevronRight className="w-3.5 h-3.5" />

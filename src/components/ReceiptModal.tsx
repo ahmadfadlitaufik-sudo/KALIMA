@@ -46,8 +46,8 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ order, onClose }) =>
         <div className="p-6 overflow-y-auto font-mono text-xs text-slate-800 space-y-4 print:p-0">
           {/* Header */}
           <div className="text-center pb-3 border-b border-dashed border-slate-300">
-            <h2 className="text-base font-black tracking-widest text-slate-950 uppercase">
-              KALIMA APPAREL
+            <h2 className="flex justify-center">
+              <img src="/brand/kalima-logo-dark.png" alt="Kalima Apparel" className="h-8 w-auto" />
             </h2>
             <p className="text-[11px] text-slate-600 mt-0.5">
               Heavyweight & Premium Menswear Essentials
