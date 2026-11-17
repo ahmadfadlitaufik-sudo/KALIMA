@@ -9,7 +9,11 @@
     "preview": "vite preview --port=3000 --host=0.0.0.0",
     "start": "node server.js",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit && tsc -p worker",
+    "test": "vitest run && npm run test:worker",
+    "test:worker": "vite build --logLevel error && vitest run --config vitest.workers.config.ts",
+    "dev:api": "wrangler dev --port 8787",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -27,6 +31,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.23.0",
+    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -34,6 +40,7 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",
-    "@types/express": "^4.17.21"
+    "vitest": "^4.1.12",
+    "wrangler": "^4.164.0"
   }
 }
