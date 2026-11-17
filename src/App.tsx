@@ -1,5 +1,6 @@
 import React, { useState, useCallback, Suspense, lazy } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { QuickOrderModal } from './components/QuickOrderModal';
@@ -19,9 +20,10 @@ const FinanceView = lazy(() => import('./views/FinanceView').then(m => ({ defaul
 const PurchasesView = lazy(() => import('./views/PurchasesView').then(m => ({ default: m.PurchasesView })));
 const ImportExportView = lazy(() => import('./views/ImportExportView').then(m => ({ default: m.ImportExportView })));
 const AuditLogView = lazy(() => import('./views/AuditLogView').then(m => ({ default: m.AuditLogView })));
+const UsersView = lazy(() => import('./views/UsersView').then(m => ({ default: m.UsersView })));
 
 const MainLayout: React.FC = () => {
-  const { currentView, quickOrderModalOpen, setQuickOrderModalOpen, theme, isAuthenticated } = useApp();
+  const { currentView, quickOrderModalOpen, setQuickOrderModalOpen, theme, isOwner } = useApp();
   const [createdOrderForReceipt, setCreatedOrderForReceipt] = useState<Order | null>(null);
   const [showOrderSuccessBanner, setShowOrderSuccessBanner] = useState<Order | null>(null);
 
@@ -35,10 +37,6 @@ const MainLayout: React.FC = () => {
       setShowOrderSuccessBanner((current) => (current?.id === order.id ? null : current));
     }, 8000);
   }, []);
-
-  if (!isAuthenticated) {
-    return <LoginPage />;
-  }
 
   return (
     <div
@@ -104,6 +102,7 @@ const MainLayout: React.FC = () => {
             {currentView === 'finance' && <FinanceView />}
             {currentView === 'import_export' && <ImportExportView />}
             {currentView === 'audit' && <AuditLogView />}
+            {currentView === 'users' && isOwner && <UsersView />}
           </Suspense>
         </main>
       </div>
@@ -126,10 +125,25 @@ const MainLayout: React.FC = () => {
   );
 };
 
-export default function App() {
+/** Data ERP hanya dimuat setelah login Firebase dan email terdaftar sebagai pengguna aktif. */
+const AuthGate: React.FC = () => {
+  const { status, appUser, signOut } = useAuth();
+
+  if (status !== 'authorized' || !appUser) {
+    return <LoginPage />;
+  }
+
   return (
-    <AppProvider>
+    <AppProvider key={appUser.id} authUser={appUser} onSignOut={signOut}>
       <MainLayout />
     </AppProvider>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
   );
 }

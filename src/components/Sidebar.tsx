@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ChevronLeft,
   LogOut,
+  UserCog,
 } from 'lucide-react';
 import { useApp, AppView } from '../context/AppContext';
 
@@ -27,7 +28,6 @@ export const Sidebar: React.FC = () => {
     mobileMenuOpen,
     setMobileMenuOpen,
     currentUser,
-    switchRole,
     isOwner,
     orders,
     purchaseOrders,
@@ -124,6 +124,16 @@ export const Sidebar: React.FC = () => {
       icon: History,
       description: 'Riwayat aktivitas sistem',
     },
+    ...(isOwner
+      ? [
+          {
+            id: 'users' as AppView,
+            label: 'Pengguna',
+            icon: UserCog,
+            description: 'Siapa yang boleh masuk & perannya',
+          },
+        ]
+      : []),
   ];
 
   const handleNavClick = (viewId: AppView) => {
@@ -251,20 +261,26 @@ export const Sidebar: React.FC = () => {
         {/* Bottom: User Avatar Ring & Expand Toggle (Reference Image Style) */}
         <div className="px-3 pt-2 flex flex-col items-center gap-2 border-t border-slate-100">
           <div className="w-full flex items-center justify-between gap-1.5">
-            <button
-              onClick={() => switchRole(isOwner ? 'admin' : 'owner')}
-              className={`flex items-center gap-2.5 p-1 rounded-2xl hover:bg-slate-100/80 transition-all cursor-pointer flex-1 min-w-0 ${
+            <div
+              className={`flex items-center gap-2.5 p-1 rounded-2xl flex-1 min-w-0 ${
                 !expanded && !mobileMenuOpen ? 'justify-center' : ''
               }`}
-              title={`Login: ${currentUser.name} (${currentUser.role}). Klik ganti peran.`}
+              title={`Login: ${currentUser.name} (${currentUser.role}) — ${currentUser.email}`}
             >
               {/* Circular Avatar with Ring (Reference: Bottom-left avatar in reference image) */}
               <div className="relative shrink-0">
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face"
-                  alt={currentUser.name}
-                  className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-200 shadow-sm"
-                />
+                {currentUser.avatar ? (
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    referrerPolicy="no-referrer"
+                    className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-200 shadow-sm"
+                  />
+                ) : (
+                  <div className="w-9 h-9 rounded-full ring-2 ring-slate-200 shadow-sm bg-slate-800 text-white flex items-center justify-center text-sm font-bold">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <span
                   className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white ${
                     isOwner ? 'bg-amber-500' : 'bg-emerald-500'
@@ -282,7 +298,7 @@ export const Sidebar: React.FC = () => {
                   </span>
                 </div>
               )}
-            </button>
+            </div>
 
             {/* Logout button */}
             <button

@@ -53,7 +53,6 @@ function mergeById<T extends { id?: string; sku?: string; code?: string }>(
 }
 import {
   User,
-  UserRole,
   ProductSeries,
   SKUItem,
   BOMItem,
@@ -86,7 +85,6 @@ import {
   getLocalDateString,
 } from '../types';
 import {
-  INITIAL_USERS,
   INITIAL_SERIES,
   INITIAL_BOM,
   INITIAL_SKUS,
@@ -119,7 +117,8 @@ export type AppView =
   | 'reseller'
   | 'finance'
   | 'import_export'
-  | 'audit';
+  | 'audit'
+  | 'users';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -137,12 +136,9 @@ export const normalizePhone = (phone?: string): string => {
 
 interface AppContextType {
   currentUser: User;
-  setCurrentUser: (user: User) => void;
-  switchRole: (role: UserRole) => void;
   isOwner: boolean;
-  isAuthenticated: boolean;
-  login: (email: string, password?: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  logAudit: (module: AuditLog['module'], action: string, detail: string) => void;
   currentView: AppView;
   setCurrentView: (view: AppView) => void;
   mobileMenuOpen: boolean;
@@ -379,17 +375,16 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const STORAGE_PREFIX = 'kalima_app_v1_';
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // User & authentication
-  const [currentUser, setCurrentUser] = useState<User>(() => {
-    const saved = localStorage.getItem(`${STORAGE_PREFIX}user`);
-    return saved ? JSON.parse(saved) : INITIAL_USERS[0];
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    const authFlag = localStorage.getItem(`${STORAGE_PREFIX}auth`);
-    return authFlag === 'true';
-  });
+/**
+ * Penyedia data ERP. Hanya dirender setelah pengguna lolos login Firebase dan
+ * terdaftar di daftar pengguna, sehingga listener Firestore tidak pernah jalan tanpa izin.
+ */
+export const AppProvider: React.FC<{
+  children: React.ReactNode;
+  authUser: User;
+  onSignOut: () => Promise<void>;
+}> = ({ children, authUser, onSignOut }) => {
+  const currentUser = authUser;
 
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1057,7 +1052,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  useEffect(() => { safeSaveLocal('user', currentUser); }, [currentUser]);
   useEffect(() => { safeSaveLocal('series', series); }, [series]);
   useEffect(() => { safeSaveLocal('skus', skus); }, [skus]);
   useEffect(() => { safeSaveLocal('bom', bomItems); }, [bomItems]);
@@ -1079,60 +1073,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isOwner = currentUser.role === 'owner';
 
-  const login = async (email: string, _password?: string): Promise<{ success: boolean; error?: string }> => {
-    const trimmed = email.trim().toLowerCase();
-    let matched = INITIAL_USERS.find((u) => u.email.toLowerCase() === trimmed);
-    if (!matched && (trimmed === 'ahmadfadlitaufik@gmail.com' || trimmed === 'fadli' || trimmed === 'owner')) {
-      matched = INITIAL_USERS[0];
-    } else if (!matched && (trimmed === 'siti' || trimmed === 'cs' || trimmed === 'admin')) {
-      matched = INITIAL_USERS[1];
-    } else if (!matched && (trimmed === 'budi' || trimmed === 'gudang' || trimmed === 'ops')) {
-      matched = INITIAL_USERS[2];
-    }
-
-    if (!matched) {
-      return { 
-        success: false, 
-        error: 'Email atau kata sandi tidak ditemukan. Gunakan email akun terdaftar atau klik salah satu profil di bawah untuk masuk instan.' 
-      };
-    }
-
-    setCurrentUser(matched);
-    setIsAuthenticated(true);
-    try {
-      localStorage.setItem(`${STORAGE_PREFIX}user`, JSON.stringify(matched));
-      localStorage.setItem(`${STORAGE_PREFIX}auth`, 'true');
-    } catch (e) {
-      console.warn('Failed to save auth to local storage:', e);
-    }
-    logAudit('Auth', 'Login Pengguna', `Pengguna ${matched.name} (${matched.role.toUpperCase()}) berhasil masuk ke sistem`);
-    return { success: true };
-  };
-
-  const logout = () => {
-    setIsAuthenticated(false);
-    try {
-      localStorage.removeItem(`${STORAGE_PREFIX}auth`);
-    } catch (e) {
-      console.warn('Failed to clear auth from local storage:', e);
-    }
+  const logout = async (): Promise<void> => {
     logAudit('Auth', 'Logout Pengguna', `Pengguna ${currentUser.name} keluar dari sistem`);
-  };
-
-  const switchRole = (newRole: UserRole) => {
-    const matchedUser = INITIAL_USERS.find((u) => u.role === newRole) || {
-      id: `usr-${Date.now()}`,
-      name: newRole === 'owner' ? 'Ahmad Fadli' : 'Siti Rahma (Admin/CS)',
-      email: newRole === 'owner' ? 'fadli.owner@kalima.id' : 'siti.cs@kalima.id',
-      role: newRole,
-    };
-    setCurrentUser(matchedUser);
     try {
-      localStorage.setItem(`${STORAGE_PREFIX}user`, JSON.stringify(matchedUser));
-    } catch (e) {
-      console.warn('Failed to persist switched user:', e);
+      sessionStorage.removeItem(`${STORAGE_PREFIX}login_logged_${currentUser.id}`);
+    } catch {
+      // abaikan
     }
-    logAudit('Auth', 'Ganti Peran Akses', `Beralih ke peran ${newRole.toUpperCase()} (${matchedUser.name})`);
+    await onSignOut();
   };
 
   const logAudit = (module: AuditLog['module'], action: string, detail: string) => {
@@ -1149,6 +1097,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setAuditLogs((prev) => [newEntry, ...prev.slice(0, 200)]);
   };
+
+  // Catat login sekali per sesi browser (bukan setiap muat ulang halaman).
+  useEffect(() => {
+    const sessionKey = `${STORAGE_PREFIX}login_logged_${currentUser.id}`;
+    try {
+      if (sessionStorage.getItem(sessionKey)) {
+        return;
+      }
+      sessionStorage.setItem(sessionKey, '1');
+    } catch {
+      // sessionStorage tidak tersedia: tetap catat login.
+    }
+    logAudit('Auth', 'Login Pengguna', `Pengguna ${currentUser.name} (${currentUser.role.toUpperCase()}) berhasil masuk ke sistem`);
+  }, [currentUser.id]);
 
   // Pre-calculate memoized stock summary and indexed lookup map for instant O(1) queries
   const stockSummaryMemo = useMemo(() => {
@@ -4007,12 +3969,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const contextValue = useMemo(
     () => ({
       currentUser,
-      setCurrentUser,
-      switchRole,
       isOwner,
-      isAuthenticated,
-      login,
       logout,
+      logAudit,
       currentView,
       setCurrentView,
       mobileMenuOpen,
@@ -4111,7 +4070,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [
       currentUser,
       isOwner,
-      isAuthenticated,
       currentView,
       mobileMenuOpen,
       quickOrderModalOpen,
