@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { askConfirm, askPassword, showNotice } from '../services/dialogStore';
 import { UserCog, Plus, Trash2, UserCheck, AlertCircle, Lock, KeyRound } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ApiError, StaffUser, api } from '../services/api';
@@ -75,18 +76,18 @@ export const UsersView: React.FC = () => {
   };
 
   const handleResetPassword = async (user: StaffUser) => {
-    const password = window.prompt(`Kata sandi baru untuk ${user.email} (minimal 8 karakter):`);
+    const password = await askPassword(`Ketik kata sandi baru untuk ${user.email} (minimal 8 karakter).`, 'Reset Kata Sandi');
     if (!password) {
       return;
     }
     if (await run(() => api.resetPassword(user.id, password))) {
       logAudit('Auth', 'Reset Kata Sandi', `Kata sandi ${user.email} di-reset oleh Owner`);
-      window.alert(`Kata sandi ${user.email} sudah diganti. Berikan kata sandi baru ini ke yang bersangkutan.`);
+      void showNotice(`Kata sandi ${user.email} sudah diganti. Berikan kata sandi baru ini ke yang bersangkutan.`, 'Kata Sandi Diganti');
     }
   };
 
   const handleDelete = async (user: StaffUser) => {
-    if (!window.confirm(`Hapus ${user.email} dari daftar pengguna? Orang ini tidak akan bisa masuk lagi.`)) {
+    if (!(await askConfirm(`Hapus ${user.email} dari daftar pengguna? Orang ini tidak akan bisa masuk lagi.`, { danger: true, confirmLabel: 'Ya, hapus' }))) {
       return;
     }
     if (await run(() => api.deleteUser(user.id))) {

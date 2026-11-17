@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { askConfirm, showNotice } from '../services/dialogStore';
 import * as XLSX from 'xlsx';
 import {
   FileSpreadsheet,
@@ -96,7 +97,7 @@ export const ImportExportView: React.FC = () => {
   // Export to CSV helper
   const exportToCSV = (filename: string, rows: object[]) => {
     if (!rows || rows.length === 0) {
-      alert('Tidak ada data untuk diekspor.');
+      void showNotice('Tidak ada data untuk diekspor.');
       return;
     }
 
@@ -1019,8 +1020,8 @@ export const ImportExportView: React.FC = () => {
               {biayaOperasional.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => {
-                    if (window.confirm(`Yakin ingin mengosongkan ${biayaOperasional.length} catatan pengeluaran lama?`)) {
+                  onClick={async () => {
+                    if (await askConfirm(`Yakin ingin mengosongkan ${biayaOperasional.length} catatan pengeluaran lama?`, { danger: true })) {
                       clearBiayaOperasional();
                       setImportStatus({
                         success: true,
@@ -1297,8 +1298,8 @@ export const ImportExportView: React.FC = () => {
           </div>
         </div>
         <button
-          onClick={() => {
-            if (window.confirm('Apakah Anda yakin ingin mereset seluruh data ke snapshot awal?')) {
+          onClick={async () => {
+            if (await askConfirm('Apakah Anda yakin ingin mereset seluruh data ke snapshot awal?', { danger: true })) {
               resetData();
             }
           }}

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { askConfirm, showNotice } from '../services/dialogStore';
 import {
   Scale,
   DollarSign,
@@ -1900,7 +1901,7 @@ const FixedAssetFormModal: React.FC<FixedAssetFormModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!nama.trim() || hargaPerolehan <= 0) {
-      alert('Nama aset dan harga perolehan wajib diisi.');
+      void showNotice('Nama aset dan harga perolehan wajib diisi.');
       return;
     }
 
@@ -2025,8 +2026,8 @@ const FixedAssetFormModal: React.FC<FixedAssetFormModalProps> = ({
             {editingAsset && onDelete ? (
               <button
                 type="button"
-                onClick={() => {
-                  if (confirm(`Hapus aset ${editingAsset.nama}?`)) {
+                onClick={async () => {
+                  if (await askConfirm(`Hapus aset ${editingAsset.nama}?`, { danger: true })) {
                     onDelete(editingAsset.id);
                   }
                 }}

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { askConfirm } from '../services/dialogStore';
 import {
   Truck,
   Package,
@@ -853,8 +854,8 @@ export const PurchasesView: React.FC = () => {
                             {/* Delete PO (Owner only) */}
                             {isOwner && (
                               <button
-                                onClick={() => {
-                                  if (confirm(`Hapus ${po.noPO} dari sistem?`)) {
+                                onClick={async () => {
+                                  if (await askConfirm(`Hapus ${po.noPO} dari sistem?`, { danger: true })) {
                                     deletePurchaseOrder(po.id);
                                     showToast(`Purchase Order #${po.noPO} berhasil dihapus.`);
                                   }
@@ -1112,8 +1113,8 @@ export const PurchasesView: React.FC = () => {
                     </button>
                     {isOwner && (
                       <button
-                        onClick={() => {
-                          if (confirm(`Hapus vendor ${ven.nama}?`)) {
+                        onClick={async () => {
+                          if (await askConfirm(`Hapus vendor ${ven.nama}?`, { danger: true })) {
                             const res = deleteVendor(ven.id);
                             if (res.success) {
                               showToast(`Vendor ${ven.nama} berhasil dihapus.`);

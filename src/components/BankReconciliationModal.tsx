@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { askConfirm } from '../services/dialogStore';
 import {
   Building2,
   Calendar,
@@ -867,8 +868,8 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
 
                           {isOwner && (
                             <button
-                              onClick={() => {
-                                if (window.confirm(`Hapus sesi rekonsiliasi ${session.noRekonsiliasi}?`)) {
+                              onClick={async () => {
+                                if (await askConfirm(`Hapus sesi rekonsiliasi ${session.noRekonsiliasi}?`, { danger: true })) {
                                   deleteBankReconciliationSession(session.id);
                                 }
                               }}

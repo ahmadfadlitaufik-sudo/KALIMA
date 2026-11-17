@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { showNotice } from '../services/dialogStore';
 import { ApiError, WorkspaceDocId, api, onUnauthorized } from '../services/api';
 import { SyncBase, docsToRefetch, isFreshBrowser, loadSyncBase, markServerLoaded, pickInitial, snapshotDoc, storeSyncBase } from '../services/workspaceSync';
 import { ListSnapshot, mergeList, mergeValue } from '../services/threeWayMerge';
@@ -576,7 +577,7 @@ export const AppProvider: React.FC<{
     console.warn(`Failed to save ${id} to server:`, err);
     setCloudSyncStatus('error');
     if ((err instanceof ApiError && err.status === 413) || err instanceof NotLoadedError) {
-      window.alert(err.message);
+      void showNotice(err.message);
     }
   };
 
