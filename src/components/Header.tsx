@@ -7,8 +7,6 @@ import {
   UserCheck,
   AlertTriangle,
   RotateCcw,
-  Sun,
-  Moon,
   CloudCheck,
   CloudOff,
   Check,
@@ -31,8 +29,6 @@ export const Header: React.FC = () => {
     orders,
     getLowStockSKUs,
     setQuickOrderModalOpen,
-    theme,
-    toggleTheme,
     cloudSyncStatus,
     lastSyncedAt,
     syncToCloudNow,
@@ -176,19 +172,6 @@ export const Header: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Theme Switcher Button */}
-        <button
-          onClick={toggleTheme}
-          title={theme === 'dark' ? 'Mode Terang (Soft Card)' : 'Mode Gelap'} aria-label={theme === 'dark' ? 'Mode Terang (Soft Card)' : 'Mode Gelap'}
-          className="btn-circle-action cursor-pointer"
-        >
-          {theme === 'dark' ? (
-            <Sun className="w-4 h-4 text-amber-500" />
-          ) : (
-            <Moon className="w-4 h-4 text-slate-700" />
-          )}
-        </button>
 
         {/* Akun yang sedang masuk (peran ditentukan Owner di menu Pengguna) */}
         <button

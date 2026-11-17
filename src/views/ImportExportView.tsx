@@ -10,7 +10,6 @@ import {
   Database,
   ArrowDownToLine,
   FileCode,
-  RotateCcw,
   FileUp,
   ClipboardCheck,
   HelpCircle,
@@ -79,7 +78,6 @@ export const ImportExportView: React.FC = () => {
     suratTitip,
     cashAccounts,
     cashMutations,
-    resetData,
     importInitialData,
     clearBiayaOperasional,
     setCurrentView,
@@ -1287,28 +1285,6 @@ export const ImportExportView: React.FC = () => {
         </div>
       )}
 
-      {/* Reset System Button */}
-      <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl flex items-center justify-between">
-        <div>
-          <div className="text-xs font-bold text-slate-300">
-            Reset ke Data Snapshot Bawaan Kalima
-          </div>
-          <div className="text-xs text-slate-400">
-            Gunakan tombol ini jika Anda ingin mengembalikan sampel data awal untuk demonstrasi
-          </div>
-        </div>
-        <button
-          onClick={async () => {
-            if (await askConfirm('Apakah Anda yakin ingin mereset seluruh data ke snapshot awal?', { danger: true })) {
-              resetData();
-            }
-          }}
-          className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 hover:border-rose-800 border border-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset Demo</span>
-        </button>
-      </div>
     </div>
   );
 };
