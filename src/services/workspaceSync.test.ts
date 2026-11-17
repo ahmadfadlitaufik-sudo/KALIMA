@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { docsToRefetch, isFreshBrowser, markServerLoaded, pickInitial } from './workspaceSync';
+import { docsToRefetch, isFreshBrowser, loadSyncBase, markServerLoaded, pickInitial, snapshotDoc } from './workspaceSync';
 
 const PREFIX = 'kalima_app_v1_';
 const memoryStorage = (entries: Record<string, string>) => ({
@@ -50,5 +50,24 @@ describe('docsToRefetch', () => {
 
   it('returns nothing when everything is current', () => {
     expect(docsToRefetch({ orders: 4 }, { orders: 4 })).toEqual([]);
+  });
+});
+
+describe('snapshotDoc', () => {
+  it('records list fields by their key field and plain values as one hash', () => {
+    const base = snapshotDoc('master', { skus: [{ sku: 'A', hpp: 1 }], customers: [{ id: 'c1' }] });
+    expect(Object.keys(base['master.skus'] as object)).toEqual(['A']);
+    expect(Object.keys(base['master.customers'] as object)).toEqual(['c1']);
+    expect(base['master.series']).toBeUndefined();
+
+    const finance = snapshotDoc('finance', { balanceSheetConfig: { modal: 1 } });
+    expect(typeof finance['finance.balanceSheetConfig']).toBe('string');
+  });
+});
+
+describe('loadSyncBase', () => {
+  it('returns an empty base when the stored value is missing or broken', () => {
+    expect(loadSyncBase(memoryStorage({}), PREFIX)).toEqual({});
+    expect(loadSyncBase(memoryStorage({ [`${PREFIX}sync_base`]: '{rusak' }), PREFIX)).toEqual({});
   });
 });

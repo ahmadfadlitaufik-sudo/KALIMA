@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { ApiError, WorkspaceDocId, api, onUnauthorized } from '../services/api';
-import { docsToRefetch, isFreshBrowser, markServerLoaded, pickInitial } from '../services/workspaceSync';
+import { SyncBase, docsToRefetch, isFreshBrowser, loadSyncBase, markServerLoaded, pickInitial, snapshotDoc, storeSyncBase } from '../services/workspaceSync';
+import { ListSnapshot, mergeList, mergeValue } from '../services/threeWayMerge';
 import { NotLoadedError, createWorkspaceSaver } from '../services/workspaceSaver';
 
 /** Selang cek perubahan data di server (ms) selama tab terlihat. */
@@ -9,45 +10,6 @@ const POLL_INTERVAL_MS = 5000;
 const ALL_WORKSPACE_DOC_IDS: WorkspaceDocId[] = ['orders', 'stock_movements', 'master', 'finance', 'operations', 'audit_logs'];
 
 // Helper to merge lists of objects by ID or custom key, ensuring no records from cloud or local are dropped
-function mergeByKey<T>(
-  localList: T[],
-  cloudList: T[] | undefined,
-  deletedIds?: Set<string>,
-  keyField: string = 'id'
-): T[] {
-  if (!cloudList || !Array.isArray(cloudList)) return localList || [];
-  if (!localList || !Array.isArray(localList)) return cloudList || [];
-
-  const map = new Map<string, T>();
-  // 1. Add cloud items unless marked as locally deleted
-  for (const item of cloudList) {
-    if (item) {
-      const k = String((item as any)[keyField] || (item as any).id || (item as any).sku || (item as any).code || '');
-      if (!k) continue;
-      if (deletedIds && deletedIds.has(k)) continue;
-      map.set(k, item);
-    }
-  }
-  // 2. Add or override with local items (local actions take immediate precedence)
-  for (const localItem of localList) {
-    if (localItem) {
-      const k = String((localItem as any)[keyField] || (localItem as any).id || (localItem as any).sku || (localItem as any).code || '');
-      if (!k) continue;
-      if (deletedIds && deletedIds.has(k)) continue;
-      map.set(k, localItem);
-    }
-  }
-  return Array.from(map.values());
-}
-
-function mergeById<T extends { id?: string; sku?: string; code?: string }>(
-  localList: T[],
-  cloudList: T[] | undefined,
-  deletedIds?: Set<string>,
-  keyField: string = 'id'
-): T[] {
-  return mergeByKey(localList, cloudList, deletedIds, keyField);
-}
 import {
   User,
   ProductSeries,
@@ -535,8 +497,6 @@ export const AppProvider: React.FC<{
   const balanceSheetConfigRef = useRef<BalanceSheetConfig>(balanceSheetConfig);
   const customOpexCategoriesRef = useRef<string[]>(customOpexCategories);
 
-  const deletedOrderIdsRef = useRef<Set<string>>(new Set());
-  const deletedMovementIdsRef = useRef<Set<string>>(new Set());
 
   // Keep refs always aligned with React state
   useEffect(() => { ordersRef.current = orders; }, [orders]);
@@ -572,9 +532,22 @@ export const AppProvider: React.FC<{
    * Dokumen yang gagal tersimpan ditandai dan dicoba lagi saat polling. `pullWorkspaceRef` diisi di bawah.
    */
   const pullWorkspaceRef = useRef<(onlyIds?: WorkspaceDocId[]) => Promise<void>>(async () => {});
+  /** Sidik data yang terakhir sama dengan server; dasar gabung tiga arah (lihat threeWayMerge). */
+  const syncBaseRef = useRef<SyncBase>(loadSyncBase(localStorage, STORAGE_PREFIX));
+  const recordBaseRef = useRef((id: WorkspaceDocId, data: Record<string, unknown>) => {
+    syncBaseRef.current = { ...syncBaseRef.current, ...snapshotDoc(id, data) };
+    storeSyncBase(localStorage, STORAGE_PREFIX, syncBaseRef.current);
+  });
+  /** Gabung satu daftar milik `id.field`: yang tidak diubah di sini ikut server, yang diubah di sini dipertahankan. */
+  const mergeField = <T,>(id: WorkspaceDocId, field: string, local: T[], server: T[] | undefined, keyField = 'id'): T[] =>
+    mergeList(syncBaseRef.current[`${id}.${field}`] as ListSnapshot | undefined, local, server, keyField);
   const saverRef = useRef(
     createWorkspaceSaver({
-      saveDoc: (id, data, baseVersion) => api.saveDoc(id, data, baseVersion),
+      saveDoc: async (id, data, baseVersion) => {
+        const result = await api.saveDoc(id, data, baseVersion);
+        recordBaseRef.current(id, data as Record<string, unknown>);
+        return result;
+      },
       refetch: (id) => pullWorkspaceRef.current([id]),
       isReady: () => isCloudInitializedRef.current,
     }),
@@ -709,7 +682,7 @@ export const AppProvider: React.FC<{
     switch (id) {
       case 'orders': {
         if (list('orders')) {
-          const merged = pickInitial(fresh, ordersRef.current, list('orders')!, (local, server) => mergeById(local, server, deletedOrderIdsRef.current).sort(orderSortComparator));
+          const merged = pickInitial(fresh, ordersRef.current, list('orders')!, (local, server) => mergeField(id, 'orders', local, server).sort(orderSortComparator));
           ordersRef.current = merged;
           isRemoteUpdateRef.current = true;
           setOrders(merged);
@@ -719,7 +692,7 @@ export const AppProvider: React.FC<{
       }
       case 'stock_movements': {
         if (list('stockMovements')) {
-          const merged = pickInitial(fresh, stockMovementsRef.current, list('stockMovements')!, (local, server) => mergeById(local, server, deletedMovementIdsRef.current).sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()));
+          const merged = pickInitial(fresh, stockMovementsRef.current, list('stockMovements')!, (local, server) => mergeField(id, 'stockMovements', local, server).sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()));
           stockMovementsRef.current = merged;
           isRemoteUpdateRef.current = true;
           setStockMovements(merged);
@@ -730,27 +703,27 @@ export const AppProvider: React.FC<{
       case 'master': {
         isRemoteUpdateRef.current = true;
         if (list('series')) {
-          const merged = pickInitial(fresh, seriesRef.current, list('series')!, (local, server) => mergeByKey(local, server, undefined, 'id'));
+          const merged = pickInitial(fresh, seriesRef.current, list('series')!, (local, server) => mergeField(id, 'series', local, server));
           seriesRef.current = merged;
           setSeries(merged);
         }
         if (list('skus')) {
-          const merged = pickInitial(fresh, skusRef.current, list('skus')!, (local, server) => mergeByKey(local, server, undefined, 'sku'));
+          const merged = pickInitial(fresh, skusRef.current, list('skus')!, (local, server) => mergeField(id, 'skus', local, server, 'sku'));
           skusRef.current = merged;
           setSkus(merged);
         }
         if (list('bomItems')) {
-          const merged = pickInitial(fresh, bomItemsRef.current, list('bomItems')!, (local, server) => mergeByKey(local, server, undefined, 'id'));
+          const merged = pickInitial(fresh, bomItemsRef.current, list('bomItems')!, (local, server) => mergeField(id, 'bomItems', local, server));
           bomItemsRef.current = merged;
           setBomItems(merged);
         }
         if (list('customers')) {
-          const merged = pickInitial(fresh, customersRef.current, list('customers')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, customersRef.current, list('customers')!, (local, server) => mergeField(id, 'customers', local, server));
           customersRef.current = merged;
           setCustomers(merged);
         }
         if (list('resellers')) {
-          const merged = pickInitial(fresh, resellersRef.current, list('resellers')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, resellersRef.current, list('resellers')!, (local, server) => mergeField(id, 'resellers', local, server));
           resellersRef.current = merged;
           setResellers(merged);
         }
@@ -760,41 +733,44 @@ export const AppProvider: React.FC<{
       case 'finance': {
         isRemoteUpdateRef.current = true;
         if (list('biayaOperasional')) {
-          const merged = pickInitial(fresh, biayaOperasionalRef.current, list('biayaOperasional')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, biayaOperasionalRef.current, list('biayaOperasional')!, (local, server) => mergeField(id, 'biayaOperasional', local, server));
           biayaOperasionalRef.current = merged;
           setBiayaOperasional(merged);
         }
         if (list('cashAccounts')) {
-          const merged = pickInitial(fresh, cashAccountsRef.current, list('cashAccounts')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, cashAccountsRef.current, list('cashAccounts')!, (local, server) => mergeField(id, 'cashAccounts', local, server));
           cashAccountsRef.current = merged;
           setCashAccounts(merged);
         }
         if (list('cashMutations')) {
-          const merged = pickInitial(fresh, cashMutationsRef.current, list('cashMutations')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, cashMutationsRef.current, list('cashMutations')!, (local, server) => mergeField(id, 'cashMutations', local, server));
           cashMutationsRef.current = merged;
           setCashMutations(merged);
         }
         if (list('bankReconciliations')) {
-          const merged = pickInitial(fresh, bankReconciliationsRef.current, list('bankReconciliations')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, bankReconciliationsRef.current, list('bankReconciliations')!, (local, server) => mergeField(id, 'bankReconciliations', local, server));
           bankReconciliationsRef.current = merged;
           setBankReconciliations(merged);
         }
         if (list('journalEntries')) {
-          const merged = pickInitial(fresh, journalEntriesRef.current, list('journalEntries')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, journalEntriesRef.current, list('journalEntries')!, (local, server) => mergeField(id, 'journalEntries', local, server));
           journalEntriesRef.current = merged;
           setJournalEntries(merged);
         }
         if (list('fixedAssets')) {
-          const merged = pickInitial(fresh, fixedAssetsRef.current, list('fixedAssets')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, fixedAssetsRef.current, list('fixedAssets')!, (local, server) => mergeField(id, 'fixedAssets', local, server));
           fixedAssetsRef.current = merged;
           setFixedAssets(merged);
         }
         if (data.balanceSheetConfig && typeof data.balanceSheetConfig === 'object') {
-          balanceSheetConfigRef.current = data.balanceSheetConfig;
-          setBalanceSheetConfig(data.balanceSheetConfig);
+          const merged = fresh
+            ? data.balanceSheetConfig
+            : mergeValue(syncBaseRef.current['finance.balanceSheetConfig'] as string | undefined, balanceSheetConfigRef.current, data.balanceSheetConfig);
+          balanceSheetConfigRef.current = merged;
+          setBalanceSheetConfig(merged);
         }
         if (list('customOpexCategories')) {
-          const merged = pickInitial(fresh, customOpexCategoriesRef.current, list('customOpexCategories')!, (local, server) => Array.from(new Set([...server, ...local])));
+          const merged = pickInitial(fresh, customOpexCategoriesRef.current, list('customOpexCategories')!, (local, server) => mergeField(id, 'customOpexCategories', local, server));
           customOpexCategoriesRef.current = merged;
           setCustomOpexCategories(merged);
         }
@@ -804,27 +780,27 @@ export const AppProvider: React.FC<{
       case 'operations': {
         isRemoteUpdateRef.current = true;
         if (list('suratTitip')) {
-          const merged = pickInitial(fresh, suratTitipRef.current, list('suratTitip')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, suratTitipRef.current, list('suratTitip')!, (local, server) => mergeField(id, 'suratTitip', local, server));
           suratTitipRef.current = merged;
           setSuratTitip(merged);
         }
         if (list('laporanTitipLaku')) {
-          const merged = pickInitial(fresh, laporanTitipLakuRef.current, list('laporanTitipLaku')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, laporanTitipLakuRef.current, list('laporanTitipLaku')!, (local, server) => mergeField(id, 'laporanTitipLaku', local, server));
           laporanTitipLakuRef.current = merged;
           setLaporanTitipLaku(merged);
         }
         if (list('stockOpnameSessions')) {
-          const merged = pickInitial(fresh, stockOpnameSessionsRef.current, list('stockOpnameSessions')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, stockOpnameSessionsRef.current, list('stockOpnameSessions')!, (local, server) => mergeField(id, 'stockOpnameSessions', local, server));
           stockOpnameSessionsRef.current = merged;
           setStockOpnameSessions(merged);
         }
         if (list('vendors')) {
-          const merged = pickInitial(fresh, vendorsRef.current, list('vendors')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, vendorsRef.current, list('vendors')!, (local, server) => mergeField(id, 'vendors', local, server));
           vendorsRef.current = merged;
           setVendors(merged);
         }
         if (list('purchaseOrders')) {
-          const merged = pickInitial(fresh, purchaseOrdersRef.current, list('purchaseOrders')!, (local, server) => mergeById(local, server));
+          const merged = pickInitial(fresh, purchaseOrdersRef.current, list('purchaseOrders')!, (local, server) => mergeField(id, 'purchaseOrders', local, server));
           purchaseOrdersRef.current = merged;
           setPurchaseOrders(merged);
         }
@@ -833,7 +809,7 @@ export const AppProvider: React.FC<{
       }
       case 'audit_logs': {
         if (list('auditLogs')) {
-          const merged = pickInitial(fresh, auditLogsRef.current, list('auditLogs')!, (local, server) => mergeById(local, server).slice(0, 150));
+          const merged = pickInitial(fresh, auditLogsRef.current, list('auditLogs')!, (local, server) => mergeField(id, 'auditLogs', local, server).slice(0, 150));
           auditLogsRef.current = merged;
           setAuditLogs(merged);
         }
@@ -860,6 +836,7 @@ export const AppProvider: React.FC<{
       }
       applyRemoteDoc(id, (docs[id]?.data ?? {}) as Record<string, any>, fresh);
       if (docs[id]) {
+        recordBaseRef.current(id, docs[id]!.data as Record<string, unknown>);
         saverRef.current.recordVersion(id, docs[id]!.version);
       }
     }
@@ -951,38 +928,46 @@ export const AppProvider: React.FC<{
 
       // 2. Union merge with local refs (local modifications always preserved!)
       const cloudOrders = cloudDocs.orders?.data.orders as Order[];
-      const mergedOrders = mergeById(ordersRef.current, cloudOrders, deletedOrderIdsRef.current)
+      const mergedOrders = mergeField('orders', 'orders', ordersRef.current, cloudOrders)
         .sort(orderSortComparator);
 
       const cloudMovements = cloudDocs.stock_movements?.data.stockMovements as StockMovement[];
-      const mergedMovements = mergeById(stockMovementsRef.current, cloudMovements, deletedMovementIdsRef.current)
+      const mergedMovements = mergeField('stock_movements', 'stockMovements', stockMovementsRef.current, cloudMovements)
         .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
 
       const cloudMaster = (cloudDocs.master?.data ?? null) as Record<string, any> | null;
-      const mergedSeries = mergeByKey(seriesRef.current, cloudMaster?.series, undefined, 'id');
-      const mergedSkus = mergeByKey(skusRef.current, cloudMaster?.skus, undefined, 'sku');
-      const mergedBom = mergeByKey(bomItemsRef.current, cloudMaster?.bomItems, undefined, 'id');
-      const mergedCustomers = mergeById(customersRef.current, cloudMaster?.customers);
-      const mergedResellers = mergeById(resellersRef.current, cloudMaster?.resellers);
+      const mergedSeries = mergeField('master', 'series', seriesRef.current, cloudMaster?.series);
+      const mergedSkus = mergeField('master', 'skus', skusRef.current, cloudMaster?.skus, 'sku');
+      const mergedBom = mergeField('master', 'bomItems', bomItemsRef.current, cloudMaster?.bomItems);
+      const mergedCustomers = mergeField('master', 'customers', customersRef.current, cloudMaster?.customers);
+      const mergedResellers = mergeField('master', 'resellers', resellersRef.current, cloudMaster?.resellers);
 
       const cloudFinance = (cloudDocs.finance?.data ?? null) as Record<string, any> | null;
-      const mergedBO = mergeById(biayaOperasionalRef.current, cloudFinance?.biayaOperasional);
-      const mergedAccounts = mergeById(cashAccountsRef.current, cloudFinance?.cashAccounts);
-      const mergedMutations = mergeById(cashMutationsRef.current, cloudFinance?.cashMutations);
-      const mergedRecon = mergeById(bankReconciliationsRef.current, cloudFinance?.bankReconciliations);
-      const mergedJournals = mergeById(journalEntriesRef.current, cloudFinance?.journalEntries);
-      const mergedFixedAssets = mergeById(fixedAssetsRef.current, cloudFinance?.fixedAssets);
-      const mergedOpexCategories = Array.from(new Set([...(cloudFinance?.customOpexCategories ?? []), ...customOpexCategoriesRef.current])) as string[];
+      const mergedBO = mergeField('finance', 'biayaOperasional', biayaOperasionalRef.current, cloudFinance?.biayaOperasional);
+      const mergedAccounts = mergeField('finance', 'cashAccounts', cashAccountsRef.current, cloudFinance?.cashAccounts);
+      const mergedMutations = mergeField('finance', 'cashMutations', cashMutationsRef.current, cloudFinance?.cashMutations);
+      const mergedRecon = mergeField('finance', 'bankReconciliations', bankReconciliationsRef.current, cloudFinance?.bankReconciliations);
+      const mergedJournals = mergeField('finance', 'journalEntries', journalEntriesRef.current, cloudFinance?.journalEntries);
+      const mergedFixedAssets = mergeField('finance', 'fixedAssets', fixedAssetsRef.current, cloudFinance?.fixedAssets);
+      const mergedOpexCategories = mergeField('finance', 'customOpexCategories', customOpexCategoriesRef.current, cloudFinance?.customOpexCategories as string[] | undefined);
+      const mergedBalanceSheet = cloudFinance?.balanceSheetConfig
+        ? mergeValue(syncBaseRef.current['finance.balanceSheetConfig'] as string | undefined, balanceSheetConfigRef.current, cloudFinance.balanceSheetConfig as BalanceSheetConfig)
+        : balanceSheetConfigRef.current;
 
       const cloudOps = (cloudDocs.operations?.data ?? null) as Record<string, any> | null;
-      const mergedSurat = mergeById(suratTitipRef.current, cloudOps?.suratTitip);
-      const mergedLaporan = mergeById(laporanTitipLakuRef.current, cloudOps?.laporanTitipLaku);
-      const mergedSessions = mergeById(stockOpnameSessionsRef.current, cloudOps?.stockOpnameSessions);
-      const mergedVendors = mergeById(vendorsRef.current, cloudOps?.vendors);
-      const mergedPOs = mergeById(purchaseOrdersRef.current, cloudOps?.purchaseOrders);
+      const mergedSurat = mergeField('operations', 'suratTitip', suratTitipRef.current, cloudOps?.suratTitip);
+      const mergedLaporan = mergeField('operations', 'laporanTitipLaku', laporanTitipLakuRef.current, cloudOps?.laporanTitipLaku);
+      const mergedSessions = mergeField('operations', 'stockOpnameSessions', stockOpnameSessionsRef.current, cloudOps?.stockOpnameSessions);
+      const mergedVendors = mergeField('operations', 'vendors', vendorsRef.current, cloudOps?.vendors);
+      const mergedPOs = mergeField('operations', 'purchaseOrders', purchaseOrdersRef.current, cloudOps?.purchaseOrders);
 
       const cloudAudit = (cloudDocs.audit_logs?.data ?? null) as Record<string, any> | null;
-      const mergedAudit = mergeById(auditLogsRef.current, cloudAudit?.auditLogs).slice(0, 150);
+      const mergedAudit = mergeField('audit_logs', 'auditLogs', auditLogsRef.current, cloudAudit?.auditLogs).slice(0, 150);
+
+      // Data server ini jadi dasar gabung berikutnya (setelah dipakai menggabung di atas).
+      for (const id of Object.keys(cloudDocs) as WorkspaceDocId[]) {
+        recordBaseRef.current(id, cloudDocs[id]!.data as Record<string, unknown>);
+      }
 
       // 3a. Simpan hasil gabung ke ref dulu, agar simpan-ulang setelah bentrok membaca data terbaru
       ordersRef.current = mergedOrders;
@@ -1005,6 +990,7 @@ export const AppProvider: React.FC<{
       auditLogsRef.current = mergedAudit;
       fixedAssetsRef.current = mergedFixedAssets;
       customOpexCategoriesRef.current = mergedOpexCategories;
+      balanceSheetConfigRef.current = mergedBalanceSheet;
 
 
       // 3. Save back to server
@@ -1062,6 +1048,7 @@ export const AppProvider: React.FC<{
       setAuditLogs(mergedAudit);
       setFixedAssets(mergedFixedAssets);
       setCustomOpexCategories(mergedOpexCategories);
+      setBalanceSheetConfig(mergedBalanceSheet);
 
       const now = new Date();
       setLastSyncedAt(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
@@ -1652,8 +1639,6 @@ export const AppProvider: React.FC<{
   const deleteOrder = (orderId: string) => {
     const targetOrder = ordersRef.current.find((o) => o.id === orderId);
     if (!targetOrder) return;
-
-    deletedOrderIdsRef.current.add(orderId);
 
     const nextMovements = stockMovementsRef.current.filter(
       (m) =>
