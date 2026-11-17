@@ -20,6 +20,8 @@ import {
   Vendor,
   PurchaseOrder,
   JournalEntry,
+  FixedAssetItem,
+  BalanceSheetConfig,
 } from '../types';
 
 export const INITIAL_USERS: User[] = [
@@ -1207,6 +1209,49 @@ export const INITIAL_JOURNAL_ENTRIES: JournalEntry[] = [
   },
 ];
 
+export const INITIAL_FIXED_ASSETS: FixedAssetItem[] = [
+  {
+    id: 'fa-1',
+    nama: 'Mesin Heat Press Sablon High-Pressure 40x60',
+    kategori: 'Peralatan & Mesin Produksi',
+    tanggalPerolehan: '2025-06-15',
+    hargaPerolehan: 8500000,
+    umurEkonomisTahun: 4,
+    akumulasiPenyusutan: 2650000,
+    nilaiBuku: 5850000,
+    lokasi: 'Gudang Finishing & QC Bandung',
+    catatan: 'Mesin press presisi tinggi untuk aplikasi label leher & sablon grafis Kalima.',
+  },
+  {
+    id: 'fa-2',
+    nama: 'Rangka Rak Pergudangan Heavy-Duty & Display (3 Set)',
+    kategori: 'Rak Pergudangan & Display',
+    tanggalPerolehan: '2025-04-10',
+    hargaPerolehan: 12000000,
+    umurEkonomisTahun: 5,
+    akumulasiPenyusutan: 3400000,
+    nilaiBuku: 8600000,
+    lokasi: 'Gudang Utama Kalima Apparel',
+    catatan: 'Rak penyimpanan rol kain dan susunan koli stok kaos polos.',
+  },
+  {
+    id: 'fa-3',
+    nama: 'Laptop Operasional & Barcode Scanner Zebra',
+    kategori: 'Inventaris & Elektronik Kantor',
+    tanggalPerolehan: '2025-08-20',
+    hargaPerolehan: 11500000,
+    umurEkonomisTahun: 3,
+    akumulasiPenyusutan: 3800000,
+    nilaiBuku: 7700000,
+    lokasi: 'Kantor Administrasi & Kasir',
+    catatan: 'Perangkat kasir POS, audit stok opname, dan pembukuan.',
+  },
+];
 
-
-
+export const DEFAULT_BALANCE_SHEET_CONFIG: BalanceSheetConfig = {
+  modalDisetorAwal: 65000000,
+  labaDitahanTahunLalu: 28500000,
+  privePemilik: 5000000,
+  uangMukaLainnya: 0,
+  hutangBiayaLainnya: 0,
+};

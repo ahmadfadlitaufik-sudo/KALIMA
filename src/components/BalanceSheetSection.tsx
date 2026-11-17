@@ -48,53 +48,6 @@ import {
 import { useApp } from '../context/AppContext';
 import { FixedAssetItem, BalanceSheetConfig, FixedAssetCategory } from '../types';
 
-const INITIAL_FIXED_ASSETS: FixedAssetItem[] = [
-  {
-    id: 'fa-1',
-    nama: 'Mesin Heat Press Sablon High-Pressure 40x60',
-    kategori: 'Peralatan & Mesin Produksi',
-    tanggalPerolehan: '2025-06-15',
-    hargaPerolehan: 8500000,
-    umurEkonomisTahun: 4,
-    akumulasiPenyusutan: 2650000,
-    nilaiBuku: 5850000,
-    lokasi: 'Gudang Finishing & QC Bandung',
-    catatan: 'Mesin press presisi tinggi untuk aplikasi label leher & sablon grafis Kalima.',
-  },
-  {
-    id: 'fa-2',
-    nama: 'Rangka Rak Pergudangan Heavy-Duty & Display (3 Set)',
-    kategori: 'Rak Pergudangan & Display',
-    tanggalPerolehan: '2025-04-10',
-    hargaPerolehan: 12000000,
-    umurEkonomisTahun: 5,
-    akumulasiPenyusutan: 3400000,
-    nilaiBuku: 8600000,
-    lokasi: 'Gudang Utama Kalima Apparel',
-    catatan: 'Rak penyimpanan rol kain dan susunan koli stok kaos polos.',
-  },
-  {
-    id: 'fa-3',
-    nama: 'Laptop Operasional & Barcode Scanner Zebra',
-    kategori: 'Inventaris & Elektronik Kantor',
-    tanggalPerolehan: '2025-08-20',
-    hargaPerolehan: 11500000,
-    umurEkonomisTahun: 3,
-    akumulasiPenyusutan: 3800000,
-    nilaiBuku: 7700000,
-    lokasi: 'Kantor Administrasi & Kasir',
-    catatan: 'Perangkat kasir POS, audit stok opname, dan pembukuan.',
-  },
-];
-
-const DEFAULT_CONFIG: BalanceSheetConfig = {
-  modalDisetorAwal: 65000000,
-  labaDitahanTahunLalu: 28500000,
-  privePemilik: 5000000,
-  uangMukaLainnya: 0,
-  hutangBiayaLainnya: 0,
-};
-
 const ASSET_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#06b6d4'];
 const LIAB_EQUITY_COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
 
@@ -109,6 +62,10 @@ export const BalanceSheetSection: React.FC = () => {
     isOwner,
     currentUser,
     journalEntries,
+    fixedAssets,
+    setFixedAssets,
+    balanceSheetConfig,
+    setBalanceSheetConfig,
   } = useApp();
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -119,25 +76,7 @@ export const BalanceSheetSection: React.FC = () => {
   const [journalFilter, setJournalFilter] = useState<'all' | 'pembayaran_utang_vendor' | 'kas_bank'>('all');
   const [journalSearch, setJournalSearch] = useState('');
 
-  // Persistence for Fixed Assets
-  const [fixedAssets, setFixedAssets] = useState<FixedAssetItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('kalima_fixed_assets');
-      return saved ? JSON.parse(saved) : INITIAL_FIXED_ASSETS;
-    } catch {
-      return INITIAL_FIXED_ASSETS;
-    }
-  });
-
-  // Persistence for Balance Sheet Config (Modal Awal, Laba Ditahan, Prive)
-  const [config, setConfig] = useState<BalanceSheetConfig>(() => {
-    try {
-      const saved = localStorage.getItem('kalima_balance_sheet_config');
-      return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
-    } catch {
-      return DEFAULT_CONFIG;
-    }
-  });
+  const config = balanceSheetConfig;
 
   // Modals State
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -154,20 +93,10 @@ export const BalanceSheetSection: React.FC = () => {
 
   const saveFixedAssets = (assets: FixedAssetItem[]) => {
     setFixedAssets(assets);
-    try {
-      localStorage.setItem('kalima_fixed_assets', JSON.stringify(assets));
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const saveConfig = (newConfig: BalanceSheetConfig) => {
-    setConfig(newConfig);
-    try {
-      localStorage.setItem('kalima_balance_sheet_config', JSON.stringify(newConfig));
-    } catch (e) {
-      console.error(e);
-    }
+    setBalanceSheetConfig(newConfig);
   };
 
   // =========================================================================

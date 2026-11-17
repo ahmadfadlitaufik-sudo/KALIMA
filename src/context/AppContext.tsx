@@ -1,15 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { db, doc, setDoc, onSnapshot, getDocFromServer } from '../services/firebase';
-import {
-  runFirestorePersistenceDiagnostic,
-  verifyOrderInServerFirestore,
-  PersistenceDiagnosticReport,
-} from '../services/firestoreDiagnostics';
+import { ApiError, WorkspaceDocId, api, onUnauthorized } from '../services/api';
+import { docsToRefetch, isFreshBrowser, pickInitial } from '../services/workspaceSync';
 
-if (typeof window !== 'undefined') {
-  (window as any).runFirestoreDiagnostic = runFirestorePersistenceDiagnostic;
-  (window as any).verifyOrderInServer = verifyOrderInServerFirestore;
-}
+/** Selang cek perubahan data di server (ms) selama tab terlihat. */
+const POLL_INTERVAL_MS = 5000;
+
+const ALL_WORKSPACE_DOC_IDS: WorkspaceDocId[] = ['orders', 'stock_movements', 'master', 'finance', 'operations', 'audit_logs'];
 
 // Helper to merge lists of objects by ID or custom key, ensuring no records from cloud or local are dropped
 function mergeByKey<T>(
@@ -83,6 +79,8 @@ import {
   JournalLineItem,
   orderSortComparator,
   getLocalDateString,
+  FixedAssetItem,
+  BalanceSheetConfig,
 } from '../types';
 import {
   INITIAL_SERIES,
@@ -105,6 +103,8 @@ import {
   INITIAL_VENDORS,
   INITIAL_PURCHASE_ORDERS,
   INITIAL_JOURNAL_ENTRIES,
+  INITIAL_FIXED_ASSETS,
+  DEFAULT_BALANCE_SHEET_CONFIG,
 } from '../data/initialData';
 
 export type AppView =
@@ -175,6 +175,12 @@ interface AppContextType {
   vendors: Vendor[];
   purchaseOrders: PurchaseOrder[];
   journalEntries: JournalEntry[];
+  fixedAssets: FixedAssetItem[];
+  setFixedAssets: (assets: FixedAssetItem[]) => void;
+  balanceSheetConfig: BalanceSheetConfig;
+  setBalanceSheetConfig: (config: BalanceSheetConfig) => void;
+  customOpexCategories: string[];
+  setCustomOpexCategories: (categories: string[]) => void;
 
   // Inventory Computations
   calculateStock: (sku: string, lokasi?: string) => number;
@@ -200,14 +206,6 @@ interface AppContextType {
     tanggal?: string;
   }) => Promise<{ success: boolean; error?: string; order?: Order }>;
 
-  runFirestoreDiagnostic: () => Promise<PersistenceDiagnosticReport>;
-  verifyOrderInServer: (orderIdOrNumber: string) => Promise<{
-    persisted: boolean;
-    order?: any;
-    serverUpdatedAt?: string;
-    totalOrdersOnServer: number;
-    message: string;
-  }>;
 
   updateOrder: (
     orderId: string,
@@ -376,8 +374,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const STORAGE_PREFIX = 'kalima_app_v1_';
 
 /**
- * Penyedia data ERP. Hanya dirender setelah pengguna lolos login Firebase dan
- * terdaftar di daftar pengguna, sehingga listener Firestore tidak pernah jalan tanpa izin.
+ * Penyedia data ERP. Hanya dirender setelah pengguna login, sehingga API data tidak dipanggil tanpa sesi.
  */
 export const AppProvider: React.FC<{
   children: React.ReactNode;
@@ -490,6 +487,19 @@ export const AppProvider: React.FC<{
     return saved ? JSON.parse(saved) : INITIAL_JOURNAL_ENTRIES;
   });
 
+  /** Data neraca & kategori biaya; dulu hanya di browser, sekarang ikut dokumen `finance`. */
+  const readLegacy = <T,>(key: string, fallback: T): T => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+  const [fixedAssets, setFixedAssets] = useState<FixedAssetItem[]>(() => readLegacy('kalima_fixed_assets', INITIAL_FIXED_ASSETS));
+  const [balanceSheetConfig, setBalanceSheetConfig] = useState<BalanceSheetConfig>(() => readLegacy('kalima_balance_sheet_config', DEFAULT_BALANCE_SHEET_CONFIG));
+  const [customOpexCategories, setCustomOpexCategories] = useState<string[]>(() => readLegacy('kalima_custom_opex_categories', []));
+
   // Cloud & Multi-User Synchronization States
   const [cloudSyncStatus, setCloudSyncStatus] = useState<'connecting' | 'connected' | 'syncing' | 'offline' | 'error'>('connecting');
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
@@ -498,6 +508,11 @@ export const AppProvider: React.FC<{
   const masterSyncTimeoutRef = useRef<any>(null);
   const financeSyncTimeoutRef = useRef<any>(null);
   const operationsSyncTimeoutRef = useRef<any>(null);
+  const auditSyncTimeoutRef = useRef<any>(null);
+  /** Versi terakhir tiap dokumen yang sudah diketahui browser ini. */
+  const knownVersionsRef = useRef<Partial<Record<WorkspaceDocId, number>>>({});
+  /** Browser baru (belum ada cache): data server dipakai apa adanya tanpa data contoh. */
+  const freshBrowserRef = useRef(isFreshBrowser(localStorage, STORAGE_PREFIX));
 
   // Synchronous State Refs to prevent stale closures during saving and merging
   const ordersRef = useRef<Order[]>(orders);
@@ -518,6 +533,9 @@ export const AppProvider: React.FC<{
   const vendorsRef = useRef<Vendor[]>(vendors);
   const purchaseOrdersRef = useRef<PurchaseOrder[]>(purchaseOrders);
   const journalEntriesRef = useRef<JournalEntry[]>(journalEntries);
+  const fixedAssetsRef = useRef<FixedAssetItem[]>(fixedAssets);
+  const balanceSheetConfigRef = useRef<BalanceSheetConfig>(balanceSheetConfig);
+  const customOpexCategoriesRef = useRef<string[]>(customOpexCategories);
 
   const deletedOrderIdsRef = useRef<Set<string>>(new Set());
   const deletedMovementIdsRef = useRef<Set<string>>(new Set());
@@ -541,6 +559,30 @@ export const AppProvider: React.FC<{
   useEffect(() => { vendorsRef.current = vendors; }, [vendors]);
   useEffect(() => { purchaseOrdersRef.current = purchaseOrders; }, [purchaseOrders]);
   useEffect(() => { journalEntriesRef.current = journalEntries; }, [journalEntries]);
+  useEffect(() => { fixedAssetsRef.current = fixedAssets; }, [fixedAssets]);
+  useEffect(() => { balanceSheetConfigRef.current = balanceSheetConfig; }, [balanceSheetConfig]);
+  useEffect(() => { customOpexCategoriesRef.current = customOpexCategories; }, [customOpexCategories]);
+
+  // Sesi habis / akun dinonaktifkan → kembali ke halaman login.
+  useEffect(() => {
+    onUnauthorized(() => { void onSignOut(); });
+    return () => onUnauthorized(null);
+  }, [onSignOut]);
+
+  /** Simpan satu dokumen ke server dan catat versinya agar polling tidak mengambil ulang perubahan sendiri. */
+  const saveWorkspaceDoc = async (id: WorkspaceDocId, data: object): Promise<void> => {
+    const { version } = await api.saveDoc(id, data);
+    knownVersionsRef.current[id] = version;
+  };
+
+  /** Gagal simpan: data lokal tetap ada, status sinkron jadi error, data terlalu besar diberi tahu. */
+  const reportSaveError = (id: WorkspaceDocId, err: unknown) => {
+    console.warn(`Failed to save ${id} to server:`, err);
+    setCloudSyncStatus('error');
+    if (err instanceof ApiError && err.status === 413) {
+      window.alert(err.message);
+    }
+  };
 
   // Save orders & stock movements to Cloud immediately
   const saveOrdersToCloud = async (targetOrders?: Order[], targetMovements?: StockMovement[]): Promise<{ success: boolean; error?: string }> => {
@@ -552,12 +594,9 @@ export const AppProvider: React.FC<{
       const ordersToSave = ordersRef.current;
       const movementsToSave = stockMovementsRef.current;
 
-      const ordersDocRef = doc(db, 'kalima_workspace', 'orders');
-      const movementsDocRef = doc(db, 'kalima_workspace', 'stock_movements');
-
       await Promise.all([
-        setDoc(ordersDocRef, { orders: ordersToSave, updatedAt: new Date().toISOString() }),
-        setDoc(movementsDocRef, { stockMovements: movementsToSave, updatedAt: new Date().toISOString() })
+        saveWorkspaceDoc('orders', { orders: ordersToSave }),
+        saveWorkspaceDoc('stock_movements', { stockMovements: movementsToSave }),
       ]);
 
       const now = new Date();
@@ -565,9 +604,8 @@ export const AppProvider: React.FC<{
       setCloudSyncStatus('connected');
       return { success: true };
     } catch (err: any) {
-      console.warn('Failed to save orders to cloud:', err);
-      setCloudSyncStatus('error');
-      return { success: false, error: err?.message || 'Gagal menyimpan ke Firestore' };
+      reportSaveError('orders', err);
+      return { success: false, error: err?.message || 'Gagal menyimpan ke server' };
     }
   };
 
@@ -586,18 +624,16 @@ export const AppProvider: React.FC<{
       if (overrides?.customers) customersRef.current = overrides.customers;
       if (overrides?.resellers) resellersRef.current = overrides.resellers;
 
-      const masterDocRef = doc(db, 'kalima_workspace', 'master');
-      await setDoc(masterDocRef, {
+      await saveWorkspaceDoc('master', {
         series: seriesRef.current,
         skus: skusRef.current,
         bomItems: bomItemsRef.current,
         customers: customersRef.current,
-        resellers: resellersRef.current,
-        updatedAt: new Date().toISOString()
+        resellers: resellersRef.current
       });
       setCloudSyncStatus('connected');
     } catch (err) {
-      console.warn('Failed to save master data to cloud:', err);
+      reportSaveError('master', err);
     }
   };
 
@@ -616,18 +652,19 @@ export const AppProvider: React.FC<{
       if (overrides?.bankReconciliations) bankReconciliationsRef.current = overrides.bankReconciliations;
       if (overrides?.journalEntries) journalEntriesRef.current = overrides.journalEntries;
 
-      const financeDocRef = doc(db, 'kalima_workspace', 'finance');
-      await setDoc(financeDocRef, {
+      await saveWorkspaceDoc('finance', {
         biayaOperasional: biayaOperasionalRef.current,
         cashAccounts: cashAccountsRef.current,
         cashMutations: cashMutationsRef.current,
         bankReconciliations: bankReconciliationsRef.current,
         journalEntries: journalEntriesRef.current,
-        updatedAt: new Date().toISOString()
+        fixedAssets: fixedAssetsRef.current,
+        balanceSheetConfig: balanceSheetConfigRef.current,
+        customOpexCategories: customOpexCategoriesRef.current,
       });
       setCloudSyncStatus('connected');
     } catch (err) {
-      console.warn('Failed to save finance to cloud:', err);
+      reportSaveError('finance', err);
     }
   };
 
@@ -646,300 +683,312 @@ export const AppProvider: React.FC<{
       if (overrides?.vendors) vendorsRef.current = overrides.vendors;
       if (overrides?.purchaseOrders) purchaseOrdersRef.current = overrides.purchaseOrders;
 
-      const opsDocRef = doc(db, 'kalima_workspace', 'operations');
-      await setDoc(opsDocRef, {
+      await saveWorkspaceDoc('operations', {
         suratTitip: suratTitipRef.current,
         laporanTitipLaku: laporanTitipLakuRef.current,
         stockOpnameSessions: stockOpnameSessionsRef.current,
         vendors: vendorsRef.current,
-        purchaseOrders: purchaseOrdersRef.current,
-        updatedAt: new Date().toISOString()
+        purchaseOrders: purchaseOrdersRef.current
       });
       setCloudSyncStatus('connected');
     } catch (err) {
-      console.warn('Failed to save operations to cloud:', err);
+      reportSaveError('operations', err);
     }
   };
 
-  // Multi-Document Firestore Real-Time Listeners (Modular, Instant Multi-User Collaboration)
-  useEffect(() => {
-    const unsubs: (() => void)[] = [];
-    try {
-      // 1. Orders Listener
-      unsubs.push(
-        onSnapshot(
-          doc(db, 'kalima_workspace', 'orders'),
-          (snap) => {
-            if (snap.exists()) {
-              const data = snap.data();
-              if (data.orders && Array.isArray(data.orders)) {
-                const merged = mergeById(ordersRef.current, data.orders, deletedOrderIdsRef.current)
-                  .sort(orderSortComparator);
-                ordersRef.current = merged;
-                isRemoteUpdateRef.current = true;
-                setOrders(merged);
-                setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
-              }
-              const now = new Date();
-              setLastSyncedAt(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
-              setCloudSyncStatus('connected');
-              isCloudInitializedRef.current = true;
-            }
-          },
-          (err) => {
-            console.warn('Orders listener error:', err);
-            setCloudSyncStatus('offline');
-          }
-        )
-      );
-
-      // 2. Stock Movements Listener
-      unsubs.push(
-        onSnapshot(
-          doc(db, 'kalima_workspace', 'stock_movements'),
-          (snap) => {
-            if (snap.exists()) {
-              const data = snap.data();
-              if (data.stockMovements && Array.isArray(data.stockMovements)) {
-                const merged = mergeById(stockMovementsRef.current, data.stockMovements, deletedMovementIdsRef.current)
-                  .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
-                stockMovementsRef.current = merged;
-                isRemoteUpdateRef.current = true;
-                setStockMovements(merged);
-                setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
-              }
-            }
-          },
-          (err) => console.warn('Stock movements listener error:', err)
-        )
-      );
-
-      // 3. Master Data Listener
-      unsubs.push(
-        onSnapshot(
-          doc(db, 'kalima_workspace', 'master'),
-          (snap) => {
-            if (snap.exists()) {
-              const data = snap.data();
-              isRemoteUpdateRef.current = true;
-              if (data.series && Array.isArray(data.series)) {
-                const merged = mergeByKey(seriesRef.current, data.series, undefined, 'id');
-                seriesRef.current = merged;
-                setSeries(merged);
-              }
-              if (data.skus && Array.isArray(data.skus)) {
-                const merged = mergeByKey(skusRef.current, data.skus, undefined, 'sku');
-                skusRef.current = merged;
-                setSkus(merged);
-              }
-              if (data.bomItems && Array.isArray(data.bomItems)) {
-                const merged = mergeByKey(bomItemsRef.current, data.bomItems, undefined, 'id');
-                bomItemsRef.current = merged;
-                setBomItems(merged);
-              }
-              if (data.customers && Array.isArray(data.customers)) {
-                const merged = mergeById(customersRef.current, data.customers);
-                customersRef.current = merged;
-                setCustomers(merged);
-              }
-              if (data.resellers && Array.isArray(data.resellers)) {
-                const merged = mergeById(resellersRef.current, data.resellers);
-                resellersRef.current = merged;
-                setResellers(merged);
-              }
-              setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
-            }
-          },
-          (err) => console.warn('Master listener error:', err)
-        )
-      );
-
-      // 4. Finance Listener
-      unsubs.push(
-        onSnapshot(
-          doc(db, 'kalima_workspace', 'finance'),
-          (snap) => {
-            if (snap.exists()) {
-              const data = snap.data();
-              isRemoteUpdateRef.current = true;
-              if (data.biayaOperasional && Array.isArray(data.biayaOperasional)) {
-                const merged = mergeById(biayaOperasionalRef.current, data.biayaOperasional);
-                biayaOperasionalRef.current = merged;
-                setBiayaOperasional(merged);
-              }
-              if (data.cashAccounts && Array.isArray(data.cashAccounts)) {
-                const merged = mergeById(cashAccountsRef.current, data.cashAccounts);
-                cashAccountsRef.current = merged;
-                setCashAccounts(merged);
-              }
-              if (data.cashMutations && Array.isArray(data.cashMutations)) {
-                const merged = mergeById(cashMutationsRef.current, data.cashMutations);
-                cashMutationsRef.current = merged;
-                setCashMutations(merged);
-              }
-              if (data.bankReconciliations && Array.isArray(data.bankReconciliations)) {
-                const merged = mergeById(bankReconciliationsRef.current, data.bankReconciliations);
-                bankReconciliationsRef.current = merged;
-                setBankReconciliations(merged);
-              }
-              if (data.journalEntries && Array.isArray(data.journalEntries)) {
-                const merged = mergeById(journalEntriesRef.current, data.journalEntries);
-                journalEntriesRef.current = merged;
-                setJournalEntries(merged);
-              }
-              setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
-            }
-          },
-          (err) => console.warn('Finance listener error:', err)
-        )
-      );
-
-      // 5. Operations Listener
-      unsubs.push(
-        onSnapshot(
-          doc(db, 'kalima_workspace', 'operations'),
-          (snap) => {
-            if (snap.exists()) {
-              const data = snap.data();
-              isRemoteUpdateRef.current = true;
-              if (data.suratTitip && Array.isArray(data.suratTitip)) {
-                const merged = mergeById(suratTitipRef.current, data.suratTitip);
-                suratTitipRef.current = merged;
-                setSuratTitip(merged);
-              }
-              if (data.laporanTitipLaku && Array.isArray(data.laporanTitipLaku)) {
-                const merged = mergeById(laporanTitipLakuRef.current, data.laporanTitipLaku);
-                laporanTitipLakuRef.current = merged;
-                setLaporanTitipLaku(merged);
-              }
-              if (data.stockOpnameSessions && Array.isArray(data.stockOpnameSessions)) {
-                const merged = mergeById(stockOpnameSessionsRef.current, data.stockOpnameSessions);
-                stockOpnameSessionsRef.current = merged;
-                setStockOpnameSessions(merged);
-              }
-              if (data.vendors && Array.isArray(data.vendors)) {
-                const merged = mergeById(vendorsRef.current, data.vendors);
-                vendorsRef.current = merged;
-                setVendors(merged);
-              }
-              if (data.purchaseOrders && Array.isArray(data.purchaseOrders)) {
-                const merged = mergeById(purchaseOrdersRef.current, data.purchaseOrders);
-                purchaseOrdersRef.current = merged;
-                setPurchaseOrders(merged);
-              }
-              setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
-            }
-          },
-          (err) => console.warn('Operations listener error:', err)
-        )
-      );
-
-      // 6. Audit Logs Listener
-      unsubs.push(
-        onSnapshot(
-          doc(db, 'kalima_workspace', 'audit_logs'),
-          (snap) => {
-            if (snap.exists()) {
-              const data = snap.data();
-              if (data.auditLogs && Array.isArray(data.auditLogs)) {
-                const merged = mergeById(auditLogsRef.current, data.auditLogs).slice(0, 150);
-                auditLogsRef.current = merged;
-                setAuditLogs(merged);
-              }
-            }
-          },
-          (err) => console.warn('Audit logs listener error:', err)
-        )
-      );
-    } catch (err) {
-      console.warn('Firebase listeners setup failed:', err);
-      setCloudSyncStatus('offline');
+  /**
+   * Gabungkan satu dokumen dari server ke state lokal (logika gabung sama dengan versi Firestore lama).
+   * `fresh` = browser baru: pakai data server apa adanya tanpa data contoh.
+   */
+  const applyRemoteDoc = (id: WorkspaceDocId, data: Record<string, any>, fresh: boolean) => {
+    /** Daftar dari server; untuk browser baru, field yang belum ada dianggap kosong (tanpa data contoh). */
+    const list = (key: string): any[] | undefined => (Array.isArray(data[key]) ? data[key] : fresh ? [] : undefined);
+    switch (id) {
+      case 'orders': {
+        if (list('orders')) {
+          const merged = pickInitial(fresh, ordersRef.current, list('orders')!, (local, server) => mergeById(local, server, deletedOrderIdsRef.current).sort(orderSortComparator));
+          ordersRef.current = merged;
+          isRemoteUpdateRef.current = true;
+          setOrders(merged);
+          setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
+        }
+        break;
+      }
+      case 'stock_movements': {
+        if (list('stockMovements')) {
+          const merged = pickInitial(fresh, stockMovementsRef.current, list('stockMovements')!, (local, server) => mergeById(local, server, deletedMovementIdsRef.current).sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()));
+          stockMovementsRef.current = merged;
+          isRemoteUpdateRef.current = true;
+          setStockMovements(merged);
+          setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
+        }
+        break;
+      }
+      case 'master': {
+        isRemoteUpdateRef.current = true;
+        if (list('series')) {
+          const merged = pickInitial(fresh, seriesRef.current, list('series')!, (local, server) => mergeByKey(local, server, undefined, 'id'));
+          seriesRef.current = merged;
+          setSeries(merged);
+        }
+        if (list('skus')) {
+          const merged = pickInitial(fresh, skusRef.current, list('skus')!, (local, server) => mergeByKey(local, server, undefined, 'sku'));
+          skusRef.current = merged;
+          setSkus(merged);
+        }
+        if (list('bomItems')) {
+          const merged = pickInitial(fresh, bomItemsRef.current, list('bomItems')!, (local, server) => mergeByKey(local, server, undefined, 'id'));
+          bomItemsRef.current = merged;
+          setBomItems(merged);
+        }
+        if (list('customers')) {
+          const merged = pickInitial(fresh, customersRef.current, list('customers')!, (local, server) => mergeById(local, server));
+          customersRef.current = merged;
+          setCustomers(merged);
+        }
+        if (list('resellers')) {
+          const merged = pickInitial(fresh, resellersRef.current, list('resellers')!, (local, server) => mergeById(local, server));
+          resellersRef.current = merged;
+          setResellers(merged);
+        }
+        setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
+        break;
+      }
+      case 'finance': {
+        isRemoteUpdateRef.current = true;
+        if (list('biayaOperasional')) {
+          const merged = pickInitial(fresh, biayaOperasionalRef.current, list('biayaOperasional')!, (local, server) => mergeById(local, server));
+          biayaOperasionalRef.current = merged;
+          setBiayaOperasional(merged);
+        }
+        if (list('cashAccounts')) {
+          const merged = pickInitial(fresh, cashAccountsRef.current, list('cashAccounts')!, (local, server) => mergeById(local, server));
+          cashAccountsRef.current = merged;
+          setCashAccounts(merged);
+        }
+        if (list('cashMutations')) {
+          const merged = pickInitial(fresh, cashMutationsRef.current, list('cashMutations')!, (local, server) => mergeById(local, server));
+          cashMutationsRef.current = merged;
+          setCashMutations(merged);
+        }
+        if (list('bankReconciliations')) {
+          const merged = pickInitial(fresh, bankReconciliationsRef.current, list('bankReconciliations')!, (local, server) => mergeById(local, server));
+          bankReconciliationsRef.current = merged;
+          setBankReconciliations(merged);
+        }
+        if (list('journalEntries')) {
+          const merged = pickInitial(fresh, journalEntriesRef.current, list('journalEntries')!, (local, server) => mergeById(local, server));
+          journalEntriesRef.current = merged;
+          setJournalEntries(merged);
+        }
+        if (list('fixedAssets')) {
+          const merged = pickInitial(fresh, fixedAssetsRef.current, list('fixedAssets')!, (local, server) => mergeById(local, server));
+          fixedAssetsRef.current = merged;
+          setFixedAssets(merged);
+        }
+        if (data.balanceSheetConfig && typeof data.balanceSheetConfig === 'object') {
+          balanceSheetConfigRef.current = data.balanceSheetConfig;
+          setBalanceSheetConfig(data.balanceSheetConfig);
+        }
+        if (list('customOpexCategories')) {
+          const merged = pickInitial(fresh, customOpexCategoriesRef.current, list('customOpexCategories')!, (local, server) => Array.from(new Set([...server, ...local])));
+          customOpexCategoriesRef.current = merged;
+          setCustomOpexCategories(merged);
+        }
+        setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
+        break;
+      }
+      case 'operations': {
+        isRemoteUpdateRef.current = true;
+        if (list('suratTitip')) {
+          const merged = pickInitial(fresh, suratTitipRef.current, list('suratTitip')!, (local, server) => mergeById(local, server));
+          suratTitipRef.current = merged;
+          setSuratTitip(merged);
+        }
+        if (list('laporanTitipLaku')) {
+          const merged = pickInitial(fresh, laporanTitipLakuRef.current, list('laporanTitipLaku')!, (local, server) => mergeById(local, server));
+          laporanTitipLakuRef.current = merged;
+          setLaporanTitipLaku(merged);
+        }
+        if (list('stockOpnameSessions')) {
+          const merged = pickInitial(fresh, stockOpnameSessionsRef.current, list('stockOpnameSessions')!, (local, server) => mergeById(local, server));
+          stockOpnameSessionsRef.current = merged;
+          setStockOpnameSessions(merged);
+        }
+        if (list('vendors')) {
+          const merged = pickInitial(fresh, vendorsRef.current, list('vendors')!, (local, server) => mergeById(local, server));
+          vendorsRef.current = merged;
+          setVendors(merged);
+        }
+        if (list('purchaseOrders')) {
+          const merged = pickInitial(fresh, purchaseOrdersRef.current, list('purchaseOrders')!, (local, server) => mergeById(local, server));
+          purchaseOrdersRef.current = merged;
+          setPurchaseOrders(merged);
+        }
+        setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
+        break;
+      }
+      case 'audit_logs': {
+        if (list('auditLogs')) {
+          const merged = pickInitial(fresh, auditLogsRef.current, list('auditLogs')!, (local, server) => mergeById(local, server).slice(0, 150));
+          auditLogsRef.current = merged;
+          setAuditLogs(merged);
+        }
+        break;
+      }
     }
+  };
 
+  const markSynced = () => {
+    const now = new Date();
+    setLastSyncedAt(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
+    setCloudSyncStatus('connected');
+  };
+
+  /** Ambil dokumen dari server dan gabungkan; `onlyIds` membatasi dokumen yang diterapkan. */
+  const pullWorkspace = async (onlyIds?: WorkspaceDocId[]) => {
+    const docs = await api.fetchWorkspace();
+    const fresh = freshBrowserRef.current;
+    isRemoteUpdateRef.current = true;
+    const ids = fresh ? ALL_WORKSPACE_DOC_IDS : (Object.keys(docs) as WorkspaceDocId[]);
+    for (const id of ids) {
+      if (onlyIds && !onlyIds.includes(id)) {
+        continue;
+      }
+      applyRemoteDoc(id, (docs[id]?.data ?? {}) as Record<string, any>, fresh);
+      if (docs[id]) {
+        knownVersionsRef.current[id] = docs[id]!.version;
+      }
+    }
+    setTimeout(() => { isRemoteUpdateRef.current = false; }, 300);
+    markSynced();
+  };
+
+  // Muat data dari server saat aplikasi dibuka, lalu cek perubahan tiap 5 detik selama tab terlihat.
+  useEffect(() => {
+    let cancelled = false;
+    let polling = false;
+
+    const initialLoad = async () => {
+      try {
+        await pullWorkspace();
+        if (cancelled) return;
+        freshBrowserRef.current = false;
+        isCloudInitializedRef.current = true;
+      } catch (err) {
+        console.warn('Initial workspace load failed:', err);
+        setCloudSyncStatus('offline');
+      }
+    };
+
+    const poll = async () => {
+      if (polling || cancelled || document.visibilityState !== 'visible') return;
+      if (!isCloudInitializedRef.current) {
+        await initialLoad();
+        return;
+      }
+      polling = true;
+      try {
+        const changed = docsToRefetch(knownVersionsRef.current, await api.fetchVersions());
+        if (changed.length > 0 && !cancelled) {
+          await pullWorkspace(changed);
+        }
+      } catch (err) {
+        console.warn('Workspace poll failed:', err);
+        setCloudSyncStatus('offline');
+      } finally {
+        polling = false;
+      }
+    };
+
+    void initialLoad();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
+    const handleVisibility = () => { void poll(); };
+    document.addEventListener('visibilitychange', handleVisibility);
     return () => {
-      unsubs.forEach((unsub) => unsub());
+      cancelled = true;
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
 
   // Function to manually or automatically force sync to cloud (bidirectional union across all split docs)
   const syncToCloudNow = async (): Promise<{ success: boolean; message?: string }> => {
     try {
+      // Jangan gabungkan sebelum data awal dari server dimuat (mencegah data contoh ikut terkirim).
+      if (!isCloudInitializedRef.current) {
+        return { success: false, message: 'Data dari server belum selesai dimuat. Coba lagi sebentar.' };
+      }
       setCloudSyncStatus('syncing');
 
-      // 1. Direct fetch from cloud documents
-      const [ordersSnap, movementsSnap, masterSnap, financeSnap, opsSnap, auditSnap] = await Promise.all([
-        getDocFromServer(doc(db, 'kalima_workspace', 'orders')).catch(() => null),
-        getDocFromServer(doc(db, 'kalima_workspace', 'stock_movements')).catch(() => null),
-        getDocFromServer(doc(db, 'kalima_workspace', 'master')).catch(() => null),
-        getDocFromServer(doc(db, 'kalima_workspace', 'finance')).catch(() => null),
-        getDocFromServer(doc(db, 'kalima_workspace', 'operations')).catch(() => null),
-        getDocFromServer(doc(db, 'kalima_workspace', 'audit_logs')).catch(() => null),
-      ]);
+      // 1. Direct fetch from server documents
+      const cloudDocs = await api.fetchWorkspace();
 
       // 2. Union merge with local refs (local modifications always preserved!)
-      const cloudOrders = ordersSnap?.exists() ? (ordersSnap.data().orders as Order[]) : undefined;
+      const cloudOrders = cloudDocs.orders?.data.orders as Order[];
       const mergedOrders = mergeById(ordersRef.current, cloudOrders, deletedOrderIdsRef.current)
         .sort(orderSortComparator);
 
-      const cloudMovements = movementsSnap?.exists() ? (movementsSnap.data().stockMovements as StockMovement[]) : undefined;
+      const cloudMovements = cloudDocs.stock_movements?.data.stockMovements as StockMovement[];
       const mergedMovements = mergeById(stockMovementsRef.current, cloudMovements, deletedMovementIdsRef.current)
         .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
 
-      const cloudMaster = masterSnap?.exists() ? masterSnap.data() : null;
+      const cloudMaster = (cloudDocs.master?.data ?? null) as Record<string, any> | null;
       const mergedSeries = mergeByKey(seriesRef.current, cloudMaster?.series, undefined, 'id');
       const mergedSkus = mergeByKey(skusRef.current, cloudMaster?.skus, undefined, 'sku');
       const mergedBom = mergeByKey(bomItemsRef.current, cloudMaster?.bomItems, undefined, 'id');
       const mergedCustomers = mergeById(customersRef.current, cloudMaster?.customers);
       const mergedResellers = mergeById(resellersRef.current, cloudMaster?.resellers);
 
-      const cloudFinance = financeSnap?.exists() ? financeSnap.data() : null;
+      const cloudFinance = (cloudDocs.finance?.data ?? null) as Record<string, any> | null;
       const mergedBO = mergeById(biayaOperasionalRef.current, cloudFinance?.biayaOperasional);
       const mergedAccounts = mergeById(cashAccountsRef.current, cloudFinance?.cashAccounts);
       const mergedMutations = mergeById(cashMutationsRef.current, cloudFinance?.cashMutations);
       const mergedRecon = mergeById(bankReconciliationsRef.current, cloudFinance?.bankReconciliations);
       const mergedJournals = mergeById(journalEntriesRef.current, cloudFinance?.journalEntries);
+      const mergedFixedAssets = mergeById(fixedAssetsRef.current, cloudFinance?.fixedAssets);
+      const mergedOpexCategories = Array.from(new Set([...(cloudFinance?.customOpexCategories ?? []), ...customOpexCategoriesRef.current])) as string[];
 
-      const cloudOps = opsSnap?.exists() ? opsSnap.data() : null;
+      const cloudOps = (cloudDocs.operations?.data ?? null) as Record<string, any> | null;
       const mergedSurat = mergeById(suratTitipRef.current, cloudOps?.suratTitip);
       const mergedLaporan = mergeById(laporanTitipLakuRef.current, cloudOps?.laporanTitipLaku);
       const mergedSessions = mergeById(stockOpnameSessionsRef.current, cloudOps?.stockOpnameSessions);
       const mergedVendors = mergeById(vendorsRef.current, cloudOps?.vendors);
       const mergedPOs = mergeById(purchaseOrdersRef.current, cloudOps?.purchaseOrders);
 
-      const cloudAudit = auditSnap?.exists() ? auditSnap.data() : null;
+      const cloudAudit = (cloudDocs.audit_logs?.data ?? null) as Record<string, any> | null;
       const mergedAudit = mergeById(auditLogsRef.current, cloudAudit?.auditLogs).slice(0, 150);
 
-      // 3. Save back to Firestore
+      // 3. Save back to server
       await Promise.all([
-        setDoc(doc(db, 'kalima_workspace', 'orders'), { orders: mergedOrders, updatedAt: new Date().toISOString() }),
-        setDoc(doc(db, 'kalima_workspace', 'stock_movements'), { stockMovements: mergedMovements, updatedAt: new Date().toISOString() }),
-        setDoc(doc(db, 'kalima_workspace', 'master'), {
+        saveWorkspaceDoc('orders', { orders: mergedOrders }),
+        saveWorkspaceDoc('stock_movements', { stockMovements: mergedMovements }),
+        saveWorkspaceDoc('master', {
           series: mergedSeries,
           skus: mergedSkus,
           bomItems: mergedBom,
           customers: mergedCustomers,
           resellers: mergedResellers,
-          updatedAt: new Date().toISOString()
         }),
-        setDoc(doc(db, 'kalima_workspace', 'finance'), {
+        saveWorkspaceDoc('finance', {
           biayaOperasional: mergedBO,
           cashAccounts: mergedAccounts,
           cashMutations: mergedMutations,
           bankReconciliations: mergedRecon,
           journalEntries: mergedJournals,
-          updatedAt: new Date().toISOString()
+          fixedAssets: mergedFixedAssets,
+          balanceSheetConfig: balanceSheetConfigRef.current,
+          customOpexCategories: mergedOpexCategories,
         }),
-        setDoc(doc(db, 'kalima_workspace', 'operations'), {
+        saveWorkspaceDoc('operations', {
           suratTitip: mergedSurat,
           laporanTitipLaku: mergedLaporan,
           stockOpnameSessions: mergedSessions,
           vendors: mergedVendors,
           purchaseOrders: mergedPOs,
-          updatedAt: new Date().toISOString()
         }),
-        setDoc(doc(db, 'kalima_workspace', 'audit_logs'), {
+        saveWorkspaceDoc('audit_logs', {
           auditLogs: mergedAudit,
-          updatedAt: new Date().toISOString()
         })
       ]);
 
@@ -962,6 +1011,8 @@ export const AppProvider: React.FC<{
       vendorsRef.current = mergedVendors;
       purchaseOrdersRef.current = mergedPOs;
       auditLogsRef.current = mergedAudit;
+      fixedAssetsRef.current = mergedFixedAssets;
+      customOpexCategoriesRef.current = mergedOpexCategories;
 
       isRemoteUpdateRef.current = true;
       setOrders(mergedOrders);
@@ -982,6 +1033,8 @@ export const AppProvider: React.FC<{
       setVendors(mergedVendors);
       setPurchaseOrders(mergedPOs);
       setAuditLogs(mergedAudit);
+      setFixedAssets(mergedFixedAssets);
+      setCustomOpexCategories(mergedOpexCategories);
 
       const now = new Date();
       setLastSyncedAt(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`);
@@ -992,7 +1045,7 @@ export const AppProvider: React.FC<{
         isRemoteUpdateRef.current = false;
       }, 500);
 
-      return { success: true, message: 'Data berhasil disinkronkan ke Cloud!' };
+      return { success: true, message: 'Data berhasil disinkronkan ke server!' };
     } catch (e: any) {
       console.warn('Sync to cloud failed:', e);
       setCloudSyncStatus('error');
@@ -1033,7 +1086,7 @@ export const AppProvider: React.FC<{
     if (financeSyncTimeoutRef.current) clearTimeout(financeSyncTimeoutRef.current);
     financeSyncTimeoutRef.current = setTimeout(() => { saveFinanceToCloud(); }, 1500);
     return () => { if (financeSyncTimeoutRef.current) clearTimeout(financeSyncTimeoutRef.current); };
-  }, [biayaOperasional, cashAccounts, cashMutations, bankReconciliations, journalEntries]);
+  }, [biayaOperasional, cashAccounts, cashMutations, bankReconciliations, journalEntries, fixedAssets, balanceSheetConfig, customOpexCategories]);
 
   // Debounced auto-save for Operations Data
   useEffect(() => {
@@ -1042,6 +1095,16 @@ export const AppProvider: React.FC<{
     operationsSyncTimeoutRef.current = setTimeout(() => { saveOperationsToCloud(); }, 1500);
     return () => { if (operationsSyncTimeoutRef.current) clearTimeout(operationsSyncTimeoutRef.current); };
   }, [suratTitip, laporanTitipLaku, stockOpnameSessions, vendors, purchaseOrders]);
+
+  // Debounced auto-save for Audit Logs
+  useEffect(() => {
+    if (isRemoteUpdateRef.current || !isCloudInitializedRef.current) return;
+    if (auditSyncTimeoutRef.current) clearTimeout(auditSyncTimeoutRef.current);
+    auditSyncTimeoutRef.current = setTimeout(() => {
+      saveWorkspaceDoc('audit_logs', { auditLogs: auditLogsRef.current.slice(0, 150) }).catch((err) => reportSaveError('audit_logs', err));
+    }, 1500);
+    return () => { if (auditSyncTimeoutRef.current) clearTimeout(auditSyncTimeoutRef.current); };
+  }, [auditLogs]);
 
   // Safe LocalStorage sync helper
   const safeSaveLocal = (key: string, data: any) => {
@@ -1070,6 +1133,15 @@ export const AppProvider: React.FC<{
   useEffect(() => { safeSaveLocal('vendors', vendors); }, [vendors]);
   useEffect(() => { safeSaveLocal('purchase_orders', purchaseOrders); }, [purchaseOrders]);
   useEffect(() => { safeSaveLocal('journal_entries', journalEntries); }, [journalEntries]);
+  useEffect(() => {
+    try {
+      localStorage.setItem('kalima_fixed_assets', JSON.stringify(fixedAssets));
+      localStorage.setItem('kalima_balance_sheet_config', JSON.stringify(balanceSheetConfig));
+      localStorage.setItem('kalima_custom_opex_categories', JSON.stringify(customOpexCategories));
+    } catch (e) {
+      console.warn('Local cache write failed:', e);
+    }
+  }, [fixedAssets, balanceSheetConfig, customOpexCategories]);
 
   const isOwner = currentUser.role === 'owner';
 
@@ -1362,7 +1434,7 @@ export const AppProvider: React.FC<{
       logAudit('Inventori', 'Override Stok Minus', `Order ${orderNumber} disimpan dengan stok minus/pre-order oleh ${currentUser.name} (${currentUser.role})`);
     }
 
-    // Direct immediate save to Firestore awaited so persistence is verified before modal closes
+    // Direct immediate save to the server awaited so persistence is verified before modal closes
     const saveRes = await saveOrdersToCloud(nextOrders, nextMovements);
     if (!saveRes.success) {
       console.warn('Persistence warning during addOrder:', saveRes.error);
@@ -4007,8 +4079,6 @@ export const AppProvider: React.FC<{
       calculateStockSummary,
       getLowStockSKUs,
       addOrder,
-      runFirestoreDiagnostic: runFirestorePersistenceDiagnostic,
-      verifyOrderInServer: verifyOrderInServerFirestore,
       updateOrder,
       deleteOrder,
       requestCancelOrder,
@@ -4041,6 +4111,12 @@ export const AppProvider: React.FC<{
       payPurchaseOrder,
       deletePurchaseOrder,
       journalEntries,
+      fixedAssets,
+      setFixedAssets,
+      balanceSheetConfig,
+      setBalanceSheetConfig,
+      customOpexCategories,
+      setCustomOpexCategories,
       recordJournalEntry,
       deleteJournalEntry,
       addBiayaOperasional,
@@ -4095,6 +4171,9 @@ export const AppProvider: React.FC<{
       vendors,
       purchaseOrders,
       journalEntries,
+      fixedAssets,
+      balanceSheetConfig,
+      customOpexCategories,
       calculateStock,
       calculateStockSummary,
       getLowStockSKUs,

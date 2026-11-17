@@ -72,15 +72,7 @@ export const FinanceView: React.FC = () => {
     return Array.from(monthSet).sort().reverse();
   }, [orders, biayaOperasional]);
 
-  // State for Custom OPEX Categories
-  const [customCategoryList, setCustomCategoryList] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('kalima_custom_opex_categories');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const { customOpexCategories: customCategoryList, setCustomOpexCategories: setCustomCategoryList } = useApp();
 
   const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [newCategoryNameInput, setNewCategoryNameInput] = useState('');
@@ -93,11 +85,6 @@ export const FinanceView: React.FC = () => {
     if (!customCategoryList.includes(trimmed)) {
       const updated = [...customCategoryList, trimmed];
       setCustomCategoryList(updated);
-      try {
-        localStorage.setItem('kalima_custom_opex_categories', JSON.stringify(updated));
-      } catch (err) {
-        console.error(err);
-      }
     }
     setNewCategoryNameInput('');
     setIsAddCategoryModalOpen(false);

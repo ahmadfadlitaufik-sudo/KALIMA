@@ -20,7 +20,6 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useApp, AppView } from '../context/AppContext';
-import { FirestoreDiagnosticModal } from './FirestoreDiagnosticModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
 
 export const Header: React.FC = () => {
@@ -46,7 +45,6 @@ export const Header: React.FC = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const [syncSuccessMessage, setSyncSuccessMessage] = useState<string | null>(null);
-  const [diagnosticModalOpen, setDiagnosticModalOpen] = useState(false);
 
   const lowStockCount = getLowStockSKUs().length;
   const pendingCancellations = orders.filter(
@@ -199,15 +197,6 @@ export const Header: React.FC = () => {
             )}
           </button>
 
-          {/* Diagnostic Modal Trigger Button */}
-          <button
-            onClick={() => setDiagnosticModalOpen(true)}
-            title="Diagnostik Persistensi Firestore (Uji Baca & Tulis Server Cloud)"
-            className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-semibold border border-slate-200/90 bg-white hover:bg-slate-100 text-slate-600 hover:text-emerald-700 transition-colors cursor-pointer shadow-2xs"
-          >
-            <Activity className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="hidden lg:inline text-[11px]">Uji Cloud</span>
-          </button>
 
           {syncSuccessMessage && (
             <div className="absolute right-0 top-full mt-1.5 bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-lg flex items-center gap-1.5 whitespace-nowrap z-50 animate-fade-in">
@@ -281,11 +270,6 @@ export const Header: React.FC = () => {
         </button>
       </div>
 
-      {/* Firestore Persistence Diagnostic Modal */}
-      <FirestoreDiagnosticModal
-        isOpen={diagnosticModalOpen}
-        onClose={() => setDiagnosticModalOpen(false)}
-      />
     </header>
   );
 };
