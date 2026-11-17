@@ -25,6 +25,7 @@ import {
   ChevronRight,
   CheckCircle2,
   ClipboardCheck,
+  X,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CashAccount, CashAccountType, CashMutation, CashMutationType } from '../types';
@@ -1062,12 +1063,12 @@ export const CashBankSection: React.FC = () => {
                 <Building2 className="w-4 h-4 text-amber-400" />
                 {editingAccount ? 'Edit Akun Kas / Bank' : 'Tambah Akun Kas & Bank Baru'}
               </h3>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 type="button"
                 onClick={() => setIsAccountModalOpen(false)}
                 className="text-slate-400 hover:text-white"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -1264,12 +1265,12 @@ export const CashBankSection: React.FC = () => {
                   </>
                 )}
               </h3>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 type="button"
                 onClick={() => setIsTransactionModalOpen(false)}
                 className="text-slate-400 hover:text-white"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -1410,12 +1411,12 @@ export const CashBankSection: React.FC = () => {
                 <ArrowRightLeft className="w-4 h-4 text-blue-400" />
                 <span>Pindah Saldo (Transfer Antar Kas & Bank)</span>
               </h3>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 type="button"
                 onClick={() => setIsTransferModalOpen(false)}
                 className="text-slate-400 hover:text-white"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 

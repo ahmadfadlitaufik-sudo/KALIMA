@@ -284,7 +284,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
 
         {onSelectMonth && (
           <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[11px] text-center text-amber-400/90 font-sans">
-            💡 Klik bar untuk memfilter detail rincian bulan ini
+            Klik bar untuk memfilter detail rincian bulan ini
           </div>
         )}
       </div>

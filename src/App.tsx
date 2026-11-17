@@ -8,7 +8,7 @@ import { QuickOrderModal } from './components/QuickOrderModal';
 import { ReceiptModal } from './components/ReceiptModal';
 import { LoginPage } from './components/LoginPage';
 import { Order } from './types';
-import { CheckCircle2, Receipt } from 'lucide-react';
+import { CheckCircle2, Receipt, X } from 'lucide-react';
 
 // Dynamic code-splitting for views to optimize bundle size and instant initial load
 const DashboardView = lazy(() => import('./views/DashboardView').then(m => ({ default: m.DashboardView })));
@@ -75,11 +75,11 @@ const MainLayout: React.FC = () => {
               <Receipt className="w-3.5 h-3.5" />
               <span>Cetak Nota</span>
             </button>
-            <button
+            <button aria-label="Tutup" data-modal-close
               onClick={() => setShowOrderSuccessBanner(null)}
               className="p-1 text-slate-500 hover:text-white rounded"
             >
-              ✕
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         )}

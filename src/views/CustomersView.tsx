@@ -439,7 +439,7 @@ export const CustomersView: React.FC = () => {
     const res = syncCustomersFromOrders();
     if (res.count > 0 || res.mergedCount > 0) {
       setSyncStatus(
-        `⚡ Sinkronisasi berhasil! ${res.count} customer baru diekstrak & ${res.mergedCount} kontak nomor HP duplikat otomatis digabungkan.`
+        `Sinkronisasi berhasil! ${res.count} customer baru diekstrak & ${res.mergedCount} kontak nomor HP duplikat otomatis digabungkan.`
       );
     } else {
       setSyncStatus(
@@ -455,7 +455,7 @@ export const CustomersView: React.FC = () => {
     const res = mergeDuplicateCustomers();
     if (res.mergedCount > 0) {
       setSyncStatus(
-        `🔗 Berhasil menggabungkan ${res.mergedCount} kontak dengan nomor HP yang sama menjadi profil customer tunggal!`
+        `Berhasil menggabungkan ${res.mergedCount} kontak dengan nomor HP yang sama menjadi profil customer tunggal!`
       );
     } else {
       setSyncStatus(
@@ -1018,7 +1018,7 @@ export const CustomersView: React.FC = () => {
                   className="w-full bg-slate-950 border border-slate-800/80 pl-9 pr-8 py-2 rounded-xl text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
                 />
                 {searchQuery && (
-                  <button
+                  <button aria-label="Hapus pencarian"
                     type="button"
                     onClick={() => setSearchQuery('')}
                     className="absolute right-2.5 top-2.5 text-slate-500 hover:text-white p-0.5 rounded cursor-pointer"
@@ -1051,7 +1051,7 @@ export const CustomersView: React.FC = () => {
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  🌱 Baru (1x)
+                  Baru (1x)
                 </button>
                 <button
                   onClick={() => setSelectedFreqFilter('reguler')}
@@ -1061,7 +1061,7 @@ export const CustomersView: React.FC = () => {
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  ⚡ Reguler (2-4x)
+                  Reguler (2-4x)
                 </button>
                 <button
                   onClick={() => setSelectedFreqFilter('loyal')}
@@ -1071,7 +1071,7 @@ export const CustomersView: React.FC = () => {
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  🔥 Loyal (≥5x)
+                  Loyal (≥5x)
                 </button>
               </div>
 
@@ -1318,7 +1318,7 @@ export const CustomersView: React.FC = () => {
                                 </div>
                                 {cust.catatan && (
                                   <div className="text-[11px] text-slate-500 italic mt-0.5 truncate max-w-xs">
-                                    📝 {cust.catatan}
+                                    {cust.catatan}
                                   </div>
                                 )}
                               </div>
@@ -1398,13 +1398,13 @@ export const CustomersView: React.FC = () => {
                             {/* Quiet Unboxed Loyalty Tier Subtext */}
                             <div className="text-xs text-slate-400 mt-1 flex items-center gap-1 font-medium">
                               {stats.frequencyTier === 'loyal' && (
-                                <span className="text-amber-400">🔥 Loyal ({stats.totalOrders}x order)</span>
+                                <span className="text-amber-400">Loyal ({stats.totalOrders}x order)</span>
                               )}
                               {stats.frequencyTier === 'reguler' && (
-                                <span className="text-blue-400">⚡ Reguler ({stats.totalOrders}x order)</span>
+                                <span className="text-blue-400">Reguler ({stats.totalOrders}x order)</span>
                               )}
                               {stats.frequencyTier === 'baru' && (
-                                <span className="text-emerald-400">🌱 Pelanggan Baru (1x)</span>
+                                <span className="text-emerald-400">Pelanggan Baru (1x)</span>
                               )}
                               {stats.frequencyTier === 'no_order' && (
                                 <span className="text-slate-500">Belum ada order</span>
@@ -1432,7 +1432,7 @@ export const CustomersView: React.FC = () => {
                             </div>
                             {stats.topItem && (
                               <div className="text-xs text-slate-400 mt-1 truncate max-w-[210px]">
-                                ⭐ Top: <span className="text-slate-300 font-medium">{stats.topItem}</span>
+                                Top: <span className="text-slate-300 font-medium">{stats.topItem}</span>
                               </div>
                             )}
                           </td>
@@ -1600,17 +1600,17 @@ export const CustomersView: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setPromoteCustomerModal(null)}
                 className="text-slate-400 hover:text-white p-1 rounded-lg text-sm cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmPromote} className="space-y-4 text-xs">
               <div className="bg-amber-950/40 border border-amber-800/60 p-3.5 rounded-xl text-amber-200 text-xs leading-relaxed">
-                ✨ <strong>Hak Akses Mitra Reseller:</strong> Customer akan resmi tercatat di modul <strong>CRM Mitra Reseller</strong> untuk pengiriman surat jalan titip konsinyasi, harga khusus reseller, serta monitoring piutang dan stok di toko mitra.
+                <strong>Hak Akses Mitra Reseller:</strong> Customer akan resmi tercatat di modul <strong>CRM Mitra Reseller</strong> untuk pengiriman surat jalan titip konsinyasi, harga khusus reseller, serta monitoring piutang dan stok di toko mitra.
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1735,11 +1735,11 @@ export const CustomersView: React.FC = () => {
                   {historyCustomerModal.noHp} • {historyCustomerModal.kota}
                 </p>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setHistoryCustomerModal(null)}
                 className="text-slate-400 hover:text-white p-1.5 rounded-lg cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -1851,11 +1851,11 @@ export const CustomersView: React.FC = () => {
           <div className="bg-[#121620] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="font-bold text-white text-base">Tambah Customer Baru</h3>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsAddCustomerOpen(false)}
                 className="text-slate-400 hover:text-white p-1 cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -1911,10 +1911,10 @@ export const CustomersView: React.FC = () => {
                   onChange={(e) => setNewCustCategory(e.target.value as any)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500 cursor-pointer"
                 >
-                  <option value="Umum">🛍️ Umum (Retail / Direct Walk-in / WhatsApp)</option>
-                  <option value="Reseller">⭐ Reseller (Mitra Konsinyasi & Grosir)</option>
-                  <option value="Marketplace">🛒 Marketplace (Shopee / TikTok Shop)</option>
-                  <option value="VIP">👑 VIP (Pelanggan Prioritas / Loyal)</option>
+                  <option value="Umum">Umum (Retail / Direct Walk-in / WhatsApp)</option>
+                  <option value="Reseller">Reseller (Mitra Konsinyasi & Grosir)</option>
+                  <option value="Marketplace">Marketplace (Shopee / TikTok Shop)</option>
+                  <option value="VIP">VIP (Pelanggan Prioritas / Loyal)</option>
                 </select>
               </div>
 
@@ -1972,11 +1972,11 @@ export const CustomersView: React.FC = () => {
           <div className="bg-[#121620] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="font-bold text-white text-base">Edit Data & Tagging Customer</h3>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setEditCustomerModal(null)}
                 className="text-slate-400 hover:text-white p-1 cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -2046,10 +2046,10 @@ export const CustomersView: React.FC = () => {
                   }}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500 cursor-pointer font-semibold"
                 >
-                  <option value="Umum">🛍️ Umum (Retail / Direct)</option>
-                  <option value="Reseller">⭐ Reseller (Mitra Konsinyasi & Grosir)</option>
-                  <option value="Marketplace">🛒 Marketplace (Shopee / TikTok Shop)</option>
-                  <option value="VIP">👑 VIP (Pelanggan Prioritas)</option>
+                  <option value="Umum">Umum (Retail / Direct)</option>
+                  <option value="Reseller">Reseller (Mitra Konsinyasi & Grosir)</option>
+                  <option value="Marketplace">Marketplace (Shopee / TikTok Shop)</option>
+                  <option value="VIP">VIP (Pelanggan Prioritas)</option>
                 </select>
                 <span className="text-[11px] text-slate-500 mt-1 block">
                   Menetapkan kategori ini akan menimpa deteksi otomatis sistem.
@@ -2141,11 +2141,11 @@ export const CustomersView: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsImportModalOpen(false)}
                 className="text-slate-400 hover:text-white p-1 rounded-lg text-sm cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 
@@ -2235,9 +2235,9 @@ export const CustomersView: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-slate-400 text-xs flex items-center gap-2">
-                  <span>📞 {deleteConfirmCustomer.noHp || 'Tidak ada no. HP'}</span>
+                  <span>{deleteConfirmCustomer.noHp || 'Tidak ada no. HP'}</span>
                   <span>•</span>
-                  <span>📍 {deleteConfirmCustomer.kota || 'Jakarta'}</span>
+                  <span>{deleteConfirmCustomer.kota || 'Jakarta'}</span>
                 </div>
                 {customerStatsMap[deleteConfirmCustomer.id] && (
                   <div className="text-xs text-amber-400 pt-1 border-t border-slate-900 flex justify-between">
@@ -2248,7 +2248,7 @@ export const CustomersView: React.FC = () => {
               </div>
 
               <div className="bg-rose-950/40 border border-rose-800/60 p-3 rounded-xl text-rose-200 text-xs leading-relaxed">
-                ⚠️ <strong>Catatan:</strong> Data customer ini akan dihapus dari daftar CRM master. Riwayat nota penjualan dan buku kas yang pernah tercatat sebelumnya tetap aman.
+                <strong>Catatan:</strong> Data customer ini akan dihapus dari daftar CRM master. Riwayat nota penjualan dan buku kas yang pernah tercatat sebelumnya tetap aman.
               </div>
             </div>
 
@@ -2297,7 +2297,7 @@ export const CustomersView: React.FC = () => {
               </p>
 
               <div className="bg-rose-950/40 border border-rose-800/60 p-3 rounded-xl text-rose-200 text-xs leading-relaxed">
-                ⚠️ Kontak yang dihapus tidak dapat dipulihkan secara otomatis kecuali diimpor ulang atau disinkronkan kembali dari transaksi order.
+                Kontak yang dihapus tidak dapat dipulihkan secara otomatis kecuali diimpor ulang atau disinkronkan kembali dari transaksi order.
               </div>
             </div>
 

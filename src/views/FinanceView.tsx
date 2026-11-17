@@ -18,6 +18,7 @@ import {
   Building2,
   Wallet,
   Scale,
+  X,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { BiayaOperasional, Order } from '../types';
@@ -527,7 +528,7 @@ export const FinanceView: React.FC = () => {
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  📅 Rentang Tanggal
+                  Rentang Tanggal
                 </button>
               </div>
 
@@ -868,12 +869,12 @@ export const FinanceView: React.FC = () => {
                     className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 w-56 focus:outline-none focus:border-amber-500/50"
                   />
                   {opexSearchQuery && (
-                    <button
+                    <button aria-label="Hapus pencarian"
                       type="button"
                       onClick={() => setOpexSearchQuery('')}
                       className="absolute right-2 top-1.5 text-slate-500 hover:text-white text-xs"
                     >
-                      ✕
+                      <X className="w-4 h-4" aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -1182,7 +1183,7 @@ export const FinanceView: React.FC = () => {
                       </option>
                     ))}
                   </optgroup>
-                  <option value="__CUSTOM__">✍️ + Tulis Kategori Kustom Baru...</option>
+                  <option value="__CUSTOM__">+ Tulis Kategori Kustom Baru...</option>
                 </select>
 
                 {isCustomCategoryMode && (
@@ -1215,7 +1216,7 @@ export const FinanceView: React.FC = () => {
                   ))}
                 </select>
                 <div className="text-[11px] text-amber-400/90 mt-0.5">
-                  ⚡ Saldo akun terpilih akan otomatis berkurang & mutasi kas tercatat seketika
+                  Saldo akun terpilih akan otomatis berkurang & mutasi kas tercatat seketika
                 </div>
               </div>
 
@@ -1310,7 +1311,7 @@ export const FinanceView: React.FC = () => {
                       </option>
                     ))}
                   </optgroup>
-                  <option value="__CUSTOM__">✍️ + Tulis Kategori Kustom Baru...</option>
+                  <option value="__CUSTOM__">+ Tulis Kategori Kustom Baru...</option>
                 </select>
 
                 {isEditCustomCategoryMode && (
@@ -1343,7 +1344,7 @@ export const FinanceView: React.FC = () => {
                   ))}
                 </select>
                 <div className="text-[11px] text-slate-400 mt-0.5">
-                  💡 Mengubah akun atau nominal akan otomatis menyesuaikan saldo kas terkait.
+                  Mengubah akun atau nominal akan otomatis menyesuaikan saldo kas terkait.
                 </div>
               </div>
 
@@ -1477,12 +1478,12 @@ export const FinanceView: React.FC = () => {
                 <Plus className="w-4 h-4 text-amber-400" />
                 <span>Tambah Kategori Beban Baru</span>
               </h3>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 type="button"
                 onClick={() => setIsAddCategoryModalOpen(false)}
                 className="text-slate-500 hover:text-white cursor-pointer"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 

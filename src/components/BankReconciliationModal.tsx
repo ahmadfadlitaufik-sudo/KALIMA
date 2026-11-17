@@ -555,7 +555,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                   </div>
                   <div className="text-[11px] opacity-80 mt-1">
                     {isBalanced
-                      ? '✓ Buku kas & bank sinkron 100%'
+                      ? 'Buku kas & bank sinkron 100%'
                       : selisih > 0
                       ? 'Saldo sistem lebih tinggi dari bank'
                       : 'Saldo bank lebih tinggi dari sistem'}
@@ -900,7 +900,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                 {quickActionType === 'interest' && <span className="text-emerald-400">+ Catat Pendapatan Bunga Bank</span>}
                 {quickActionType === 'adjustment' && <span className="text-amber-400">+ Penyesuaian Selisih Saldo</span>}
               </h3>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsQuickActionModalOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-white"
               >
@@ -981,7 +981,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                 <Sparkles className="w-4 h-4 text-blue-400" />
                 <span>Smart Auto-Match Rekening Koran</span>
               </h3>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsSmartParserOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-white"
               >
@@ -1042,7 +1042,7 @@ export const BankReconciliationModal: React.FC<BankReconciliationModalProps> = (
                   {viewingHistorySession.noRekonsiliasi}
                 </span>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setViewingHistorySession(null)}
                 className="p-1.5 text-slate-400 hover:text-white rounded-lg"
               >

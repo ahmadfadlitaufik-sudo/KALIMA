@@ -545,9 +545,9 @@ export const ResellerView: React.FC = () => {
           </div>
           <div className="text-xs text-slate-400 mt-2">
             {metrics.resellersWithPiutang > 0 ? (
-              <span className="text-amber-400 font-medium">⚠️ {metrics.resellersWithPiutang} mitra ada tagihan</span>
+              <span className="text-amber-400 font-medium">{metrics.resellersWithPiutang} mitra ada tagihan</span>
             ) : (
-              <span className="text-emerald-400 font-medium">✓ Semua mitra tertib lunas</span>
+              <span className="text-emerald-400 font-medium">Semua mitra tertib lunas</span>
             )}
           </div>
         </div>
@@ -635,7 +635,7 @@ export const ResellerView: React.FC = () => {
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500/60"
           />
           {searchQuery && (
-            <button
+            <button aria-label="Hapus pencarian"
               onClick={() => setSearchQuery('')}
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white p-0.5"
             >
@@ -709,7 +709,7 @@ export const ResellerView: React.FC = () => {
                                 : 'bg-slate-900 text-slate-300 border-slate-800'
                             }`}
                           >
-                            ⭐ {res.level || 'Silver'}
+                            {res.level || 'Silver'}
                           </span>
                           <span className="text-[11px] font-semibold text-slate-400">
                             Diskon: {res.diskonPersen ?? 20}%
@@ -1329,7 +1329,7 @@ export const ResellerView: React.FC = () => {
                   <p className="text-xs text-slate-400">Kirim stok dari Gudang Utama ke rak toko mitra.</p>
                 </div>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsSuratModalOpen(false)}
                 className="p-1.5 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
               >
@@ -1514,7 +1514,7 @@ export const ResellerView: React.FC = () => {
                   <p className="text-xs text-slate-400">Barang terjual otomatis memotong stok di toko reseller.</p>
                 </div>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsLakuModalOpen(false)}
                 className="p-1.5 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
               >
@@ -1702,7 +1702,7 @@ export const ResellerView: React.FC = () => {
                   <p className="text-xs text-slate-400">Tarik barang kembali ke Gudang Utama atau Reject.</p>
                 </div>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsReturModalOpen(false)}
                 className="p-1.5 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
               >
@@ -1824,7 +1824,7 @@ export const ResellerView: React.FC = () => {
                   <p className="text-xs text-slate-400">Saldo akun kas/bank akan bertambah seketika.</p>
                 </div>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsSetoranModalOpen(false)}
                 className="p-1.5 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
               >
@@ -1951,7 +1951,7 @@ export const ResellerView: React.FC = () => {
                   <p className="text-xs text-slate-400">Atur level kemitraan, plafon titipan, dan kontak toko.</p>
                 </div>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 onClick={() => setIsResellerModalOpen(false)}
                 className="p-1.5 text-slate-400 hover:text-white rounded-xl transition-colors cursor-pointer"
               >
@@ -2143,7 +2143,7 @@ export const ResellerView: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Tutup" data-modal-close
                 type="button"
                 onClick={() => {
                   setDeleteModalReseller(null);
@@ -2286,7 +2286,7 @@ export const ResellerView: React.FC = () => {
                   <Printer className="w-3.5 h-3.5" />
                   <span>Cetak / Simpan PDF</span>
                 </button>
-                <button
+                <button aria-label="Tutup" data-modal-close
                   onClick={() => setIsPrintSuratOpen(false)}
                   className="text-slate-400 hover:text-white p-1.5 rounded-xl transition-colors cursor-pointer"
                 >

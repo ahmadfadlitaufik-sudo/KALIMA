@@ -521,7 +521,7 @@ export const SalesView: React.FC = () => {
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                📅 Rentang
+                Rentang
               </button>
               <button
                 type="button"
@@ -689,7 +689,7 @@ export const SalesView: React.FC = () => {
               selectedChannel === 'Shopee'
             )}`}
           >
-            🛒 Shopee ({orders.filter((o) => o.channel === 'Shopee' && o.statusOrder !== 'batal').length})
+            Shopee ({orders.filter((o) => o.channel === 'Shopee' && o.statusOrder !== 'batal').length})
           </button>
           <button
             type="button"
@@ -699,7 +699,7 @@ export const SalesView: React.FC = () => {
               selectedChannel === 'Umum'
             )}`}
           >
-            🛍️ Umum / Retail ({orders.filter((o) => o.channel === 'Umum' && o.statusOrder !== 'batal').length})
+            Umum / Retail ({orders.filter((o) => o.channel === 'Umum' && o.statusOrder !== 'batal').length})
           </button>
           <button
             type="button"
@@ -709,7 +709,7 @@ export const SalesView: React.FC = () => {
               selectedChannel === 'Reseller'
             )}`}
           >
-            ⭐ Reseller ({orders.filter((o) => o.channel === 'Reseller' && o.statusOrder !== 'batal').length})
+            Reseller ({orders.filter((o) => o.channel === 'Reseller' && o.statusOrder !== 'batal').length})
           </button>
           <button
             type="button"
@@ -719,7 +719,7 @@ export const SalesView: React.FC = () => {
               selectedChannel === 'TikTok'
             )}`}
           >
-            🎬 TikTok Shop ({orders.filter((o) => o.channel === 'TikTok' && o.statusOrder !== 'batal').length})
+            TikTok Shop ({orders.filter((o) => o.channel === 'TikTok' && o.statusOrder !== 'batal').length})
           </button>
           <button
             type="button"
@@ -729,7 +729,7 @@ export const SalesView: React.FC = () => {
               selectedChannel === 'TAPADA'
             )}`}
           >
-            🏪 TAPADA ({orders.filter((o) => o.channel === 'TAPADA' && o.statusOrder !== 'batal').length})
+            TAPADA ({orders.filter((o) => o.channel === 'TAPADA' && o.statusOrder !== 'batal').length})
           </button>
         </div>
       </div>
@@ -1085,7 +1085,7 @@ export const SalesView: React.FC = () => {
                   ))}
                 </select>
                 <p className="text-xs text-emerald-700 mt-1 font-medium">
-                  ⚡ Saldo kas/bank otomatis bertambah saat pelunasan disimpan
+                  Saldo kas/bank otomatis bertambah saat pelunasan disimpan
                 </p>
               </div>
 
@@ -1165,7 +1165,7 @@ export const SalesView: React.FC = () => {
                         ))}
                       </select>
                       <p className="text-[11px] text-amber-700 mt-1 font-medium">
-                        ⚡ Saldo akun ini akan dipotong sebesar Rp {cancelModalOrder.totalTerbayar.toLocaleString('id-ID')}
+                        Saldo akun ini akan dipotong sebesar Rp {cancelModalOrder.totalTerbayar.toLocaleString('id-ID')}
                       </p>
                     </div>
                   )}

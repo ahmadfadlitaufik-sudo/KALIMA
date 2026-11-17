@@ -31,6 +31,7 @@ import {
   Truck,
   Boxes,
   Package,
+  X,
 } from 'lucide-react';
 import { negativeStock, stockValue } from '../services/dashboardMetrics';
 import { useApp } from '../context/AppContext';
@@ -909,12 +910,12 @@ export const InventoryView: React.FC = () => {
                     />
 
                     {restockRows.length > 1 && (
-                      <button
+                      <button aria-label="Tutup" data-modal-close
                         type="button"
                         onClick={() => setRestockRows((prev) => prev.filter((r) => r.id !== row.id))}
                         className="text-rose-500 hover:text-rose-700 p-1.5 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
                       >
-                        ✕
+                        <X className="w-4 h-4" aria-hidden="true" />
                       </button>
                     )}
                   </div>
@@ -1875,12 +1876,12 @@ export const InventoryView: React.FC = () => {
                 </p>
               </div>
 
-              <button
+              <button aria-label="Tutup" data-modal-close
                 type="button"
                 onClick={() => setViewingSessionDetail(null)}
                 className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 cursor-pointer transition-colors"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
 

@@ -335,7 +335,7 @@ export const PurchasesView: React.FC = () => {
             <Check className="w-3.5 h-3.5" />
           </div>
           <span className="text-xs font-medium">{toastMessage}</span>
-          <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-slate-600 p-1">
+          <button aria-label="Tutup" data-modal-close onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-slate-600 p-1">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -580,8 +580,8 @@ export const PurchasesView: React.FC = () => {
             >
               <option value="ALL">Semua Status Pengiriman</option>
               <option value="diproses">⏳ Diproses (Pabrik)</option>
-              <option value="dalam_perjalanan">🚚 Dalam Perjalanan (Kargo)</option>
-              <option value="diterima">✅ Diterima (Gudang)</option>
+              <option value="dalam_perjalanan">Dalam Perjalanan (Kargo)</option>
+              <option value="diterima">Diterima (Gudang)</option>
             </select>
 
             {/* Vendor Filter */}
@@ -754,10 +754,10 @@ export const PurchasesView: React.FC = () => {
                                   ⏳ Diproses
                                 </option>
                                 <option value="dalam_perjalanan" className="bg-white text-blue-700">
-                                  🚚 Dalam Perjalanan
+                                  Dalam Perjalanan
                                 </option>
                                 <option value="diterima" className="bg-white text-emerald-700">
-                                  ✅ Diterima
+                                  Diterima
                                 </option>
                               </select>
 
@@ -1816,7 +1816,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                 {paymentOption !== 'belum_bayar' && jumlahTerbayar > 0 && (
                   <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200/80 text-[11px] text-blue-700 flex items-center gap-1.5">
                     <Scale className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span>⚡ Terjurnal otomatis ke Neraca: <strong>Debit Utang/DP</strong> & <strong>Kredit Kas/Bank</strong> Rp {jumlahTerbayar.toLocaleString('id-ID')}</span>
+                    <span>Terjurnal otomatis ke Neraca: <strong>Debit Utang/DP</strong> & <strong>Kredit Kas/Bank</strong> Rp {jumlahTerbayar.toLocaleString('id-ID')}</span>
                   </div>
                 )}
               </div>
@@ -2412,7 +2412,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                 }`}
               >
-                <span>⚡ 100% Lunas</span>
+                <span>100% Lunas</span>
               </button>
 
               <button
@@ -2470,7 +2470,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
                   sisaSetelahBayar === 0 ? 'text-emerald-700' : 'text-amber-700'
                 }`}
               >
-                {sisaSetelahBayar === 0 ? '✓ Lunas Penuh (Sisa Rp 0)' : `Sisa Nanti: Rp ${sisaSetelahBayar.toLocaleString('id-ID')}`}
+                {sisaSetelahBayar === 0 ? 'Lunas Penuh (Sisa Rp 0)' : `Sisa Nanti: Rp ${sisaSetelahBayar.toLocaleString('id-ID')}`}
               </span>
             </div>
           </div>

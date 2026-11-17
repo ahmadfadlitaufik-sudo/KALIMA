@@ -751,7 +751,7 @@ export const ImportExportView: React.FC = () => {
                 : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
             }`}
           >
-            📋 1. Format & Template Excel (CSV)
+            1. Format & Template Excel (CSV)
           </button>
           <button
             onClick={() => setActiveSubTab('import_tool')}
@@ -761,7 +761,7 @@ export const ImportExportView: React.FC = () => {
                 : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
             }`}
           >
-            📥 2. Impor Data ke Sistem
+            2. Impor Data ke Sistem
           </button>
           <button
             onClick={() => setActiveSubTab('csv_export')}
@@ -771,7 +771,7 @@ export const ImportExportView: React.FC = () => {
                 : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
             }`}
           >
-            📤 3. Ekspor Data (.CSV / JSON)
+            3. Ekspor Data (.CSV / JSON)
           </button>
         </div>
       </div>
@@ -907,7 +907,7 @@ export const ImportExportView: React.FC = () => {
 
           <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-200 space-y-1">
             <div className="font-bold flex items-center gap-2">
-              💡 Cara Penggunaan di Microsoft Excel atau Google Sheets:
+              Cara Penggunaan di Microsoft Excel atau Google Sheets:
             </div>
             <ol className="list-decimal list-inside space-y-0.5 text-slate-300 text-xs pl-1">
               <li>Klik tombol <strong>"Unduh .CSV"</strong> di atas.</li>
@@ -977,7 +977,7 @@ export const ImportExportView: React.FC = () => {
               </p>
               {uploadedFileName && (
                 <span className="mt-2 text-[11px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-md border border-emerald-500/30">
-                  ✓ Siap diproses
+                  Siap diproses
                 </span>
               )}
             </div>
@@ -1010,7 +1010,7 @@ export const ImportExportView: React.FC = () => {
                     onChange={(e) => setReplaceExistingExpenses(e.target.checked)}
                     className="w-4 h-4 rounded text-amber-500 bg-slate-900 border-slate-700 focus:ring-amber-400"
                   />
-                  <span>⚠️ Timpa / Kosongkan data OPEX lama sebelum mengimpor data ini</span>
+                  <span>Timpa / Kosongkan data OPEX lama sebelum mengimpor data ini</span>
                 </label>
                 <p className="text-xs text-slate-400 pl-6">
                   Centang opsi ini agar data pengeluaran lama tidak terduplikasi (misal jika terbaca 83 juta padahal seharusnya 30 jutaan).

@@ -770,7 +770,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                   onClick={() => setSelectedSizeFilter('ALL')}
                   className="text-blue-600 hover:text-blue-800 font-bold hover:underline cursor-pointer"
                 >
-                  Tampilkan Semua Ukuran (ALL) ✕
+                  Tampilkan Semua Ukuran (ALL) 
                 </button>
               </div>
             )}
@@ -1203,7 +1203,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                       ))}
                     </select>
                     <p className="text-[11px] text-amber-700 mt-1 font-medium">
-                      ⚡ Saldo akun ini akan dipotong Rp {ongkir.toLocaleString('id-ID')} saat transaksi disimpan.
+                      Saldo akun ini akan dipotong Rp {ongkir.toLocaleString('id-ID')} saat transaksi disimpan.
                     </p>
                   </div>
                 )}
@@ -1253,7 +1253,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                   }}
                   className="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs shrink-0 cursor-pointer shadow-xs"
                 >
-                  ✓ Izinkan Stok Minus & Lanjut
+                  Izinkan Stok Minus & Lanjut
                 </button>
               )}
             </div>

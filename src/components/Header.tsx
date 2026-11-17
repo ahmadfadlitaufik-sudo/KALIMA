@@ -132,13 +132,13 @@ export const Header: React.FC = () => {
                 ? `Server Terhubung (Multi-User). Terakhir sinkron: ${lastSyncedAt || 'Baru saja'}. Klik untuk tarik data terbaru dari tim.`
                 : cloudSyncStatus === 'syncing'
                 ? 'Sedang menyinkronkan data dengan server...'
-                : '⚠️ Cloud Terputus/Offline. Klik untuk sambungkan & sinkronkan data sekarang.'
+                : 'Cloud Terputus/Offline. Klik untuk sambungkan & sinkronkan data sekarang.'
             } aria-label={
               cloudSyncStatus === 'connected'
                 ? `Server Terhubung (Multi-User). Terakhir sinkron: ${lastSyncedAt || 'Baru saja'}. Klik untuk tarik data terbaru dari tim.`
                 : cloudSyncStatus === 'syncing'
                 ? 'Sedang menyinkronkan data dengan server...'
-                : '⚠️ Cloud Terputus/Offline. Klik untuk sambungkan & sinkronkan data sekarang.'
+                : 'Cloud Terputus/Offline. Klik untuk sambungkan & sinkronkan data sekarang.'
             }
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer select-none ${
               cloudSyncStatus === 'connected'

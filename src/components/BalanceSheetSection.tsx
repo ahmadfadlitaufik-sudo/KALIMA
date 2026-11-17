@@ -468,7 +468,7 @@ export const BalanceSheetSection: React.FC = () => {
         <div className="fixed top-5 right-5 z-50 bg-[#161c28] border border-amber-500/60 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-3">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
           <span className="text-xs font-medium">{toastMsg}</span>
-          <button onClick={() => setToastMsg(null)} className="text-slate-400 hover:text-white p-1">
+          <button aria-label="Tutup" data-modal-close onClick={() => setToastMsg(null)} className="text-slate-400 hover:text-white p-1">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -494,7 +494,7 @@ export const BalanceSheetSection: React.FC = () => {
                         : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
                     }`}
                   >
-                    {isBalanced ? '✅ BALANCE (SEIMBANG)' : `⚠️ SELISIH Rp ${Math.abs(balanceDiff).toLocaleString('id-ID')}`}
+                    {isBalanced ? 'BALANCE (SEIMBANG)' : `SELISIH Rp ${Math.abs(balanceDiff).toLocaleString('id-ID')}`}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -662,7 +662,7 @@ export const BalanceSheetSection: React.FC = () => {
                   ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                   : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
               }`}>
-                {isBalanced ? '✓ 100% SEIMBANG' : `⚠️ SELISIH Rp ${Math.abs(balanceDiff).toLocaleString('id-ID')}`}
+                {isBalanced ? '100% SEIMBANG' : `SELISIH Rp ${Math.abs(balanceDiff).toLocaleString('id-ID')}`}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5 font-mono">
@@ -814,7 +814,7 @@ export const BalanceSheetSection: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-[11px] text-blue-400/80 flex items-center gap-1">
-                  <span>⚡ Terkredit otomatis saat pelunasan utang vendor</span>
+                  <span>Terkredit otomatis saat pelunasan utang vendor</span>
                 </div>
                 <div className="pl-3 space-y-1 text-xs text-slate-400 border-l border-slate-800">
                   {cashAccounts.map((acc) => (
@@ -1000,7 +1000,7 @@ export const BalanceSheetSection: React.FC = () => {
                   </div>
                 </div>
                 <div className="text-[11px] text-emerald-400/80 flex items-center gap-1">
-                  <span>⚡ Terdebit otomatis mengurangi kewajiban saat dibayar</span>
+                  <span>Terdebit otomatis mengurangi kewajiban saat dibayar</span>
                 </div>
                 <div className="pl-3 space-y-1 text-xs text-slate-400 border-l border-slate-800">
                   <div className="flex justify-between">
@@ -1429,7 +1429,7 @@ export const BalanceSheetSection: React.FC = () => {
                             Rp {je.totalKredit.toLocaleString('id-ID')}
                           </td>
                           <td className="px-4 py-2 text-emerald-400 font-mono text-xs">
-                            ✓ Balance (Klop)
+                            Balance (Klop)
                           </td>
                         </tr>
                       </tfoot>
@@ -1537,7 +1537,7 @@ export const BalanceSheetSection: React.FC = () => {
                             : 'bg-rose-500/10 text-rose-400 border border-rose-500/25'
                         }`}
                       >
-                        {vb.sisaHutang === 0 ? '✓ Lunas' : 'Ada Sisa'}
+                        {vb.sisaHutang === 0 ? 'Lunas' : 'Ada Sisa'}
                       </span>
                     </div>
 

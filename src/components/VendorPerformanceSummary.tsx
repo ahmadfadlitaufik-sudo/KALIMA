@@ -868,14 +868,14 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             <tbody className="divide-y divide-slate-100 font-sans">
               {vendorAnalytics.map((v) => {
                 let badgeStyle = 'bg-emerald-50 text-emerald-800 border-emerald-200';
-                let statusText = '⭐ Sangat Baik (Tepat Waktu)';
+                let statusText = 'Sangat Baik (Tepat Waktu)';
 
                 if (v.onTimeRate < 80 || v.avgDelayDays > 2) {
                   badgeStyle = 'bg-rose-50 text-rose-800 border-rose-200';
-                  statusText = '⚠️ Sering Terlambat';
+                  statusText = 'Sering Terlambat';
                 } else if (v.onTimeRate < 90 || v.avgDelayDays > 0.8) {
                   badgeStyle = 'bg-amber-50 text-amber-800 border-amber-200';
-                  statusText = '🟡 Cukup Baik';
+                  statusText = 'Cukup Baik';
                 }
 
                 return (
