@@ -26,6 +26,7 @@ const handleApi = async (req: Request, env: Env, path: string): Promise<Response
   }
 };
 
+/** Untuk respons API; file statis mendapat header yang sama dari public/_headers. */
 const SECURITY_HEADERS: Record<string, string> = {
   'content-security-policy': [
     "default-src 'self'",
