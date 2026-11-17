@@ -67,7 +67,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Right Action Icons (Reference: Circular white buttons & Dark CTA) */}
-      <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
+      <div className="flex flex-wrap items-center justify-end gap-2 md:shrink-0">
         {/* Search Action */}
         <button
           onClick={() => setSearchOpen(!searchOpen)}
@@ -221,10 +221,10 @@ export const Header: React.FC = () => {
         {/* Quick Order CTA Button (Solid Dark Capsule Pill) */}
         <button
           onClick={() => setQuickOrderModalOpen(true)}
-          className="btn-primary-dark flex items-center gap-1.5 text-xs cursor-pointer shadow-md"
+          className="btn-primary-dark flex items-center gap-1.5 text-xs whitespace-nowrap cursor-pointer shadow-md"
         >
           <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>+ Order Baru</span>
+          <span>Order Baru</span>
         </button>
       </div>
 

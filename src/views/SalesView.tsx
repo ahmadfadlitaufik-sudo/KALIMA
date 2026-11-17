@@ -414,7 +414,7 @@ export const SalesView: React.FC = () => {
             className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2.5 rounded-2xl text-xs shadow-sm hover:shadow transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>+ Input Order Baru (&lt; 60 dtk)</span>
+            <span>Input Order Baru (&lt; 60 dtk)</span>
           </button>
         </div>
       </div>

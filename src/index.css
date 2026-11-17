@@ -322,6 +322,15 @@ textarea:focus {
   border-radius: 9999px !important;
   padding: 4px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* Pilihan di pill tidak terpotong jadi dua baris; bar digeser bila sempit. */
+.segmented-pill-bar > button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Active Segmented Pill */
