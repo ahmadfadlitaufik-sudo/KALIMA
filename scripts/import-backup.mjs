@@ -12,29 +12,63 @@ if (!file || !baseUrl) {
   process.exit(1);
 }
 
-const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: process.stdin.isTTY });
-let muted = false;
-const writeToOutput = rl._writeToOutput.bind(rl);
-rl._writeToOutput = (text) => {
-  if (!muted) writeToOutput(text);
-};
+/** Baris dari stdin bila input berupa pipe (bukan terminal). */
+let pipedLines;
 
-const lines = rl[Symbol.asyncIterator]();
+/** Baca satu baris dari stdin; di terminal, `hidden` menyembunyikan ketikan (untuk kata sandi). */
+const readLine = (question, hidden) =>
+  new Promise((resolve) => {
+    process.stdout.write(question);
+    if (!process.stdin.isTTY) {
+      pipedLines ??= createInterface({ input: process.stdin })[Symbol.asyncIterator]();
+      pipedLines.next().then(({ value }) => resolve(value ?? ''));
+      return;
+    }
+    let value = '';
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    const onData = (chunk) => {
+      for (const char of chunk) {
+        if (char === '\u0003') {
+          process.stdout.write('\n');
+          process.exit(130);
+        }
+        if (char === '\r' || char === '\n') {
+          process.stdin.setRawMode(false);
+          process.stdin.pause();
+          process.stdin.off('data', onData);
+          process.stdout.write('\n');
+          resolve(value);
+          return;
+        }
+        if (char === '\u007f' || char === '\b') {
+          if (value.length > 0) {
+            value = value.slice(0, -1);
+            if (!hidden) process.stdout.write('\b \b');
+          }
+          continue;
+        }
+        value += char;
+        if (!hidden) process.stdout.write(char);
+      }
+    };
+    process.stdin.on('data', onData);
+  });
 
-/** Tanya satu baris; bila `hidden`, ketikan tidak ditampilkan. */
+/** Tanya sampai jawabannya tidak kosong. */
 const ask = async (question, hidden = false) => {
-  process.stdout.write(question);
-  muted = hidden;
-  const { value } = await lines.next();
-  muted = false;
-  if (hidden) process.stdout.write('\n');
-  return value ?? '';
+  for (;;) {
+    const answer = (await readLine(question, hidden)).trim();
+    if (answer) {
+      return answer;
+    }
+  }
 };
 
 const { docs } = JSON.parse(await readFile(file, 'utf8'));
-const email = (await ask('Email Owner: ')).trim();
-const password = await ask('Kata sandi: ', true);
-rl.close();
+const email = await ask('Email Owner: ');
+const password = await ask('Kata sandi (tidak tampil saat diketik): ', true);
 
 const login = await fetch(new URL('/api/auth/login', baseUrl), {
   method: 'POST',
