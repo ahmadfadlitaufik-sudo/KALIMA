@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useApp, AppView } from '../context/AppContext';
 import { FirestoreDiagnosticModal } from './FirestoreDiagnosticModal';
+import { ChangePasswordModal } from './ChangePasswordModal';
 
 export const Header: React.FC = () => {
   const {
@@ -41,6 +42,7 @@ export const Header: React.FC = () => {
     logout,
   } = useApp();
 
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const [syncSuccessMessage, setSyncSuccessMessage] = useState<string | null>(null);
@@ -242,9 +244,11 @@ export const Header: React.FC = () => {
         </button>
 
         {/* Akun yang sedang masuk (peran ditentukan Owner di menu Pengguna) */}
-        <div
-          title={`${currentUser.name} — ${currentUser.email}`}
-          className="px-3 py-2 rounded-full bg-white border border-slate-200/80 shadow-sm text-xs font-semibold text-slate-700 flex items-center gap-1.5"
+        <button
+          type="button"
+          onClick={() => setChangePasswordOpen(true)}
+          title={`${currentUser.name} — ${currentUser.email}. Klik untuk ganti kata sandi.`}
+          className="px-3 py-2 rounded-full bg-white border border-slate-200/80 shadow-sm text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
         >
           {isOwner ? (
             <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
@@ -255,7 +259,8 @@ export const Header: React.FC = () => {
           <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700">
             {currentUser.role}
           </span>
-        </div>
+        </button>
+        {changePasswordOpen && <ChangePasswordModal onClose={() => setChangePasswordOpen(false)} />}
 
         {/* Logout Button */}
         <button

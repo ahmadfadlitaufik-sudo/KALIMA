@@ -125,7 +125,7 @@ const MainLayout: React.FC = () => {
   );
 };
 
-/** Data ERP hanya dimuat setelah login Firebase dan email terdaftar sebagai pengguna aktif. */
+/** Data ERP hanya dimuat setelah pengguna login (sesi Worker) dan akunnya aktif. */
 const AuthGate: React.FC = () => {
   const { status, appUser, signOut } = useAuth();
 
