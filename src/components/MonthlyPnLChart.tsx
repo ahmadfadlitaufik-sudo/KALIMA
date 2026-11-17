@@ -217,7 +217,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
       <div className="bg-slate-950/95 border border-slate-700/80 p-3.5 rounded-2xl shadow-2xl backdrop-blur-md text-xs font-sans min-w-[240px]">
         <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
           <div className="flex items-center gap-1.5 font-bold text-white">
-            <Calendar className="w-3.5 h-3.5 text-amber-400" />
+            <Calendar className="w-3.5 h-3.5 text-slate-900" />
             <span>{data.label}</span>
           </div>
           <span className="text-[11px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
@@ -226,7 +226,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
         </div>
 
         <div className="space-y-1.5 font-mono">
-          <div className="flex items-center justify-between text-blue-300">
+          <div className="flex items-center justify-between text-slate-900">
             <span className="flex items-center gap-1.5 font-sans text-slate-300">
               <span className="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block" />
               Pendapatan Bersih:
@@ -234,7 +234,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             <span className="font-bold">{formatRupiah(data.pendapatan)}</span>
           </div>
 
-          <div className="flex items-center justify-between text-rose-300">
+          <div className="flex items-center justify-between text-rose-700">
             <span className="flex items-center gap-1.5 font-sans text-slate-300">
               <span className="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block" />
               Beban Pokok (HPP):
@@ -245,7 +245,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center justify-between text-amber-300">
+          <div className="flex items-center justify-between text-slate-900">
             <span className="flex items-center gap-1.5 font-sans text-slate-300">
               <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 inline-block" />
               Biaya Operasional (OPEX):
@@ -263,7 +263,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             </span>
             <span
               className={`font-black font-mono ${
-                data.labaBersih >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                data.labaBersih >= 0 ? 'text-indigo-700' : 'text-rose-700'
               }`}
             >
               {formatRupiah(data.labaBersih)}
@@ -274,7 +274,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             <span className="font-sans">Nett Profit Margin:</span>
             <span
               className={`font-bold font-mono ${
-                data.marginBersih >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                data.marginBersih >= 0 ? 'text-indigo-700' : 'text-rose-700'
               }`}
             >
               {data.marginBersih}%
@@ -283,7 +283,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
         </div>
 
         {onSelectMonth && (
-          <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[11px] text-center text-amber-400/90 font-sans">
+          <div className="mt-2.5 pt-2 border-t border-slate-800/80 text-[11px] text-center text-slate-900/90 font-sans">
             Klik bar untuk memfilter detail rincian bulan ini
           </div>
         )}
@@ -297,13 +297,13 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-indigo-700">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                 <span>Tren Laporan Laba Rugi Bulanan</span>
-                <span className="text-[11px] font-mono font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-mono font-semibold bg-emerald-500/20 text-indigo-700 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                   Recharts Visual
                 </span>
               </h3>
@@ -323,7 +323,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
               onClick={() => setTimeRange('all')}
               className={`px-2.5 py-1 rounded-lg font-medium cursor-pointer transition-colors ${
                 timeRange === 'all'
-                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  ? 'segmented-pill-active font-bold'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -334,7 +334,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
               onClick={() => setTimeRange('6m')}
               className={`px-2.5 py-1 rounded-lg font-medium cursor-pointer transition-colors ${
                 timeRange === '6m'
-                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  ? 'segmented-pill-active font-bold'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -345,7 +345,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
               onClick={() => setTimeRange('3m')}
               className={`px-2.5 py-1 rounded-lg font-medium cursor-pointer transition-colors ${
                 timeRange === '3m'
-                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  ? 'segmented-pill-active font-bold'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -392,77 +392,43 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             }`}
             title="Tampilkan / Sembunyikan tabel angka detail bulanan" aria-label="Tampilkan / Sembunyikan tabel angka detail bulanan"
           >
-            <TableIcon className="w-3.5 h-3.5 text-amber-400" />
+            <TableIcon className="w-3.5 h-3.5 text-slate-900" />
             <span>{showDataTable ? 'Tutup Tabel' : 'Tabel Angka'}</span>
           </button>
         </div>
       </div>
 
       {/* Ringkasan Finansial Akumulasi Periode (KPI Strip) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Card 1: Total Pendapatan */}
-        <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-blue-500/20">
-          <div className="flex items-center justify-between text-xs text-blue-400 mb-1">
-            <span className="font-medium">Total Pendapatan</span>
-            <DollarSign className="w-3.5 h-3.5" />
-          </div>
-          <div className="text-lg sm:text-xl font-black text-white font-mono">
-            {formatRupiah(overallSummary.totalPendapatan)}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <span>Net Sales setelah diskon</span>
-          </div>
-        </div>
-
+      {/* Pendapatan & laba bersih sudah ada di kartu atas; di sini hanya HPP dan bulan terbaik. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Card 2: Total Beban Pokok (HPP) */}
         <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-rose-500/20">
-          <div className="flex items-center justify-between text-xs text-rose-400 mb-1">
+          <div className="flex items-center justify-between text-xs text-rose-700 mb-1">
             <span className="font-medium">Beban Pokok (HPP)</span>
             <Layers className="w-3.5 h-3.5" />
           </div>
-          <div className="text-lg sm:text-xl font-black text-rose-400 font-mono">
+          <div className="text-lg sm:text-xl font-black text-rose-700 font-mono">
             {formatRupiah(overallSummary.totalHpp)}
           </div>
           <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
             <span>Rasio HPP:</span>
-            <strong className="text-rose-300 font-mono">{overallSummary.avgHppRatio.toFixed(1)}%</strong>
-          </div>
-        </div>
-
-        {/* Card 3: Total Laba Bersih */}
-        <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-emerald-500/20">
-          <div className="flex items-center justify-between text-xs text-emerald-400 mb-1">
-            <span className="font-medium">Total Laba Bersih</span>
-            <TrendingUp className="w-3.5 h-3.5" />
-          </div>
-          <div
-            className={`text-lg sm:text-xl font-black font-mono ${
-              overallSummary.totalLabaBersih >= 0 ? 'text-emerald-400' : 'text-rose-400'
-            }`}
-          >
-            {formatRupiah(overallSummary.totalLabaBersih)}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <span>Rata-rata Margin:</span>
-            <strong className="text-emerald-300 font-mono">
-              {overallSummary.avgMarginBersih.toFixed(1)}%
-            </strong>
+            <strong className="text-rose-700 font-mono">{overallSummary.avgHppRatio.toFixed(1)}%</strong>
           </div>
         </div>
 
         {/* Card 4: Bulan Terbaik */}
-        <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-amber-500/20">
-          <div className="flex items-center justify-between text-xs text-amber-400 mb-1">
+        <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-200">
+          <div className="flex items-center justify-between text-xs text-slate-900 mb-1">
             <span className="font-medium">Bulan Performa Terbaik</span>
             <Sparkles className="w-3.5 h-3.5" />
           </div>
           {overallSummary.bestMonth ? (
             <>
-              <div className="text-lg sm:text-xl font-black text-amber-300 font-mono truncate">
+              <div className="text-lg sm:text-xl font-black text-slate-900 font-mono truncate">
                 {overallSummary.bestMonth.label}
               </div>
               <div className="text-[11px] text-slate-400 mt-1 truncate">
-                Laba: <span className="text-emerald-400 font-mono font-semibold">{formatRupiah(overallSummary.bestMonth.labaBersih)}</span> ({overallSummary.bestMonth.marginBersih}%)
+                Laba: <span className="text-indigo-700 font-mono font-semibold">{formatRupiah(overallSummary.bestMonth.labaBersih)}</span> ({overallSummary.bestMonth.marginBersih}%)
               </div>
             </>
           ) : (
@@ -537,10 +503,10 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
                   align="right"
                   wrapperStyle={{ paddingBottom: '12px', fontSize: '11px' }}
                   formatter={(value) => {
-                    if (value === 'pendapatan') return <span className="text-blue-300 font-medium">Pendapatan Bersih</span>;
-                    if (value === 'hpp') return <span className="text-rose-300 font-medium">Harga Pokok (HPP)</span>;
-                    if (value === 'opex') return <span className="text-amber-300 font-medium">Beban Operasional</span>;
-                    if (value === 'labaBersih') return <span className="text-emerald-400 font-bold">Laba Bersih</span>;
+                    if (value === 'pendapatan') return <span className="text-slate-900 font-medium">Pendapatan Bersih</span>;
+                    if (value === 'hpp') return <span className="text-rose-700 font-medium">Harga Pokok (HPP)</span>;
+                    if (value === 'opex') return <span className="text-slate-900 font-medium">Beban Operasional</span>;
+                    if (value === 'labaBersih') return <span className="text-indigo-700 font-bold">Laba Bersih</span>;
                     return value;
                   }}
                 />
@@ -617,10 +583,10 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
                   align="right"
                   wrapperStyle={{ paddingBottom: '12px', fontSize: '11px' }}
                   formatter={(value) => {
-                    if (value === 'marginKotor') return <span className="text-blue-300 font-medium">Gross Margin (%)</span>;
-                    if (value === 'hppRatio') return <span className="text-rose-300 font-medium">HPP Ratio (%)</span>;
-                    if (value === 'opexRatio') return <span className="text-amber-300 font-medium">OPEX Ratio (%)</span>;
-                    if (value === 'marginBersih') return <span className="text-emerald-400 font-bold">Net Profit Margin (%)</span>;
+                    if (value === 'marginKotor') return <span className="text-slate-900 font-medium">Gross Margin (%)</span>;
+                    if (value === 'hppRatio') return <span className="text-rose-700 font-medium">HPP Ratio (%)</span>;
+                    if (value === 'opexRatio') return <span className="text-slate-900 font-medium">OPEX Ratio (%)</span>;
+                    if (value === 'marginBersih') return <span className="text-indigo-700 font-bold">Net Profit Margin (%)</span>;
                     return value;
                   }}
                 />
@@ -668,7 +634,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
       {monthlyData.length > 1 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-800/80">
           <span className="text-xs text-slate-400 font-medium mr-1 flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-amber-400" />
+            <Calendar className="w-3 h-3 text-slate-900" />
             <span>Pilih Bulan Spesifik:</span>
           </span>
           {monthlyData.map((d) => {
@@ -680,7 +646,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
                 onClick={() => onSelectMonth && onSelectMonth(d.month)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer flex items-center gap-1.5 ${
                   isSelected
-                    ? 'bg-amber-500 text-slate-950 font-bold shadow-sm'
+                    ? 'segmented-pill-active font-bold shadow-sm'
                     : 'bg-slate-900 hover:bg-slate-850 text-slate-300 hover:text-white border border-slate-800'
                 }`}
               >
@@ -697,7 +663,7 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
         <div className="pt-3 border-t border-slate-800/80 overflow-x-auto">
           <div className="flex items-center justify-between pb-2">
             <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
-              <TableIcon className="w-3.5 h-3.5 text-amber-400" />
+              <TableIcon className="w-3.5 h-3.5 text-slate-900" />
               <span>Tabel Rincian Kinerja Finansial Bulanan Kalima</span>
             </h4>
             <span className="text-[11px] text-slate-400">Semua nominal dalam Rupiah (Rp)</span>
@@ -725,14 +691,14 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
                     onClick={() => onSelectMonth && onSelectMonth(row.month)}
                     className={`cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-amber-500/10 text-white'
+                        ? 'bg-slate-100 text-white'
                         : 'hover:bg-slate-900/60'
                     }`}
                   >
                     <td className="py-2.5 px-3 font-sans font-semibold text-white flex items-center gap-1.5">
                       <span>{row.label}</span>
                       {isSelected && (
-                        <span className="text-[11px] bg-amber-500 text-slate-950 font-bold px-1.5 py-0.2 rounded font-sans">
+                        <span className="text-[11px] segmented-pill-active font-bold px-1.5 py-0.2 rounded font-sans">
                           Dipilih
                         </span>
                       )}
@@ -740,28 +706,28 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
                     <td className="py-2.5 px-2.5 text-center text-slate-400 font-sans">
                       {row.orderCount}
                     </td>
-                    <td className="py-2.5 px-3 text-right text-blue-300 font-semibold">
+                    <td className="py-2.5 px-3 text-right text-slate-900 font-semibold">
                       {formatRupiah(row.pendapatan)}
                     </td>
-                    <td className="py-2.5 px-3 text-right text-rose-300">
+                    <td className="py-2.5 px-3 text-right text-rose-700">
                       {formatRupiah(row.hpp)}
                     </td>
-                    <td className="py-2.5 px-3 text-right text-emerald-400">
+                    <td className="py-2.5 px-3 text-right text-indigo-700">
                       {formatRupiah(row.labaKotor)}
                     </td>
-                    <td className="py-2.5 px-3 text-right text-amber-300">
+                    <td className="py-2.5 px-3 text-right text-slate-900">
                       {formatRupiah(row.opex)}
                     </td>
                     <td
                       className={`py-2.5 px-3 text-right font-black ${
-                        row.labaBersih >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        row.labaBersih >= 0 ? 'text-indigo-700' : 'text-rose-700'
                       }`}
                     >
                       {formatRupiah(row.labaBersih)}
                     </td>
                     <td
                       className={`py-2.5 px-3 text-right font-bold ${
-                        row.marginBersih >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        row.marginBersih >= 0 ? 'text-indigo-700' : 'text-rose-700'
                       }`}
                     >
                       {row.marginBersih}%
@@ -776,26 +742,26 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
                 <td className="py-2.5 px-2.5 text-center text-slate-400 font-sans">
                   {filteredData.reduce((s, r) => s + r.orderCount, 0)}
                 </td>
-                <td className="py-2.5 px-3 text-right text-blue-300">
+                <td className="py-2.5 px-3 text-right text-slate-900">
                   {formatRupiah(overallSummary.totalPendapatan)}
                 </td>
-                <td className="py-2.5 px-3 text-right text-rose-300">
+                <td className="py-2.5 px-3 text-right text-rose-700">
                   {formatRupiah(overallSummary.totalHpp)}
                 </td>
-                <td className="py-2.5 px-3 text-right text-emerald-400">
+                <td className="py-2.5 px-3 text-right text-indigo-700">
                   {formatRupiah(overallSummary.totalLabaKotor)}
                 </td>
-                <td className="py-2.5 px-3 text-right text-amber-300">
+                <td className="py-2.5 px-3 text-right text-slate-900">
                   {formatRupiah(overallSummary.totalOpex)}
                 </td>
                 <td
                   className={`py-2.5 px-3 text-right font-black ${
-                    overallSummary.totalLabaBersih >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                    overallSummary.totalLabaBersih >= 0 ? 'text-indigo-700' : 'text-rose-700'
                   }`}
                 >
                   {formatRupiah(overallSummary.totalLabaBersih)}
                 </td>
-                <td className="py-2.5 px-3 text-right text-emerald-400">
+                <td className="py-2.5 px-3 text-right text-indigo-700">
                   {overallSummary.avgMarginBersih.toFixed(1)}%
                 </td>
               </tr>

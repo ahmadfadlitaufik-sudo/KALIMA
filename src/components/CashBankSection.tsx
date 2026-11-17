@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { sortNewestFirst } from '../services/financeLedger';
 import {
   Wallet,
   Building2,
@@ -145,7 +146,7 @@ export const CashBankSection: React.FC = () => {
 
   // Filtered Mutations
   const filteredMutations = useMemo(() => {
-    return cashMutations.filter((m) => {
+    return sortNewestFirst(cashMutations).filter((m) => {
       if (selectedAccountId !== 'all' && m.accountId !== selectedAccountId) {
         return false;
       }
@@ -346,40 +347,40 @@ export const CashBankSection: React.FC = () => {
         return {
           border: 'border-emerald-500/40 hover:border-emerald-500/80',
           bg: 'from-emerald-950/40 to-slate-900/90',
-          badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-          accent: 'text-emerald-400',
+          badge: 'bg-emerald-500/20 text-indigo-700 border-emerald-500/30',
+          accent: 'text-indigo-700',
           gradientText: 'from-emerald-400 to-teal-300',
         };
       case 'blue':
         return {
           border: 'border-blue-500/40 hover:border-blue-500/80',
           bg: 'from-blue-950/40 to-slate-900/90',
-          badge: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-          accent: 'text-blue-400',
+          badge: 'bg-blue-500/20 text-slate-900 border-blue-500/30',
+          accent: 'text-slate-900',
           gradientText: 'from-blue-400 to-cyan-300',
         };
       case 'amber':
         return {
-          border: 'border-amber-500/40 hover:border-amber-500/80',
+          border: 'border-slate-200 hover:border-amber-500/80',
           bg: 'from-amber-950/40 to-slate-900/90',
-          badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-          accent: 'text-amber-400',
+          badge: 'bg-slate-100 text-slate-900 border-slate-200',
+          accent: 'text-slate-900',
           gradientText: 'from-amber-400 to-yellow-300',
         };
       case 'teal':
         return {
           border: 'border-teal-500/40 hover:border-teal-500/80',
           bg: 'from-teal-950/40 to-slate-900/90',
-          badge: 'bg-teal-500/20 text-teal-400 border-teal-500/30',
-          accent: 'text-teal-400',
+          badge: 'bg-teal-500/20 text-slate-900 border-teal-500/30',
+          accent: 'text-slate-900',
           gradientText: 'from-teal-400 to-emerald-300',
         };
       case 'purple':
         return {
           border: 'border-purple-500/40 hover:border-purple-500/80',
           bg: 'from-purple-950/40 to-slate-900/90',
-          badge: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-          accent: 'text-purple-400',
+          badge: 'bg-purple-500/20 text-slate-900 border-purple-500/30',
+          accent: 'text-slate-900',
           gradientText: 'from-purple-400 to-pink-300',
         };
       default:
@@ -396,11 +397,11 @@ export const CashBankSection: React.FC = () => {
   const getTypeIcon = (tipe: CashAccountType) => {
     switch (tipe) {
       case 'tunai':
-        return <Wallet className="w-4 h-4 text-emerald-400" />;
+        return <Wallet className="w-4 h-4 text-indigo-700" />;
       case 'bank':
-        return <Building2 className="w-4 h-4 text-blue-400" />;
+        return <Building2 className="w-4 h-4 text-slate-900" />;
       case 'e-wallet':
-        return <Smartphone className="w-4 h-4 text-purple-400" />;
+        return <Smartphone className="w-4 h-4 text-slate-900" />;
     }
   };
 
@@ -410,7 +411,7 @@ export const CashBankSection: React.FC = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shadow-2xs">
+            <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700">
               <Building2 className="w-4.5 h-4.5" />
             </div>
             <h2 className="text-base font-bold text-slate-900 tracking-tight">
@@ -423,31 +424,19 @@ export const CashBankSection: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => handleOpenTrx('masuk')}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2.5 rounded-full text-xs shadow-sm transition-all cursor-pointer"
-          >
-            <ArrowDownRight className="w-3.5 h-3.5" />
-            <span>+ Kas Masuk</span>
+          <button type="button" onClick={() => handleOpenTrx('masuk')} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-900 font-semibold px-3.5 py-2 rounded-full text-xs transition-colors cursor-pointer">
+            <ArrowDownRight className="w-4 h-4 text-indigo-700" aria-hidden="true" />
+            <span>Kas Masuk</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => handleOpenTrx('keluar')}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold px-3.5 py-2.5 rounded-full text-xs shadow-sm transition-all cursor-pointer"
-          >
-            <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>- Kas Keluar</span>
+          <button type="button" onClick={() => handleOpenTrx('keluar')} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-900 font-semibold px-3.5 py-2 rounded-full text-xs transition-colors cursor-pointer">
+            <ArrowUpRight className="w-4 h-4 text-rose-700" aria-hidden="true" />
+            <span>Kas Keluar</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => handleOpenTransfer()}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold px-3.5 py-2.5 rounded-full text-xs shadow-sm transition-all cursor-pointer"
-          >
-            <ArrowRightLeft className="w-3.5 h-3.5" />
-            <span>⇄ Pindah Saldo</span>
+          <button type="button" onClick={() => handleOpenTransfer()} className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-900 font-semibold px-3.5 py-2 rounded-full text-xs transition-colors cursor-pointer">
+            <ArrowRightLeft className="w-4 h-4" aria-hidden="true" />
+            <span>Pindah Saldo</span>
           </button>
 
           <button
@@ -456,109 +445,63 @@ export const CashBankSection: React.FC = () => {
               setReconcileAccountId(selectedAccountId !== 'all' ? selectedAccountId : undefined);
               setIsReconciliationOpen(true);
             }}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-full text-xs shadow-sm transition-all cursor-pointer"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-900 font-semibold px-3.5 py-2 rounded-full text-xs transition-colors cursor-pointer"
           >
-            <ClipboardCheck className="w-3.5 h-3.5" />
+            <ClipboardCheck className="w-4 h-4" aria-hidden="true" />
             <span>Rekonsiliasi Bank</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleOpenAddAccount}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold px-4 py-2.5 rounded-full text-xs shadow-sm transition-all cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Tambah Akun</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Top Summary KPI Cards */}
+      {/* 2. Ringkasan kas: label satu baris, keterangan di bawah angka */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Total Likuiditas */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-rose-500" />
-              Total Likuiditas
-            </span>
-            <span className="text-[11px] bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full font-mono font-bold">
-              {cashAccounts.length} Akun
-            </span>
+        <div className="bg-white p-5 rounded-[20px] border border-slate-200 space-y-1">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <DollarSign className="w-4 h-4 text-slate-500" aria-hidden="true" />
+            Total Likuiditas
           </div>
-          <div className="text-xl sm:text-2xl font-black text-slate-900 font-mono tracking-tight mt-1">
-            Rp {totalLikuiditas.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">
-            Seluruh kas tunai, bank & e-wallet
-          </div>
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums whitespace-nowrap">Rp {totalLikuiditas.toLocaleString('id-ID')}</div>
+          <div className="text-xs text-slate-500">{cashAccounts.length} akun · kas tunai, bank & e-wallet</div>
         </div>
 
-        {/* Kas Tunai Fisik */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
-              <Wallet className="w-3.5 h-3.5 text-emerald-600" />
-              Kas Tunai Fisik
-            </span>
-            <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold">
-              Laci Kasir
-            </span>
+        <div className="bg-white p-5 rounded-[20px] border border-slate-200 space-y-1">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <Wallet className="w-4 h-4 text-slate-500" aria-hidden="true" />
+            Kas Tunai
           </div>
-          <div className="text-xl sm:text-2xl font-black text-emerald-600 font-mono tracking-tight mt-1">
-            Rp {totalKasTunai.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">
-            Uang fisik di kasir toko & COD
-          </div>
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums whitespace-nowrap">Rp {totalKasTunai.toLocaleString('id-ID')}</div>
+          <div className="text-xs text-slate-500">Laci kasir toko & COD</div>
         </div>
 
-        {/* Rekening Bank */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-blue-600" />
-              Saldo Rekening Bank
-            </span>
-            <span className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold">
-              BCA, Mandiri, BSI
-            </span>
+        <div className="bg-white p-5 rounded-[20px] border border-slate-200 space-y-1">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <Building2 className="w-4 h-4 text-slate-500" aria-hidden="true" />
+            Saldo Bank
           </div>
-          <div className="text-xl sm:text-2xl font-black text-blue-600 font-mono tracking-tight mt-1">
-            Rp {totalBank.toLocaleString('id-ID')}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">
-            Rekening operasional & transfer mitra
-          </div>
+          <div className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums whitespace-nowrap">Rp {totalBank.toLocaleString('id-ID')}</div>
+          <div className="text-xs text-slate-500">Rekening operasional & transfer mitra</div>
         </div>
 
-        {/* Arus Kas Bulan Ini */}
-        <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-            <span className="font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-slate-600" />
-              Arus Kas Bulan Ini
-            </span>
-            <span className="text-[11px] text-slate-400 font-mono font-bold">{todayMonth}</span>
+        <div className="bg-white p-5 rounded-[20px] border border-slate-200 space-y-1">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <TrendingUp className="w-4 h-4 text-slate-500" aria-hidden="true" />
+            Arus Kas Bulan Ini
           </div>
-          <div className="flex items-center justify-between mt-1 pt-1">
-            <div className="text-xs">
-              <div className="text-[11px] text-emerald-600 font-bold flex items-center gap-0.5">
-                <ArrowDownRight className="w-3 h-3" /> Masuk
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <div>
+              <div className="text-xs text-indigo-700 font-semibold flex items-center gap-0.5">
+                <ArrowDownRight className="w-3.5 h-3.5" aria-hidden="true" /> Masuk
               </div>
-              <div className="font-black text-slate-900 font-mono text-sm">
-                Rp {totalMasukBulanIni.toLocaleString('id-ID')}
-              </div>
+              <div className="font-bold text-slate-900 tabular-nums whitespace-nowrap">Rp {totalMasukBulanIni.toLocaleString('id-ID')}</div>
             </div>
-            <div className="text-xs text-right">
-              <div className="text-[11px] text-rose-600 font-bold flex items-center justify-end gap-0.5">
-                <ArrowUpRight className="w-3 h-3" /> Keluar
+            <div className="text-right">
+              <div className="text-xs text-rose-700 font-semibold flex items-center justify-end gap-0.5">
+                <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" /> Keluar
               </div>
-              <div className="font-black text-slate-900 font-mono text-sm">
-                Rp {totalKeluarBulanIni.toLocaleString('id-ID')}
-              </div>
+              <div className="font-bold text-slate-900 tabular-nums whitespace-nowrap">Rp {totalKeluarBulanIni.toLocaleString('id-ID')}</div>
             </div>
           </div>
+          <div className="text-xs text-slate-500">{todayMonth}</div>
         </div>
       </div>
 
@@ -568,7 +511,7 @@ export const CashBankSection: React.FC = () => {
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <span>Daftar Akun Kas & Bank Aktif</span>
-              <span className="text-xs font-bold text-rose-600 font-mono">({cashAccounts.length} Akun Terdaftar)</span>
+              <span className="text-xs font-semibold text-slate-500">· {cashAccounts.length} akun</span>
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               Saldo masing-masing akun ter-update secara real-time dari seluruh transaksi penjualan, pelunasan, dan beban operasional.
@@ -616,10 +559,10 @@ export const CashBankSection: React.FC = () => {
             <button
               type="button"
               onClick={handleOpenAddAccount}
-              className="flex items-center gap-1.5 bg-rose-500 hover:bg-rose-600 text-white font-bold px-3.5 py-2 rounded-full text-xs transition-colors cursor-pointer ml-auto sm:ml-0 shadow-sm"
+              className="flex items-center gap-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-900 font-semibold px-3.5 py-2 rounded-full text-xs transition-colors cursor-pointer ml-auto sm:ml-0"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+ Tambah Akun</span>
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              <span>Tambah Akun</span>
             </button>
           </div>
         </div>
@@ -646,7 +589,7 @@ export const CashBankSection: React.FC = () => {
                         <div className="font-bold text-sm text-white flex items-center gap-1.5">
                           <span>{acc.nama}</span>
                           {acc.isDefault && (
-                            <span className="text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1 rounded font-normal">
+                            <span className="text-[11px] bg-slate-100 text-slate-900 border border-slate-200 px-1 rounded font-normal">
                               Utama
                             </span>
                           )}
@@ -675,7 +618,7 @@ export const CashBankSection: React.FC = () => {
                           type="button"
                           title="Hapus Akun" aria-label="Hapus Akun"
                           onClick={() => setDeletingAccountId(acc.id)}
-                          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 text-slate-500 hover:text-rose-700 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -690,11 +633,11 @@ export const CashBankSection: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleCopyRekening(acc)}
-                        className="flex items-center gap-1 text-xs font-mono font-bold text-white hover:text-amber-400 transition-colors cursor-pointer"
+                        className="flex items-center gap-1 text-xs font-mono font-bold text-white hover:text-slate-900 transition-colors cursor-pointer"
                       >
                         <span>{acc.nomorRekening || '-'}</span>
                         {isCopied ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
+                          <Check className="w-3 h-3 text-indigo-700" />
                         ) : (
                           <Copy className="w-3 h-3 text-slate-400" />
                         )}
@@ -731,7 +674,7 @@ export const CashBankSection: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleOpenTrx('masuk', acc.id)}
-                        className="flex items-center justify-center gap-1 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-semibold rounded-lg border border-emerald-500/20 transition-colors cursor-pointer"
+                        className="flex items-center justify-center gap-1 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-indigo-700 font-semibold rounded-lg border border-emerald-500/20 transition-colors cursor-pointer"
                       >
                         <Plus className="w-3 h-3" />
                         <span>Masuk</span>
@@ -739,7 +682,7 @@ export const CashBankSection: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleOpenTrx('keluar', acc.id)}
-                        className="flex items-center justify-center gap-1 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-lg border border-rose-500/20 transition-colors cursor-pointer"
+                        className="flex items-center justify-center gap-1 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 font-semibold rounded-lg border border-rose-500/20 transition-colors cursor-pointer"
                       >
                         <ArrowUpRight className="w-3 h-3" />
                         <span>Keluar</span>
@@ -747,7 +690,7 @@ export const CashBankSection: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleOpenTransfer(acc.id)}
-                        className="flex items-center justify-center gap-1 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-semibold rounded-lg border border-blue-500/20 transition-colors cursor-pointer"
+                        className="flex items-center justify-center gap-1 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-slate-900 font-semibold rounded-lg border border-blue-500/20 transition-colors cursor-pointer"
                       >
                         <ArrowRightLeft className="w-3 h-3" />
                         <span>Transfer</span>
@@ -760,9 +703,9 @@ export const CashBankSection: React.FC = () => {
                         setReconcileAccountId(acc.id);
                         setIsReconciliationOpen(true);
                       }}
-                      className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 font-semibold rounded-lg border border-indigo-500/20 transition-colors cursor-pointer"
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-slate-900 font-semibold rounded-lg border border-indigo-500/20 transition-colors cursor-pointer"
                     >
-                      <ClipboardCheck className="w-3.5 h-3.5 text-indigo-400" />
+                      <ClipboardCheck className="w-3.5 h-3.5 text-slate-900" />
                       <span>Rekonsiliasi Bank Ini</span>
                     </button>
                   </div>
@@ -777,25 +720,23 @@ export const CashBankSection: React.FC = () => {
           <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                <CreditCard className="w-3.5 h-3.5 text-slate-900" />
                 <span>Rincian Saldo Real-Time Seluruh Rekening & Kas Tunai</span>
               </h4>
               <span className="text-xs text-slate-400 font-mono">
-                Total Likuiditas: <strong className="text-amber-400 font-bold">Rp {totalLikuiditas.toLocaleString('id-ID')}</strong>
+                Total Likuiditas: <strong className="text-slate-900 font-bold">Rp {totalLikuiditas.toLocaleString('id-ID')}</strong>
               </span>
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-slate-800">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[11px]">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-[#161c28] border-b border-slate-800 text-slate-500 uppercase text-[11px]">
                   <tr>
-                    <th className="py-2.5 px-3">Akun & Tipe</th>
-                    <th className="py-2.5 px-3">Nomor Rekening / ID</th>
-                    <th className="py-2.5 px-3">Atas Nama</th>
-                    <th className="py-2.5 px-3 text-right">Saldo Real-Time</th>
-                    <th className="py-2.5 px-3 text-center">Porsi Likuiditas</th>
-                    <th className="py-2.5 px-3">Keterangan</th>
-                    <th className="py-2.5 px-3 text-center">Aksi Cepat</th>
+                    <th className="py-2.5 px-3">Akun</th>
+                    <th className="py-2.5 px-3">Rekening</th>
+                    <th className="py-2.5 px-3 text-right">Saldo</th>
+                    <th className="py-2.5 px-3">Porsi</th>
+                    <th className="py-2.5 px-3 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-sans">
@@ -806,93 +747,55 @@ export const CashBankSection: React.FC = () => {
                     return (
                       <tr key={acc.id} className="hover:bg-slate-850/50 transition-colors">
                         <td className="py-2.5 px-3">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1 rounded bg-slate-900 border border-slate-700 shrink-0">
-                              {getTypeIcon(acc.tipe)}
-                            </div>
-                            <div>
-                              <div className="font-bold text-white flex items-center gap-1">
-                                <span>{acc.nama}</span>
+                          <div className="flex items-center gap-2" title={acc.keterangan || undefined}>
+                            <div className="p-1.5 rounded-lg bg-white border border-slate-200 shrink-0">{getTypeIcon(acc.tipe)}</div>
+                            <div className="min-w-0">
+                              <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                                <span className="truncate">{acc.nama}</span>
                                 {acc.isDefault && (
-                                  <span className="text-[11px] bg-amber-500/20 text-amber-300 px-1 rounded font-normal">
-                                    Utama
-                                  </span>
+                                  <span className="text-[11px] bg-slate-100 text-slate-700 px-1.5 rounded-full font-normal">Utama</span>
                                 )}
                               </div>
-                              <div className="text-[11px] text-slate-400 uppercase font-semibold">
-                                {acc.tipe}
-                              </div>
+                              <div className="text-[11px] text-slate-500 uppercase">{acc.tipe}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 font-mono text-xs text-slate-200">
+                        <td className="py-2.5 px-3">
                           <button
                             type="button"
                             onClick={() => handleCopyRekening(acc)}
-                            className="flex items-center gap-1 hover:text-amber-400 transition-colors cursor-pointer"
-                            title="Salin No. Rekening" aria-label="Salin No. Rekening"
+                            className="flex items-center gap-1 text-slate-900 tabular-nums whitespace-nowrap hover:underline cursor-pointer"
+                            title="Salin nomor rekening" aria-label={`Salin nomor rekening ${acc.nama}`}
                           >
                             <span>{acc.nomorRekening || '-'}</span>
-                            {isCopied ? (
-                              <Check className="w-3 h-3 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3 h-3 text-slate-500" />
-                            )}
+                            {isCopied ? <Check className="w-3 h-3 text-indigo-700" aria-hidden="true" /> : <Copy className="w-3 h-3 text-slate-500" aria-hidden="true" />}
                           </button>
+                          <div className="text-[11px] text-slate-500 truncate max-w-[180px]">a/n {acc.atasNama || '-'}</div>
                         </td>
-                        <td className="py-2.5 px-3 text-slate-300 font-medium">
-                          {acc.atasNama || '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold text-white text-sm">
+                        <td className="py-2.5 px-3 text-right font-bold text-slate-900 text-sm tabular-nums whitespace-nowrap">
                           Rp {acc.saldo.toLocaleString('id-ID')}
                         </td>
-                        <td className="py-2.5 px-3 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="w-16 h-1.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
-                              <div
-                                className="h-full bg-amber-500 rounded-full"
-                                style={{ width: `${Math.min(100, Number(percent))}%` }}
-                              />
+                        <td className="py-2.5 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-14 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-indigo-600 rounded-full" style={{ width: `${Math.min(100, Number(percent))}%` }} />
                             </div>
-                            <span className="font-mono text-xs text-slate-400">{percent}%</span>
+                            <span className="text-xs text-slate-500 tabular-nums">{percent}%</span>
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 text-xs text-slate-400 max-w-xs truncate">
-                          {acc.keterangan || '-'}
-                        </td>
-                        <td className="py-2.5 px-3 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenTrx('masuk', acc.id)}
-                              className="px-2 py-0.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 text-[11px] font-bold rounded border border-emerald-500/30 cursor-pointer"
-                              title="Catat Kas Masuk" aria-label="Catat Kas Masuk"
-                            >
-                              + Masuk
+                        <td className="py-2.5 px-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <button type="button" onClick={() => handleOpenTrx('masuk', acc.id)} className="p-1.5 rounded-lg border border-slate-200 bg-white hover:border-slate-900 cursor-pointer text-indigo-700" title="Kas masuk" aria-label={`Kas masuk ke ${acc.nama}`}>
+                              <ArrowDownRight className="w-3.5 h-3.5" aria-hidden="true" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenTrx('keluar', acc.id)}
-                              className="px-2 py-0.5 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 text-[11px] font-bold rounded border border-rose-500/30 cursor-pointer"
-                              title="Catat Kas Keluar" aria-label="Catat Kas Keluar"
-                            >
-                              - Keluar
+                            <button type="button" onClick={() => handleOpenTrx('keluar', acc.id)} className="p-1.5 rounded-lg border border-slate-200 bg-white hover:border-slate-900 cursor-pointer text-rose-700" title="Kas keluar" aria-label={`Kas keluar dari ${acc.nama}`}>
+                              <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenTransfer(acc.id)}
-                              className="px-2 py-0.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-[11px] font-bold rounded border border-blue-500/30 cursor-pointer"
-                              title="Pindah Saldo" aria-label="Pindah Saldo"
-                            >
-                              ⇄ Trf
+                            <button type="button" onClick={() => handleOpenTransfer(acc.id)} className="p-1.5 rounded-lg border border-slate-200 bg-white hover:border-slate-900 cursor-pointer text-slate-700" title="Pindah saldo" aria-label={`Pindah saldo dari ${acc.nama}`}>
+                              <ArrowRightLeft className="w-3.5 h-3.5" aria-hidden="true" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditAccount(acc)}
-                              className="p-1 text-slate-400 hover:text-white rounded"
-                              title="Edit Akun" aria-label="Edit Akun"
-                            >
-                              <Edit2 className="w-3 h-3" />
+                            <button type="button" onClick={() => handleOpenEditAccount(acc)} className="p-1.5 rounded-lg border border-slate-200 bg-white hover:border-slate-900 cursor-pointer text-slate-700" title="Edit akun" aria-label={`Edit akun ${acc.nama}`}>
+                              <Edit2 className="w-3.5 h-3.5" aria-hidden="true" />
                             </button>
                           </div>
                         </td>
@@ -911,7 +814,7 @@ export const CashBankSection: React.FC = () => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 border-b border-slate-800">
           <div>
             <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              <FileSpreadsheet className="w-4 h-4 text-amber-400" />
+              <FileSpreadsheet className="w-4 h-4 text-slate-900" />
               Buku Kas & Riwayat Mutasi Rekening
             </h3>
             <p className="text-xs text-slate-400">
@@ -975,20 +878,17 @@ export const CashBankSection: React.FC = () => {
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[11px]">
               <tr>
-                <th className="py-2.5 px-3">Tgl & Jam</th>
-                <th className="py-2.5 px-3">Akun Kas / Bank</th>
-                <th className="py-2.5 px-3">Tipe</th>
-                <th className="py-2.5 px-3">Kategori & Keterangan</th>
-                <th className="py-2.5 px-3">Referensi</th>
+                <th className="py-2.5 px-3">Tanggal</th>
+                <th className="py-2.5 px-3">Akun</th>
+                <th className="py-2.5 px-3">Keterangan</th>
                 <th className="py-2.5 px-3 text-right">Nominal</th>
-                <th className="py-2.5 px-3 text-right">Saldo Setelahnya</th>
-                <th className="py-2.5 px-3">Pencatat</th>
+                <th className="py-2.5 px-3 text-right">Saldo Setelah</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-sans">
               {filteredMutations.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-500 text-xs">
+                  <td colSpan={5} className="py-8 text-center text-slate-500 text-xs">
                     Tidak ada transaksi mutasi kas/bank yang sesuai filter.
                   </td>
                 </tr>
@@ -1000,54 +900,34 @@ export const CashBankSection: React.FC = () => {
 
                   return (
                     <tr key={m.id} className="hover:bg-slate-850/50 transition-colors">
-                      <td className="py-2.5 px-3 font-mono text-xs text-slate-400 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-xs text-slate-700 tabular-nums whitespace-nowrap">
                         <div>{m.tanggal}</div>
-                        <div className="text-[11px] text-slate-500">{m.waktu || '12:00'}</div>
-                      </td>
-                      <td className="py-2.5 px-3 font-semibold text-white whitespace-nowrap">
-                        {m.accountNama}
+                        <div className="text-[11px] text-slate-500">{m.waktu || '–'}</div>
                       </td>
                       <td className="py-2.5 px-3 whitespace-nowrap">
-                        {isMasuk && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                            <ArrowDownRight className="w-3 h-3" /> MASUK
-                          </span>
-                        )}
-                        {isKeluar && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                            <ArrowUpRight className="w-3 h-3" /> KELUAR
-                          </span>
-                        )}
-                        {isTransfer && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                            <ArrowRightLeft className="w-3 h-3" /> PINDAH SALDO
-                          </span>
-                        )}
+                        <div className="font-semibold text-slate-900">{m.accountNama}</div>
+                        <div className="text-[11px] text-slate-500">oleh {m.dicatatOleh}</div>
                       </td>
-                      <td className="py-2.5 px-3 min-w-[200px]">
-                        <div className="font-semibold text-slate-200">{m.deskripsi}</div>
-                        <div className="text-[11px] text-slate-400">
+                      <td className="py-2.5 px-3 min-w-[240px]">
+                        <div className="font-medium text-slate-900">{m.deskripsi}</div>
+                        <div className="text-[11px] text-slate-500">
                           {m.kategori}
-                          {m.targetAccountNama && (
-                            <span className="text-blue-300"> → Ke: {m.targetAccountNama}</span>
-                          )}
+                          {m.targetAccountNama && <> → {m.targetAccountNama}</>}
+                          {m.referensi && <> · {m.referensi}</>}
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-xs font-mono text-slate-400 whitespace-nowrap">
-                        {m.referensi || '-'}
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <div className={`font-bold tabular-nums ${isMasuk ? 'text-indigo-700' : isKeluar ? 'text-rose-700' : 'text-slate-900'}`}>
+                          {isMasuk ? '+' : isKeluar ? '−' : ''} Rp {m.jumlah.toLocaleString('id-ID')}
+                        </div>
+                        <div className="inline-flex items-center gap-0.5 text-[11px] text-slate-500">
+                          {isMasuk && <><ArrowDownRight className="w-3 h-3" aria-hidden="true" /> Masuk</>}
+                          {isKeluar && <><ArrowUpRight className="w-3 h-3" aria-hidden="true" /> Keluar</>}
+                          {isTransfer && <><ArrowRightLeft className="w-3 h-3" aria-hidden="true" /> Pindah saldo</>}
+                        </div>
                       </td>
-                      <td
-                        className={`py-2.5 px-3 text-right font-mono font-bold whitespace-nowrap text-xs ${
-                          isMasuk ? 'text-emerald-400' : isKeluar ? 'text-rose-400' : 'text-blue-400'
-                        }`}
-                      >
-                        {isMasuk ? '+' : isKeluar ? '-' : ''} Rp {m.jumlah.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-300 whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-right text-slate-700 tabular-nums whitespace-nowrap">
                         Rp {m.saldoSetelah.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-2.5 px-3 text-xs text-slate-400 whitespace-nowrap">
-                        {m.dicatatOleh}
                       </td>
                     </tr>
                   );
@@ -1075,7 +955,7 @@ export const CashBankSection: React.FC = () => {
           <div className="w-full max-w-md bg-[#121620] border border-slate-700 rounded-2xl p-6 space-y-4 shadow-2xl text-xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-amber-400" />
+                <Building2 className="w-4 h-4 text-slate-900" />
                 {editingAccount ? 'Edit Akun Kas / Bank' : 'Tambah Akun Kas & Bank Baru'}
               </h3>
               <button aria-label="Tutup" data-modal-close
@@ -1117,7 +997,7 @@ export const CashBankSection: React.FC = () => {
                             atasNama: preset.an || prev.atasNama,
                           }))
                         }
-                        className="px-2 py-1 bg-slate-900 hover:bg-amber-500/20 hover:text-amber-300 text-slate-300 border border-slate-700/80 hover:border-amber-500/40 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
+                        className="px-2 py-1 bg-slate-900 hover:bg-slate-100 hover:text-slate-900 text-slate-300 border border-slate-700/80 hover:border-slate-200 rounded-lg text-[11px] font-medium transition-colors cursor-pointer"
                       >
                         + {preset.label}
                       </button>
@@ -1252,7 +1132,7 @@ export const CashBankSection: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl"
+                  className="px-4 py-2 segmented-pill-active hover:opacity-90 font-bold rounded-xl"
                 >
                   {editingAccount ? 'Simpan Perubahan' : 'Buat Akun'}
                 </button>
@@ -1270,12 +1150,12 @@ export const CashBankSection: React.FC = () => {
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 {trxType === 'masuk' ? (
                   <>
-                    <ArrowDownRight className="w-4 h-4 text-emerald-400" />
+                    <ArrowDownRight className="w-4 h-4 text-indigo-700" />
                     <span>Catat Kas Masuk (Pemasukan)</span>
                   </>
                 ) : (
                   <>
-                    <ArrowUpRight className="w-4 h-4 text-rose-400" />
+                    <ArrowUpRight className="w-4 h-4 text-rose-700" />
                     <span>Catat Kas Keluar (Pengeluaran Langsung)</span>
                   </>
                 )}
@@ -1423,7 +1303,7 @@ export const CashBankSection: React.FC = () => {
           <div className="w-full max-w-md bg-[#121620] border border-blue-500/40 rounded-2xl p-6 space-y-4 shadow-2xl text-xs">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <ArrowRightLeft className="w-4 h-4 text-blue-400" />
+                <ArrowRightLeft className="w-4 h-4 text-slate-900" />
                 <span>Pindah Saldo (Transfer Antar Kas & Bank)</span>
               </h3>
               <button aria-label="Tutup" data-modal-close
@@ -1436,7 +1316,7 @@ export const CashBankSection: React.FC = () => {
             </div>
 
             {transferError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs flex items-center gap-2">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-700 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{transferError}</span>
               </div>
@@ -1531,7 +1411,7 @@ export const CashBankSection: React.FC = () => {
       {deletingAccountId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="w-full max-w-sm bg-[#121620] border border-rose-500/40 rounded-2xl p-6 space-y-4 shadow-2xl text-xs">
-            <div className="flex items-center gap-3 text-rose-400">
+            <div className="flex items-center gap-3 text-rose-700">
               <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>

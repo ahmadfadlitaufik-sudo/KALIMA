@@ -136,7 +136,7 @@ export const DashboardView: React.FC = () => {
   const lowStockCount = lowStockSKUs.filter((sku) => (stockSummary[sku.sku]?.gudang ?? 0) >= 0).length;
   const totalStockGudang = Object.values(stockSummary).reduce((sum, entry) => sum + entry.gudang, 0);
   const totalStockReseller = Object.values(stockSummary).reduce((sum, entry) => sum + entry.reseller, 0);
-  const stockValueGudang = useMemo(() => stockValue(skus, stockSummary, 'gudang'), [skus, stockSummary]);
+  const stockValueTotal = useMemo(() => stockValue(skus, stockSummary, 'total'), [skus, stockSummary]);
   const openPurchaseOrders = purchaseOrders.filter((po) => !['diterima', 'batal'].includes(po.statusPO));
 
   const actions = useMemo(
@@ -383,8 +383,8 @@ export const DashboardView: React.FC = () => {
             </div>
             {isOwner && (
               <div className="p-3 rounded-2xl bg-slate-50">
-                <dt className="text-xs text-slate-500">Nilai HPP stok gudang</dt>
-                <dd className="font-bold text-slate-900 tabular-nums whitespace-nowrap">{rupiah(stockValueGudang)}</dd>
+                <dt className="text-xs text-slate-500" title="Stok gudang + reseller × HPP; SKU stok minus tidak dihitung">Nilai HPP stok</dt>
+                <dd className="font-bold text-slate-900 tabular-nums whitespace-nowrap">{rupiah(stockValueTotal)}</dd>
               </div>
             )}
             <div className="p-3 rounded-2xl bg-slate-50">

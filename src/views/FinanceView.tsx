@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { receivableAging, sortNewestFirst } from '../services/financeLedger';
 import {
   DollarSign,
   TrendingUp,
@@ -6,6 +7,7 @@ import {
   AlertCircle,
   Plus,
   Trash2,
+  MoreHorizontal,
   Edit2,
   Calendar,
   PieChart,
@@ -26,6 +28,9 @@ import { CashBankSection } from '../components/CashBankSection';
 import { BalanceSheetSection } from '../components/BalanceSheetSection';
 import { MonthlyPnLChart } from '../components/MonthlyPnLChart';
 import { useCashBank } from '../hooks/useCashBank';
+
+/** Jumlah baris per tampilan untuk daftar panjang (OPEX, piutang). */
+const LIST_PAGE_SIZE = 25;
 
 export const FinanceView: React.FC = () => {
   const {
@@ -185,6 +190,8 @@ export const FinanceView: React.FC = () => {
 
   // Settle Payment Modal
   const [settleOrder, setSettleOrder] = useState<Order | null>(null);
+  const [visibleReceivableCount, setVisibleReceivableCount] = useState(LIST_PAGE_SIZE);
+  const [visibleOpexCount, setVisibleOpexCount] = useState(LIST_PAGE_SIZE);
   const [settleAmount, setSettleAmount] = useState<number>(0);
   const [settleMethod, setSettleMethod] = useState('Transfer BCA');
   const [settleAccountId, setSettleAccountId] = useState<string>('');
@@ -206,7 +213,7 @@ export const FinanceView: React.FC = () => {
 
   // Filter OPEX
   const monthOpex = useMemo(() => {
-    return biayaOperasional.filter((b) => {
+    return sortNewestFirst(biayaOperasional).filter((b) => {
       if (filterType === 'all') return true;
       if (filterType === 'month') return b.tanggal.startsWith(selectedMonth);
       if (filterType === 'custom') {
@@ -244,6 +251,14 @@ export const FinanceView: React.FC = () => {
   }, [monthOpex]);
 
   const netProfit = grossProfit - totalOpex;
+
+  /** Nama periode yang sedang difilter, untuk judul rincian laba rugi. */
+  const plPeriodLabel =
+    filterType === 'month'
+      ? selectedMonth
+      : filterType === 'custom'
+        ? `${customStartDate || 'awal'} s.d. ${customEndDate || 'sekarang'}`
+        : 'Semua periode';
 
   // Category Breakdown for OPEX
   const opexCategoryBreakdown = useMemo(() => {
@@ -283,30 +298,8 @@ export const FinanceView: React.FC = () => {
     });
   }, [monthOpex, selectedOpexCategoryFilter, opexSearchQuery]);
 
-  const getCategoryBadgeColor = (cat: string) => {
-    if (cat.includes('Marketing') || cat.includes('Ads') || cat.includes('Iklan')) {
-      return 'bg-purple-950/80 text-purple-300 border-purple-800/80';
-    }
-    if (cat.includes('Gaji') || cat.includes('Training') || cat.includes('Upah')) {
-      return 'bg-blue-950/80 text-blue-300 border-blue-800/80';
-    }
-    if (cat.includes('Entertainment') || cat.includes('Jamuan')) {
-      return 'bg-amber-950/80 text-amber-300 border-amber-800/80';
-    }
-    if (cat.includes('Packaging') || cat.includes('Logistik')) {
-      return 'bg-emerald-950/80 text-emerald-300 border-emerald-800/80';
-    }
-    if (cat.includes('Sewa') || cat.includes('Utilitas')) {
-      return 'bg-rose-950/80 text-rose-300 border-rose-800/80';
-    }
-    if (cat.includes('Software') || cat.includes('Tools') || cat.includes('Operasional')) {
-      return 'bg-teal-950/80 text-teal-300 border-teal-800/80';
-    }
-    if (cat.includes('Pajak') || cat.includes('Legal')) {
-      return 'bg-indigo-950/80 text-indigo-300 border-indigo-800/80';
-    }
-    return 'bg-slate-900 text-slate-300 border-slate-750';
-  };
+  /** Satu gaya netral untuk semua kategori OPEX; nama kategori sudah cukup membedakan. */
+  const getCategoryBadgeColor = (_cat: string) => 'bg-white text-slate-700 border-slate-200';
 
   // Receivables (Piutang)
   const allReceivableOrders = useMemo(() => {
@@ -317,26 +310,11 @@ export const FinanceView: React.FC = () => {
     return allReceivableOrders.reduce((sum, o) => sum + o.sisaPiutang, 0);
   }, [allReceivableOrders]);
 
-  // Aging Analysis
+  // Umur piutang (dari tanggal order)
   const agingData = useMemo(() => {
-    let under7 = 0;
-    let days7to14 = 0;
-    let days15to30 = 0;
-    let over30 = 0;
-
-    allReceivableOrders.forEach((o) => {
-      const orderDate = new Date(o.tanggal);
-      const diffDays = Math.floor(
-        (new Date().getTime() - orderDate.getTime()) / (1000 * 3600 * 24)
-      );
-
-      if (diffDays <= 7) under7 += o.sisaPiutang;
-      else if (diffDays <= 14) days7to14 += o.sisaPiutang;
-      else if (diffDays <= 30) days15to30 += o.sisaPiutang;
-      else over30 += o.sisaPiutang;
-    });
-
-    return { under7, days7to14, days15to30, over30 };
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return receivableAging(allReceivableOrders, today);
   }, [allReceivableOrders]);
 
   const handleSaveOpex = (e: React.FormEvent) => {
@@ -458,21 +436,18 @@ export const FinanceView: React.FC = () => {
           )}
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-mono pr-2">
-          <span>Likuiditas: <strong className="text-emerald-700 font-bold">Rp {cashAccounts.reduce((s, a) => s + (a.saldo || a.saldoAwal || 0), 0).toLocaleString('id-ID')}</strong></span>
-        </div>
       </div>
 
       {/* Role notice for Admin */}
       {!isOwner && activeTab === 'pl_opex' && (
-        <div className="p-4 bg-amber-950/40 border border-amber-800/80 rounded-2xl flex items-center justify-between text-xs text-amber-300">
+        <div className="p-4 bg-amber-950/40 border border-amber-800/80 rounded-2xl flex items-center justify-between text-xs text-slate-900">
           <div className="flex items-center gap-2">
-            <EyeOff className="w-4 h-4 text-amber-400" />
+            <EyeOff className="w-4 h-4 text-slate-900" />
             <span>
               Anda login sebagai <strong>Admin/CS</strong>. Sesuai PRD, modul Laba Kotor, HPP, dan Biaya Operasional (OPEX) hanya dapat diakses oleh Owner.
             </span>
           </div>
-          <span className="font-mono text-xs bg-amber-500/20 px-2 py-0.5 rounded">
+          <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">
             Monitoring Piutang
           </span>
         </div>
@@ -504,7 +479,7 @@ export const FinanceView: React.FC = () => {
                   onClick={() => setFilterType('all')}
                   className={`px-2.5 py-1 text-xs rounded-lg font-medium cursor-pointer transition-colors ${
                     filterType === 'all'
-                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      ? 'segmented-pill-active font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -514,7 +489,7 @@ export const FinanceView: React.FC = () => {
                   onClick={() => setFilterType('month')}
                   className={`px-2.5 py-1 text-xs rounded-lg font-medium cursor-pointer transition-colors ${
                     filterType === 'month'
-                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      ? 'segmented-pill-active font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -524,7 +499,7 @@ export const FinanceView: React.FC = () => {
                   onClick={() => setFilterType('custom')}
                   className={`px-2.5 py-1 text-xs rounded-lg font-medium cursor-pointer transition-colors ${
                     filterType === 'custom'
-                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      ? 'segmented-pill-active font-bold'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -557,7 +532,7 @@ export const FinanceView: React.FC = () => {
 
               {/* Custom Date Range Selector */}
               {filterType === 'custom' && (
-                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-amber-500/40">
+                <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-200">
                   <div className="flex items-center gap-1 text-xs text-slate-300">
                     <span className="text-[11px] text-slate-400">Dari:</span>
                     <input
@@ -582,10 +557,10 @@ export const FinanceView: React.FC = () => {
 
               <button
                 onClick={openAddOpexModal}
-                className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs shadow-sm cursor-pointer ml-auto sm:ml-0"
+                className="flex items-center gap-1.5 segmented-pill-active hover:opacity-90 font-bold px-3 py-1.5 rounded-xl text-xs shadow-sm cursor-pointer ml-auto sm:ml-0"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>+ Catat OPEX</span>
+                <span>Catat OPEX</span>
               </button>
             </div>
           </div>
@@ -604,7 +579,7 @@ export const FinanceView: React.FC = () => {
 
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
               <div className="text-xs text-slate-400 mb-1">Laba Kotor (Gross Profit)</div>
-              <div className="text-lg sm:text-2xl font-black text-emerald-400 font-mono">
+              <div className="text-lg sm:text-2xl font-black text-indigo-700 font-mono">
                 Rp {grossProfit.toLocaleString('id-ID')}
               </div>
               <div className="text-[11px] text-slate-400 mt-1">
@@ -614,7 +589,7 @@ export const FinanceView: React.FC = () => {
 
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
               <div className="text-xs text-slate-400 mb-1">Biaya Operasional (OPEX)</div>
-              <div className="text-lg sm:text-2xl font-black text-amber-400 font-mono">
+              <div className="text-lg sm:text-2xl font-black text-slate-900 font-mono">
                 Rp {totalOpex.toLocaleString('id-ID')}
               </div>
               <div className="text-[11px] text-slate-400 mt-1">
@@ -626,7 +601,7 @@ export const FinanceView: React.FC = () => {
               <div className="text-xs text-slate-400 mb-1">Estimasi Laba Bersih (Nett)</div>
               <div
                 className={`text-lg sm:text-2xl font-black font-mono ${
-                  netProfit >= 0 ? 'text-emerald-300' : 'text-rose-400'
+                  netProfit >= 0 ? 'text-indigo-700' : 'text-rose-700'
                 }`}
               >
                 Rp {netProfit.toLocaleString('id-ID')}
@@ -654,8 +629,8 @@ export const FinanceView: React.FC = () => {
             <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                 <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  <span>Rincian Laba Rugi {selectedMonth}</span>
+                  <TrendingUp className="w-4 h-4 text-indigo-700" />
+                  <span>Rincian Laba Rugi · {plPeriodLabel}</span>
                 </h3>
                 <span className="text-[11px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
                   Basis: Real-Time Accrual
@@ -667,7 +642,7 @@ export const FinanceView: React.FC = () => {
                   <span>(+) Penjualan Kotor (Gross Sales)</span>
                   <span>Rp {grossSales.toLocaleString('id-ID')}</span>
                 </div>
-                <div className="flex justify-between text-rose-400">
+                <div className="flex justify-between text-rose-700">
                   <span>(-) Potongan & Diskon Penjualan</span>
                   <span>- Rp {totalDiskon.toLocaleString('id-ID')}</span>
                 </div>
@@ -676,24 +651,24 @@ export const FinanceView: React.FC = () => {
                   <span>Rp {netSales.toLocaleString('id-ID')}</span>
                 </div>
 
-                <div className="flex justify-between text-rose-400 pt-2">
+                <div className="flex justify-between text-rose-700 pt-2">
                   <span>(-) Beban Pokok Penjualan (Total HPP)</span>
                   <span>- Rp {totalHpp.toLocaleString('id-ID')}</span>
                 </div>
-                <div className="flex justify-between text-rose-400">
+                <div className="flex justify-between text-rose-700">
                   <span>(-) Biaya Admin Marketplace & Channel</span>
                   <span>- Rp {totalAdminFees.toLocaleString('id-ID')}</span>
                 </div>
-                <div className="flex justify-between text-emerald-400 font-bold pt-1 border-t border-slate-800">
+                <div className="flex justify-between text-indigo-700 font-bold pt-1 border-t border-slate-800">
                   <span>(=) LABA KOTOR (GROSS PROFIT)</span>
                   <span>Rp {grossProfit.toLocaleString('id-ID')}</span>
                 </div>
 
-                <div className="flex justify-between text-amber-400 pt-2">
+                <div className="flex justify-between text-slate-900 pt-2">
                   <span>(-) Total Biaya Operasional (OPEX)</span>
                   <span>- Rp {totalOpex.toLocaleString('id-ID')}</span>
                 </div>
-                <div className="flex justify-between text-base font-black text-emerald-300 pt-2 border-t-2 border-slate-700">
+                <div className="flex justify-between text-base font-black text-indigo-700 pt-2 border-t-2 border-slate-700">
                   <span>(=) LABA BERSIH (NET INCOME)</span>
                   <span>Rp {netProfit.toLocaleString('id-ID')}</span>
                 </div>
@@ -706,10 +681,10 @@ export const FinanceView: React.FC = () => {
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
                   <div>
                     <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                      <PieChart className="w-4 h-4 text-amber-400" />
+                      <PieChart className="w-4 h-4 text-slate-900" />
                       <span>Ringkasan Beban per Kategori</span>
                     </h3>
-                    <div className="text-xs text-amber-400 font-mono font-semibold">
+                    <div className="text-xs text-slate-900 font-mono font-semibold">
                       Total: Rp {totalOpex.toLocaleString('id-ID')} ({opexCategoryBreakdown.length} Kategori Aktif)
                     </div>
                   </div>
@@ -720,13 +695,13 @@ export const FinanceView: React.FC = () => {
                       onClick={() => setIsAddCategoryModalOpen(true)}
                       className="text-xs text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-850 border border-slate-700/80 px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1"
                     >
-                      <Plus className="w-3 h-3 text-amber-400" />
-                      <span>+ Kategori Baru</span>
+                      <Plus className="w-3 h-3 text-slate-900" />
+                      <span>Kategori Baru</span>
                     </button>
                     <button
                       type="button"
                       onClick={openAddOpexModal}
-                      className="text-xs text-amber-400 hover:text-amber-300 font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 cursor-pointer transition-colors"
+                      className="text-xs text-slate-900 hover:text-slate-900 font-bold bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 cursor-pointer transition-colors"
                     >
                       + Catat Pengeluaran
                     </button>
@@ -742,35 +717,32 @@ export const FinanceView: React.FC = () => {
                         <th className="py-2 px-2 text-center">Freq</th>
                         <th className="py-2 px-2.5 text-right">Total (Rp)</th>
                         <th className="py-2 px-2.5 text-right">Porsi OPEX</th>
-                        <th className="py-2 px-2.5 text-right">% Net Sales</th>
                         <th className="py-2 px-2 text-center">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 font-sans">
                       {opexCategoryBreakdown.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="py-8 text-center text-slate-500 text-xs">
+                          <td colSpan={5} className="py-8 text-center text-slate-500 text-xs">
                             Belum ada pengeluaran operasional yang dicatat di periode ini.
                           </td>
                         </tr>
                       ) : (
                         opexCategoryBreakdown.map((cat, idx) => {
                           const isFiltered = selectedOpexCategoryFilter === cat.kategori;
-                          const ratioToNetSales =
-                            netSales > 0 ? ((cat.total / netSales) * 100).toFixed(1) : '0';
                           const pctNum = parseFloat(cat.percent) || 0;
 
                           return (
                             <tr
                               key={cat.kategori}
                               className={`hover:bg-slate-850/50 transition-colors ${
-                                isFiltered ? 'bg-amber-500/10 border-l-2 border-amber-500' : ''
+                                isFiltered ? 'bg-slate-100 border-l-2 border-slate-900' : ''
                               }`}
                             >
                               <td className="py-2 px-2.5">
                                 <div className="flex items-center gap-1.5">
                                   <span
-                                    className={`px-1.5 py-0.5 rounded border text-[11px] font-semibold ${getCategoryBadgeColor(
+                                    className={`px-1.5 py-0.5 rounded-full border text-[11px] font-semibold ${getCategoryBadgeColor(
                                       cat.kategori
                                     )}`}
                                   >
@@ -781,14 +753,14 @@ export const FinanceView: React.FC = () => {
                               <td className="py-2 px-2 text-center font-mono text-slate-400">
                                 {cat.count}x
                               </td>
-                              <td className="py-2 px-2.5 text-right font-mono font-bold text-amber-400">
+                              <td className="py-2 px-2.5 text-right font-bold text-slate-900 tabular-nums whitespace-nowrap">
                                 Rp {cat.total.toLocaleString('id-ID')}
                               </td>
                               <td className="py-2 px-2.5 text-right">
                                 <div className="flex items-center justify-end gap-1.5">
                                   <div className="w-12 bg-slate-900 rounded-full h-1.5 overflow-hidden">
                                     <div
-                                      className="bg-amber-500 h-full rounded-full"
+                                      className="bg-indigo-600 h-full rounded-full"
                                       style={{ width: `${Math.min(100, pctNum)}%` }}
                                     />
                                   </div>
@@ -796,9 +768,6 @@ export const FinanceView: React.FC = () => {
                                     {cat.percent}%
                                   </span>
                                 </div>
-                              </td>
-                              <td className="py-2 px-2.5 text-right font-mono text-slate-400 text-xs">
-                                {ratioToNetSales}%
                               </td>
                               <td className="py-2 px-2 text-center">
                                 <button
@@ -810,7 +779,7 @@ export const FinanceView: React.FC = () => {
                                   }
                                   className={`px-2 py-0.5 rounded text-[11px] font-semibold cursor-pointer transition-colors ${
                                     isFiltered
-                                      ? 'bg-amber-500 text-slate-950 font-bold'
+                                      ? 'segmented-pill-active font-bold'
                                       : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
                                   }`}
                                 >
@@ -827,14 +796,14 @@ export const FinanceView: React.FC = () => {
               </div>
 
               {selectedOpexCategoryFilter !== 'ALL' && (
-                <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-between text-xs text-amber-300 mt-2">
+                <div className="p-2 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-between text-xs text-slate-900 mt-2">
                   <span>
                     Menampilkan pengeluaran kategori: <strong>{selectedOpexCategoryFilter}</strong>
                   </span>
                   <button
                     type="button"
                     onClick={() => setSelectedOpexCategoryFilter('ALL')}
-                    className="text-[11px] text-amber-400 hover:underline font-bold cursor-pointer"
+                    className="text-[11px] text-slate-900 hover:underline font-bold cursor-pointer"
                   >
                     Tampilkan Semua
                   </button>
@@ -879,25 +848,40 @@ export const FinanceView: React.FC = () => {
                   )}
                 </div>
 
-                {biayaOperasional.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsConfirmClearOpexOpen(true)}
-                    className="text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-rose-500/30 px-3 py-1.5 rounded-xl font-medium transition-colors cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Kosongkan OPEX</span>
-                  </button>
-                )}
 
                 <button
                   type="button"
                   onClick={openAddOpexModal}
-                  className="text-xs text-slate-950 hover:bg-amber-400 font-bold bg-amber-500 px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer shadow-md flex items-center gap-1.5"
+                  className="text-xs segmented-pill-active hover:opacity-90 font-bold px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5 text-slate-950" />
-                  <span>+ Tambah Beban</span>
+                  <span>Tambah Beban</span>
                 </button>
+
+                {biayaOperasional.length > 0 && (
+                  <details className="relative">
+                    <summary
+                      className="list-none p-2 rounded-xl border border-slate-200 bg-white hover:border-slate-900 cursor-pointer [&::-webkit-details-marker]:hidden"
+                      aria-label="Menu lainnya buku OPEX"
+                      title="Lainnya"
+                    >
+                      <MoreHorizontal className="w-4 h-4 text-slate-700" aria-hidden="true" />
+                    </summary>
+                    <div className="absolute right-0 mt-1 z-20 w-48 bg-white border border-slate-200 rounded-xl shadow-xl p-1">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          (event.currentTarget.closest('details') as HTMLDetailsElement | null)?.removeAttribute('open');
+                          setIsConfirmClearOpexOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-rose-700 hover:bg-rose-50 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                        Kosongkan semua OPEX…
+                      </button>
+                    </div>
+                  </details>
+                )}
               </div>
             </div>
 
@@ -906,10 +890,11 @@ export const FinanceView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedOpexCategoryFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
+                aria-pressed={selectedOpexCategoryFilter === 'ALL'}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
                   selectedOpexCategoryFilter === 'ALL'
-                    ? 'bg-amber-500 text-slate-950 font-bold border-amber-500'
-                    : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    ? 'segmented-pill-active border-slate-900'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
                 }`}
               >
                 Semua Kategori ({monthOpex.length})
@@ -927,10 +912,9 @@ export const FinanceView: React.FC = () => {
                         isSelected ? 'ALL' : cat.kategori
                       )
                     }
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer flex items-center gap-1.5 ${
-                      isSelected
-                        ? 'ring-2 ring-amber-400 font-bold ' + badgeClass
-                        : badgeClass + ' opacity-85 hover:opacity-100'
+                    aria-pressed={isSelected}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      isSelected ? 'segmented-pill-active border-slate-900' : badgeClass + ' hover:border-slate-400'
                     }`}
                   >
                     <span>{cat.kategori}</span>
@@ -965,14 +949,14 @@ export const FinanceView: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    filteredMonthOpex.map((b) => (
+                    filteredMonthOpex.slice(0, visibleOpexCount).map((b) => (
                       <tr key={b.id} className="hover:bg-slate-850/50 transition-colors">
-                        <td className="py-2.5 px-3 font-mono text-slate-400 text-xs">
+                        <td className="py-2.5 px-3 text-slate-700 text-xs tabular-nums whitespace-nowrap">
                           {b.tanggal}
                         </td>
                         <td className="py-2.5 px-3">
                           <span
-                            className={`px-2 py-0.5 rounded border text-[11px] font-semibold ${getCategoryBadgeColor(
+                            className={`px-2 py-0.5 rounded-full border text-[11px] font-semibold ${getCategoryBadgeColor(
                               b.kategori
                             )}`}
                           >
@@ -984,14 +968,14 @@ export const FinanceView: React.FC = () => {
                         </td>
                         <td className="py-2.5 px-3 font-mono text-slate-400 text-xs">
                           {b.accountNama ? (
-                            <span className="text-amber-400/90 font-medium">
+                            <span className="text-slate-900/90 font-medium">
                               {b.accountNama}
                             </span>
                           ) : (
                             <span className="text-slate-600">-</span>
                           )}
                         </td>
-                        <td className="py-2.5 px-3 text-right font-mono font-bold text-amber-400 text-xs">
+                        <td className="py-2.5 px-3 text-right font-bold text-slate-900 text-xs tabular-nums whitespace-nowrap">
                           Rp {b.jumlah.toLocaleString('id-ID')}
                         </td>
                         <td className="py-2.5 px-3 text-center">
@@ -1000,7 +984,7 @@ export const FinanceView: React.FC = () => {
                               type="button"
                               onClick={() => handleOpenEditOpex(b)}
                               title="Edit Pengeluaran" aria-label="Edit Pengeluaran"
-                              className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
@@ -1008,7 +992,7 @@ export const FinanceView: React.FC = () => {
                               type="button"
                               onClick={() => deleteBiayaOperasional(b.id)}
                               title="Hapus Pengeluaran" aria-label="Hapus Pengeluaran"
-                              className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-rose-700 hover:bg-slate-800 rounded-lg cursor-pointer transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1020,6 +1004,17 @@ export const FinanceView: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            {filteredMonthOpex.length > visibleOpexCount && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleOpexCount((count) => count + LIST_PAGE_SIZE)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:border-slate-900 cursor-pointer"
+                >
+                  Tampilkan {Math.min(LIST_PAGE_SIZE, filteredMonthOpex.length - visibleOpexCount)} lagi ({visibleOpexCount} dari {filteredMonthOpex.length})
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1031,41 +1026,37 @@ export const FinanceView: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
               <div>
                 <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-rose-400" />
+                  <Clock className="w-5 h-5 text-rose-700" />
                   Monitoring Piutang & Jatuh Tempo Pelanggan
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Total piutang beredar: <strong className="text-rose-400 font-mono">Rp {totalAllPiutang.toLocaleString('id-ID')}</strong> ({allReceivableOrders.length} order tertunggak)
+                  Total piutang beredar: <strong className="text-rose-700 font-mono">Rp {totalAllPiutang.toLocaleString('id-ID')}</strong> ({allReceivableOrders.length} order tertunggak)
                 </p>
               </div>
             </div>
 
-            {/* Aging Matrix */}
+            {/* Umur piutang */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                <div className="text-slate-400 text-xs">&lt; 7 Hari (Baru)</div>
-                <div className="text-sm font-bold text-white font-mono mt-1">
-                  Rp {agingData.under7.toLocaleString('id-ID')}
-                </div>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                <div className="text-slate-400 text-xs">8 - 14 Hari</div>
-                <div className="text-sm font-bold text-amber-400 font-mono mt-1">
-                  Rp {agingData.days7to14.toLocaleString('id-ID')}
-                </div>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850">
-                <div className="text-slate-400 text-xs">15 - 30 Hari</div>
-                <div className="text-sm font-bold text-rose-400 font-mono mt-1">
-                  Rp {agingData.days15to30.toLocaleString('id-ID')}
-                </div>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-xl border border-rose-900/60">
-                <div className="text-rose-400 text-xs font-bold">&gt; 30 Hari (Macet)</div>
-                <div className="text-sm font-black text-rose-400 font-mono mt-1">
-                  Rp {agingData.over30.toLocaleString('id-ID')}
-                </div>
-              </div>
+              {(
+                [
+                  { key: 'under7', label: '≤ 7 hari', urgent: false },
+                  { key: 'days8to14', label: '8–14 hari', urgent: false },
+                  { key: 'days15to30', label: '15–30 hari', urgent: true },
+                  { key: 'over30', label: '> 30 hari (macet)', urgent: true },
+                ] as const
+              ).map((bucket) => {
+                const data = agingData[bucket.key];
+                return (
+                  <div
+                    key={bucket.key}
+                    className={`p-3 rounded-xl border ${bucket.urgent && data.count > 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}
+                  >
+                    <div className={`text-xs ${bucket.urgent && data.count > 0 ? 'text-rose-700 font-semibold' : 'text-slate-500'}`}>{bucket.label}</div>
+                    <div className="text-sm font-bold text-slate-900 tabular-nums mt-1">Rp {data.total.toLocaleString('id-ID')}</div>
+                    <div className="text-xs text-slate-500">{data.count} order</div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Table of Receivables */}
@@ -1085,12 +1076,12 @@ export const FinanceView: React.FC = () => {
                 <tbody className="divide-y divide-slate-800/60 font-sans">
                   {allReceivableOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-emerald-400 text-xs font-medium">
+                      <td colSpan={7} className="py-8 text-center text-indigo-700 text-xs font-medium">
                         Semua piutang telah lunas!
                       </td>
                     </tr>
                   ) : (
-                    allReceivableOrders.map((ord) => {
+                    allReceivableOrders.slice(0, visibleReceivableCount).map((ord) => {
                       const isOverdue = ord.jatuhTempo && ord.jatuhTempo < todayStr;
 
                       return (
@@ -1107,27 +1098,23 @@ export const FinanceView: React.FC = () => {
                           </td>
                           <td className="py-2.5 px-3">
                             <span
-                              className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
-                                isOverdue
-                                  ? 'bg-rose-950 text-rose-300 border border-rose-800'
-                                  : 'text-slate-300'
-                              }`}
+                              className={`text-xs font-semibold tabular-nums whitespace-nowrap ${isOverdue ? 'text-rose-700' : 'text-slate-700'}`}
                             >
                               {ord.jatuhTempo || 'Tidak ditentukan'}
                             </span>
                             {isOverdue && (
-                              <div className="text-[11px] text-rose-400 font-bold mt-0.5">
-                                LEWAT JATUH TEMPO
-                              </div>
+                              <span className="block w-fit mt-0.5 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[11px] font-semibold whitespace-nowrap">
+                                Lewat jatuh tempo
+                              </span>
                             )}
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono text-slate-300">
+                          <td className="py-2.5 px-3 text-right tabular-nums whitespace-nowrap text-slate-700">
                             Rp {ord.totalTagihan.toLocaleString('id-ID')}
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono text-emerald-400">
+                          <td className="py-2.5 px-3 text-right tabular-nums whitespace-nowrap text-slate-700">
                             Rp {ord.totalTerbayar.toLocaleString('id-ID')}
                           </td>
-                          <td className="py-2.5 px-3 text-right font-mono font-bold text-rose-400">
+                          <td className="py-2.5 px-3 text-right tabular-nums whitespace-nowrap font-bold text-rose-700">
                             Rp {ord.sisaPiutang.toLocaleString('id-ID')}
                           </td>
                           <td className="py-2.5 px-3 text-center">
@@ -1136,7 +1123,7 @@ export const FinanceView: React.FC = () => {
                                 setSettleOrder(ord);
                                 setSettleAmount(ord.sisaPiutang);
                               }}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs"
+                              className="px-3 py-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-900 font-semibold rounded-lg text-xs whitespace-nowrap cursor-pointer"
                             >
                               Catat Bayar
                             </button>
@@ -1148,6 +1135,17 @@ export const FinanceView: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            {allReceivableOrders.length > visibleReceivableCount && (
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleReceivableCount((count) => count + LIST_PAGE_SIZE)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:border-slate-900 cursor-pointer"
+                >
+                  Tampilkan {Math.min(LIST_PAGE_SIZE, allReceivableOrders.length - visibleReceivableCount)} lagi ({visibleReceivableCount} dari {allReceivableOrders.length})
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1188,7 +1186,7 @@ export const FinanceView: React.FC = () => {
 
                 {isCustomCategoryMode && (
                   <div className="mt-2 space-y-1">
-                    <label className="block text-xs text-amber-300 font-semibold">Nama Kategori Kustom:</label>
+                    <label className="block text-xs text-slate-900 font-semibold">Nama Kategori Kustom:</label>
                     <input
                       type="text"
                       required
@@ -1215,7 +1213,7 @@ export const FinanceView: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <div className="text-[11px] text-amber-400/90 mt-0.5">
+                <div className="text-[11px] text-slate-900/90 mt-0.5">
                   Saldo akun terpilih akan otomatis berkurang & mutasi kas tercatat seketika
                 </div>
               </div>
@@ -1254,7 +1252,7 @@ export const FinanceView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg cursor-pointer shadow-md"
+                  className="px-4 py-2 segmented-pill-active hover:opacity-90 font-bold rounded-lg cursor-pointer shadow-md"
                 >
                   Simpan Biaya
                 </button>
@@ -1267,10 +1265,10 @@ export const FinanceView: React.FC = () => {
       {/* Modal Edit OPEX */}
       {editingOpex && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm bg-[#121620] border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-2xl text-xs">
+          <div className="w-full max-w-sm bg-[#121620] border border-slate-200 rounded-2xl p-5 space-y-4 shadow-2xl text-xs">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Edit2 className="w-4 h-4 text-amber-400" />
+                <Edit2 className="w-4 h-4 text-slate-900" />
                 <span>Edit Biaya Operasional (OPEX)</span>
               </h3>
               <span className="text-[11px] font-mono text-slate-500">
@@ -1316,7 +1314,7 @@ export const FinanceView: React.FC = () => {
 
                 {isEditCustomCategoryMode && (
                   <div className="mt-2 space-y-1">
-                    <label className="block text-xs text-amber-300 font-semibold">Nama Kategori Kustom:</label>
+                    <label className="block text-xs text-slate-900 font-semibold">Nama Kategori Kustom:</label>
                     <input
                       type="text"
                       required
@@ -1382,7 +1380,7 @@ export const FinanceView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg cursor-pointer shadow-md"
+                  className="px-4 py-2 segmented-pill-active hover:opacity-90 font-bold rounded-lg cursor-pointer shadow-md"
                 >
                   Simpan Perubahan
                 </button>
@@ -1402,7 +1400,7 @@ export const FinanceView: React.FC = () => {
 
             <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
               <div className="text-slate-400">Pelanggan: {settleOrder.customerNama}</div>
-              <div className="text-rose-400 font-mono font-bold">
+              <div className="text-rose-700 font-mono font-bold">
                 Sisa Piutang: Rp {settleOrder.sisaPiutang.toLocaleString('id-ID')}
               </div>
             </div>
@@ -1472,10 +1470,10 @@ export const FinanceView: React.FC = () => {
       {/* MODAL TAMBAH KATEGORI KUSTOM BARU */}
       {isAddCategoryModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm bg-[#121620] border border-amber-500/40 rounded-2xl p-5 space-y-4 shadow-2xl text-xs">
+          <div className="w-full max-w-sm bg-[#121620] border border-slate-200 rounded-2xl p-5 space-y-4 shadow-2xl text-xs">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Plus className="w-4 h-4 text-amber-400" />
+                <Plus className="w-4 h-4 text-slate-900" />
                 <span>Tambah Kategori Beban Baru</span>
               </h3>
               <button aria-label="Tutup" data-modal-close
@@ -1528,7 +1526,7 @@ export const FinanceView: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg cursor-pointer shadow-md"
+                  className="px-4 py-2 segmented-pill-active hover:opacity-90 font-bold rounded-lg cursor-pointer shadow-md"
                 >
                   Simpan Kategori
                 </button>
@@ -1542,7 +1540,7 @@ export const FinanceView: React.FC = () => {
       {isConfirmClearOpexOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-[#121620] border border-rose-500/40 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center gap-3 text-rose-400">
+            <div className="flex items-center gap-3 text-rose-700">
               <div className="w-10 h-10 rounded-full bg-rose-500/10 flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
               </div>
@@ -1554,7 +1552,7 @@ export const FinanceView: React.FC = () => {
 
             <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2">
               <p>
-                Saat ini terdapat <strong className="text-amber-400 font-mono">{biayaOperasional.length} catatan pengeluaran</strong> dengan total akumulasi senilai <strong className="text-amber-400 font-mono">Rp {biayaOperasional.reduce((acc, b) => acc + b.jumlah, 0).toLocaleString('id-ID')}</strong>.
+                Saat ini terdapat <strong className="text-slate-900 font-mono">{biayaOperasional.length} catatan pengeluaran</strong> dengan total akumulasi senilai <strong className="text-slate-900 font-mono">Rp {biayaOperasional.reduce((acc, b) => acc + b.jumlah, 0).toLocaleString('id-ID')}</strong>.
               </p>
               <p className="text-xs text-slate-400">
                 Gunakan fitur ini jika Anda ingin membersihkan data pengeluaran lama atau data ganda sebelum meng-upload ulang file CSV yang baru.

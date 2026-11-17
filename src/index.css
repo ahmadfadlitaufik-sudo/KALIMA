@@ -411,3 +411,43 @@ textarea:focus {
 .nav-item-active:hover {
   background-color: #37352F !important;
 }
+
+/* Teks putih di tombol berwarna pekat tetap putih (aturan .text-white umum menggelapkannya). */
+.text-white[class*="bg-indigo-500"],
+.text-white[class*="bg-indigo-600"],
+.text-white[class*="bg-indigo-700"],
+.text-white[class*="bg-indigo-800"],
+.text-white[class*="bg-emerald-500"],
+.text-white[class*="bg-emerald-600"],
+.text-white[class*="bg-emerald-700"],
+.text-white[class*="bg-emerald-800"],
+.text-white[class*="bg-green-500"],
+.text-white[class*="bg-green-600"],
+.text-white[class*="bg-green-700"],
+.text-white[class*="bg-green-800"],
+.text-white[class*="bg-rose-500"],
+.text-white[class*="bg-rose-600"],
+.text-white[class*="bg-rose-700"],
+.text-white[class*="bg-rose-800"],
+.text-white[class*="bg-red-500"],
+.text-white[class*="bg-red-600"],
+.text-white[class*="bg-red-700"],
+.text-white[class*="bg-red-800"],
+.text-white[class*="bg-blue-500"],
+.text-white[class*="bg-blue-600"],
+.text-white[class*="bg-blue-700"],
+.text-white[class*="bg-blue-800"],
+.text-white[class*="bg-teal-500"],
+.text-white[class*="bg-teal-600"],
+.text-white[class*="bg-teal-700"],
+.text-white[class*="bg-teal-800"],
+.text-white[class*="bg-purple-500"],
+.text-white[class*="bg-purple-600"],
+.text-white[class*="bg-purple-700"],
+.text-white[class*="bg-purple-800"],
+.text-white[class*="bg-violet-500"],
+.text-white[class*="bg-violet-600"],
+.text-white[class*="bg-violet-700"],
+.text-white[class*="bg-violet-800"] {
+  color: #ffffff !important;
+}

@@ -127,7 +127,7 @@ export const ProductsView: React.FC = () => {
       const stockR = calculateStock(s.sku) - stockG;
       totalStockGudang += stockG;
       totalStockReseller += Math.max(0, stockR);
-      totalValuasiHpp += (stockG + Math.max(0, stockR)) * s.hpp;
+      totalValuasiHpp += Math.max(0, stockG + stockR) * (s.hpp || 0);
       const margin = s.price - s.hpp;
       const pct = s.price > 0 ? (margin / s.price) * 100 : 0;
       totalMarginSum += pct;
@@ -140,7 +140,7 @@ export const ProductsView: React.FC = () => {
       totalStockGudang,
       totalStockReseller,
       totalStockAll: totalStockGudang + totalStockReseller,
-      totalValuasiHpp,
+      totalValuasiHpp: Math.round(totalValuasiHpp),
       avgMargin,
     };
   }, [filteredSkus, calculateStock]);
@@ -351,7 +351,7 @@ export const ProductsView: React.FC = () => {
               const hppStandar = ser.baseCost + totalAksesoris;
               const marginRp = ser.defaultPrice - hppStandar;
               const marginPct = ser.defaultPrice > 0 ? ((marginRp / ser.defaultPrice) * 100).toFixed(1) : '0';
-              const totalValuasiAset = totalStockAll * hppStandar;
+              const totalValuasiAset = Math.round(totalStockAll * hppStandar);
 
               return (
                 <div
@@ -560,7 +560,7 @@ export const ProductsView: React.FC = () => {
               </p>
             </div>
             <div className="bg-[#121620] p-3 rounded-2xl border border-slate-800/80">
-              <span className="text-xs text-slate-400">Total Nilai Valuasi HPP</span>
+              <span className="text-xs text-slate-400" title="Stok gudang + reseller × HPP; SKU stok minus tidak dihitung">Nilai HPP Stok (gudang + reseller)</span>
               <p className="text-sm font-mono font-bold text-white mt-0.5">
                 Rp {skuStats.totalValuasiHpp.toLocaleString('id-ID')}
               </p>

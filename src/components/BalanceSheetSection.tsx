@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { askConfirm, showNotice } from '../services/dialogStore';
+import { stockValue } from '../services/dashboardMetrics';
 import {
   Scale,
   DollarSign,
@@ -67,6 +68,7 @@ export const BalanceSheetSection: React.FC = () => {
     setFixedAssets,
     balanceSheetConfig,
     setBalanceSheetConfig,
+    logAudit,
   } = useApp();
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -130,16 +132,11 @@ export const BalanceSheetSection: React.FC = () => {
     return calculateStockSummary();
   }, [calculateStockSummary]);
 
-  const totalPersediaanKaos = useMemo(() => {
-    return skus.reduce((sum, item) => {
-      const qty = stockSummary[item.sku]?.total ?? 0;
-      const hpp = item.hpp || 48000;
-      return sum + (qty * hpp);
-    }, 0);
-  }, [skus, stockSummary]);
+  // Sama dengan Dashboard & Master SKU: stok gudang + reseller × HPP, SKU stok minus dihitung 0, dibulatkan ke rupiah.
+  const totalPersediaanKaos = useMemo(() => stockValue(skus, stockSummary, 'total'), [skus, stockSummary]);
 
   const totalPcsKaosStok = useMemo(() => {
-    return skus.reduce((sum, item) => sum + (stockSummary[item.sku]?.total ?? 0), 0);
+    return skus.reduce((sum, item) => sum + Math.max(0, stockSummary[item.sku]?.total ?? 0), 0);
   }, [skus, stockSummary]);
 
   // 4. UANG MUKA PEMBELIAN / VENDOR DP (PREPAID TO SUPPLIER)
@@ -237,13 +234,19 @@ export const BalanceSheetSection: React.FC = () => {
   const isBalanced = Math.abs(balanceDiff) === 0;
 
   // Auto-Calibrate Initial Capital to Balance the Sheet
-  const handleAutoCalibrateEquity = () => {
-    const newModalAwal = config.modalDisetorAwal + balanceDiff;
-    saveConfig({
-      ...config,
-      modalDisetorAwal: Math.max(0, newModalAwal),
-    });
-    showToast('Modal Awal berhasil disesuaikan otomatis sehingga Neraca klop & seimbang (Balanced)!');
+  const handleAutoCalibrateEquity = async () => {
+    const newModalAwal = Math.max(0, Math.round(config.modalDisetorAwal + balanceDiff));
+    const rp = (value: number) => `Rp ${Math.round(value).toLocaleString('id-ID')}`;
+    const confirmed = await askConfirm(
+      `Neraca selisih ${rp(Math.abs(balanceDiff))}. Modal Awal akan diubah dari ${rp(config.modalDisetorAwal)} menjadi ${rp(newModalAwal)} agar neraca seimbang.\n\nIni hanya menutup selisih, bukan mencari penyebabnya. Pastikan selisih memang berasal dari modal yang belum dicatat.`,
+      { title: 'Ubah Modal Awal?', confirmLabel: 'Ya, ubah modal', danger: true },
+    );
+    if (!confirmed) {
+      return;
+    }
+    saveConfig({ ...config, modalDisetorAwal: newModalAwal });
+    logAudit('Keuangan', 'Seimbangkan Modal Awal', `Modal Awal ${rp(config.modalDisetorAwal)} → ${rp(newModalAwal)} untuk menutup selisih neraca ${rp(balanceDiff)}`);
+    showToast('Modal Awal disesuaikan; perubahan dicatat di Jejak Audit.');
   };
 
   // Financial Health Ratios
@@ -466,7 +469,7 @@ export const BalanceSheetSection: React.FC = () => {
       {/* Toast Feedback */}
       {toastMsg && (
         <div className="fixed top-5 right-5 z-50 bg-[#161c28] border border-amber-500/60 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <CheckCircle2 className="w-5 h-5 text-indigo-700 shrink-0" />
           <span className="text-xs font-medium">{toastMsg}</span>
           <button aria-label="Tutup" data-modal-close onClick={() => setToastMsg(null)} className="text-slate-400 hover:text-white p-1">
             <X className="w-3.5 h-3.5" />
@@ -479,7 +482,7 @@ export const BalanceSheetSection: React.FC = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="p-2.5 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-inner">
+              <span className="p-2.5 rounded-2xl bg-slate-100 text-slate-900 border border-slate-200 shadow-inner">
                 <Scale className="w-5 h-5" />
               </span>
               <div>
@@ -490,8 +493,8 @@ export const BalanceSheetSection: React.FC = () => {
                   <span
                     className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
                       isBalanced
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                        : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                        ? 'bg-emerald-500/10 text-indigo-700 border-emerald-500/30'
+                        : 'bg-rose-500/10 text-rose-700 border-rose-500/30'
                     }`}
                   >
                     {isBalanced ? 'BALANCE (SEIMBANG)' : `SELISIH Rp ${Math.abs(balanceDiff).toLocaleString('id-ID')}`}
@@ -522,11 +525,11 @@ export const BalanceSheetSection: React.FC = () => {
             {!isBalanced && (
               <button
                 onClick={handleAutoCalibrateEquity}
-                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
-                title="Seimbangkan otomatis modal awal pemilik agar selisih neraca menjadi Rp 0" aria-label="Seimbangkan otomatis modal awal pemilik agar selisih neraca menjadi Rp 0"
+                className="px-3 py-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Ubah Modal Awal agar selisih neraca menjadi Rp 0 (minta konfirmasi dulu)" aria-label="Seimbangkan Modal Awal"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Seimbangkan Modal (Auto-Calibrate)</span>
+                <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Seimbangkan Modal…</span>
               </button>
             )}
 
@@ -535,7 +538,7 @@ export const BalanceSheetSection: React.FC = () => {
               onClick={() => setIsConfigModalOpen(true)}
               className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Edit2 className="w-3.5 h-3.5 text-amber-400" />
+              <Edit2 className="w-3.5 h-3.5 text-slate-900" />
               <span>Atur Modal & Prive</span>
             </button>
 
@@ -544,7 +547,7 @@ export const BalanceSheetSection: React.FC = () => {
               onClick={() => setIsPrintModalOpen(true)}
               className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Printer className="w-3.5 h-3.5 text-blue-400" />
+              <Printer className="w-3.5 h-3.5 text-slate-900" />
               <span>Cetak Neraca Resmi</span>
             </button>
 
@@ -553,7 +556,7 @@ export const BalanceSheetSection: React.FC = () => {
               onClick={handleExportCSV}
               className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 hover:border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <Download className="w-3.5 h-3.5 text-indigo-700" />
               <span>Ekspor CSV</span>
             </button>
           </div>
@@ -566,11 +569,11 @@ export const BalanceSheetSection: React.FC = () => {
         <div className="bg-[#121620] p-4 rounded-2xl border border-slate-850 border-t-2 border-t-emerald-400 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-1.5">
             <span className="font-semibold tracking-wider text-xs">TOTAL AKTIVA (ASET)</span>
-            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-indigo-700">
               <DollarSign className="w-4 h-4" />
             </span>
           </div>
-          <div className="text-base sm:text-lg font-bold font-mono text-emerald-400 truncate">
+          <div className="text-base sm:text-lg font-bold font-mono text-indigo-700 truncate">
             Rp {totalAset.toLocaleString('id-ID')}
           </div>
           <div className="text-xs text-slate-400 mt-1 flex items-center justify-between">
@@ -583,16 +586,16 @@ export const BalanceSheetSection: React.FC = () => {
         <div className="bg-[#121620] p-4 rounded-2xl border border-slate-850 border-t-2 border-t-rose-400 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-1.5">
             <span className="font-semibold tracking-wider text-xs">TOTAL KEWAJIBAN (HUTANG)</span>
-            <span className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+            <span className="p-1.5 rounded-lg bg-rose-500/10 text-rose-700">
               <CreditCard className="w-4 h-4" />
             </span>
           </div>
-          <div className="text-base sm:text-lg font-bold font-mono text-rose-300 truncate">
+          <div className="text-base sm:text-lg font-bold font-mono text-rose-700 truncate">
             Rp {liabilitiesSummary.totalKewajiban.toLocaleString('id-ID')}
           </div>
           <div className="text-xs text-slate-400 mt-1 flex items-center justify-between">
             <span>Utang PO Vendor:</span>
-            <span className="font-mono text-rose-400">Rp {liabilitiesSummary.hutangVendor.toLocaleString('id-ID')}</span>
+            <span className="font-mono text-rose-700">Rp {liabilitiesSummary.hutangVendor.toLocaleString('id-ID')}</span>
           </div>
         </div>
 
@@ -600,16 +603,16 @@ export const BalanceSheetSection: React.FC = () => {
         <div className="bg-[#121620] p-4 rounded-2xl border border-slate-850 border-t-2 border-t-blue-400 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-1.5">
             <span className="font-semibold tracking-wider text-xs">TOTAL EKUITAS (MODAL)</span>
-            <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
+            <span className="p-1.5 rounded-lg bg-blue-500/10 text-slate-900">
               <Building2 className="w-4 h-4" />
             </span>
           </div>
-          <div className="text-base sm:text-lg font-bold font-mono text-blue-300 truncate">
+          <div className="text-base sm:text-lg font-bold font-mono text-slate-900 truncate">
             Rp {equitySummary.totalEkuitas.toLocaleString('id-ID')}
           </div>
           <div className="text-xs text-slate-400 mt-1 flex items-center justify-between">
             <span>Laba Berjalan:</span>
-            <span className="font-mono text-emerald-400">Rp {equitySummary.labaPeriodeBerjalan.toLocaleString('id-ID')}</span>
+            <span className="font-mono text-indigo-700">Rp {equitySummary.labaPeriodeBerjalan.toLocaleString('id-ID')}</span>
           </div>
         </div>
 
@@ -617,16 +620,16 @@ export const BalanceSheetSection: React.FC = () => {
         <div className="bg-[#121620] p-4 rounded-2xl border border-slate-850 border-t-2 border-t-purple-400 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-1.5">
             <span className="font-semibold tracking-wider text-xs">CURRENT RATIO</span>
-            <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">
+            <span className="p-1.5 rounded-lg bg-purple-500/10 text-slate-900">
               <Percent className="w-4 h-4" />
             </span>
           </div>
-          <div className="text-base sm:text-lg font-bold font-mono text-purple-300">
+          <div className="text-base sm:text-lg font-bold font-mono text-slate-900">
             {ratios.currentRatio} {typeof ratios.currentRatio === 'number' || !isNaN(Number(ratios.currentRatio)) ? 'x' : ''}
           </div>
           <div className="text-xs text-slate-400 mt-1 flex items-center justify-between">
             <span>Likuiditas:</span>
-            <span className="text-purple-400 font-medium">Aset Lancar / Hutang</span>
+            <span className="text-slate-900 font-medium">Aset Lancar / Hutang</span>
           </div>
         </div>
 
@@ -634,16 +637,16 @@ export const BalanceSheetSection: React.FC = () => {
         <div className="bg-[#121620] p-4 rounded-2xl border border-slate-850 border-t-2 border-t-amber-400 shadow-sm col-span-2 lg:col-span-1 relative overflow-hidden group hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-1.5">
             <span className="font-semibold tracking-wider text-xs">MODAL KERJA BERSIH</span>
-            <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400">
+            <span className="p-1.5 rounded-lg bg-slate-100 text-slate-900">
               <ShieldCheck className="w-4 h-4" />
             </span>
           </div>
-          <div className="text-base sm:text-lg font-bold font-mono text-amber-300 truncate">
+          <div className="text-base sm:text-lg font-bold font-mono text-slate-900 truncate">
             Rp {ratios.workingCapital.toLocaleString('id-ID')}
           </div>
           <div className="text-xs text-slate-400 mt-1 flex items-center justify-between">
             <span>Net Working Capital</span>
-            <span className="text-emerald-400 font-medium font-mono">Positif</span>
+            <span className="text-indigo-700 font-medium font-mono">Positif</span>
           </div>
         </div>
       </div>
@@ -652,21 +655,21 @@ export const BalanceSheetSection: React.FC = () => {
       <div className="bg-[#FDFAF3] p-3.5 rounded-2xl border border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
-            <Scale className="w-4 h-4 text-amber-400" />
+            <Scale className="w-4 h-4 text-slate-900" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-bold text-white">Keseimbangan Pembukuan Neraca:</span>
               <span className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold border ${
                 isBalanced
-                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                  : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                  ? 'bg-emerald-500/15 text-indigo-700 border-emerald-500/30'
+                  : 'bg-rose-500/15 text-rose-700 border-rose-500/30'
               }`}>
                 {isBalanced ? '100% SEIMBANG' : `SELISIH Rp ${Math.abs(balanceDiff).toLocaleString('id-ID')}`}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5 font-mono">
-              Total Aktiva (Aset) <strong className="text-emerald-400">Rp {totalAset.toLocaleString('id-ID')}</strong> = Total Pasiva (Kewajiban + Ekuitas) <strong className="text-blue-400">Rp {totalPasiva.toLocaleString('id-ID')}</strong>
+              Total Aktiva (Aset) <strong className="text-indigo-700">Rp {totalAset.toLocaleString('id-ID')}</strong> = Total Pasiva (Kewajiban + Ekuitas) <strong className="text-slate-900">Rp {totalPasiva.toLocaleString('id-ID')}</strong>
             </p>
           </div>
         </div>
@@ -675,7 +678,7 @@ export const BalanceSheetSection: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubView('jurnal')}
-            className="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/25 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-slate-900 border border-blue-500/25 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>Audit Buku Jurnal ({journalEntries.length})</span>
@@ -683,7 +686,7 @@ export const BalanceSheetSection: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubView('buku_besar')}
-            className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/25 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 border border-rose-500/25 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <CreditCard className="w-3.5 h-3.5" />
             <span>Buku Besar Utang</span>
@@ -699,7 +702,7 @@ export const BalanceSheetSection: React.FC = () => {
             onClick={() => setActiveSubView('neraca')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubView === 'neraca'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                ? 'segmented-pill-active'
                 : 'text-slate-400 hover:text-white hover:bg-slate-850'
             }`}
           >
@@ -712,7 +715,7 @@ export const BalanceSheetSection: React.FC = () => {
             onClick={() => setActiveSubView('jurnal')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubView === 'jurnal'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                ? 'segmented-pill-active'
                 : 'text-slate-400 hover:text-white hover:bg-slate-850'
             }`}
           >
@@ -721,7 +724,7 @@ export const BalanceSheetSection: React.FC = () => {
             <span
               className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${
                 activeSubView === 'jurnal'
-                  ? 'bg-slate-950 text-amber-300'
+                  ? 'bg-slate-950 text-slate-900'
                   : 'bg-slate-800 text-slate-300'
               }`}
             >
@@ -734,7 +737,7 @@ export const BalanceSheetSection: React.FC = () => {
             onClick={() => setActiveSubView('buku_besar')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeSubView === 'buku_besar'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                ? 'segmented-pill-active'
                 : 'text-slate-400 hover:text-white hover:bg-slate-850'
             }`}
           >
@@ -743,8 +746,8 @@ export const BalanceSheetSection: React.FC = () => {
             <span
               className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${
                 activeSubView === 'buku_besar'
-                  ? 'bg-slate-950 text-rose-300'
-                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                  ? 'bg-slate-950 text-rose-700'
+                  : 'bg-rose-500/20 text-rose-700 border border-rose-500/30'
               }`}
             >
               {apLedgerData.rows.length} Mutasi
@@ -753,7 +756,7 @@ export const BalanceSheetSection: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 text-xs text-slate-400 font-mono px-3">
-          <span>Otomatisasi: <strong className="text-emerald-400">Debit Utang ↔ Kredit Kas</strong></span>
+          <span>Otomatisasi: <strong className="text-indigo-700">Debit Utang ↔ Kredit Kas</strong></span>
         </div>
       </div>
 
@@ -770,7 +773,7 @@ export const BalanceSheetSection: React.FC = () => {
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               ASET (AKTIVA)
             </h3>
-            <span className="font-mono font-bold text-emerald-400 text-sm">
+            <span className="font-mono font-bold text-indigo-700 text-sm">
               Rp {totalAset.toLocaleString('id-ID')}
             </span>
           </div>
@@ -780,10 +783,10 @@ export const BalanceSheetSection: React.FC = () => {
             <div className="space-y-2.5">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
                 <span className="font-bold text-slate-200 uppercase tracking-wider text-xs flex items-center gap-1.5">
-                  <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+                  <Wallet className="w-3.5 h-3.5 text-indigo-700" />
                   1. Aset Lancar (Current Assets)
                 </span>
-                <span className="font-mono font-bold text-emerald-400 text-xs">
+                <span className="font-mono font-bold text-indigo-700 text-xs">
                   Rp {totalAsetLancar.toLocaleString('id-ID')}
                 </span>
               </div>
@@ -805,7 +808,7 @@ export const BalanceSheetSection: React.FC = () => {
                         setJournalFilter('kas_bank');
                         setActiveSubView('jurnal');
                       }}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/25 text-[11px] font-medium transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-slate-900 border border-blue-500/25 text-[11px] font-medium transition-colors cursor-pointer"
                       title="Klik untuk membuka buku jurnal akun Kas/Bank" aria-label="Klik untuk membuka buku jurnal akun Kas/Bank"
                     >
                       <span>Jurnal</span>
@@ -813,7 +816,7 @@ export const BalanceSheetSection: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                <div className="text-[11px] text-blue-400/80 flex items-center gap-1">
+                <div className="text-[11px] text-slate-900/80 flex items-center gap-1">
                   <span>Terkredit otomatis saat pelunasan utang vendor</span>
                 </div>
                 <div className="pl-3 space-y-1 text-xs text-slate-400 border-l border-slate-800">
@@ -848,7 +851,7 @@ export const BalanceSheetSection: React.FC = () => {
                 </div>
                 <div className="pl-3 text-xs text-slate-400 border-l border-slate-800">
                   <div className="flex justify-between">
-                    <span>• {totalPcsKaosStok.toLocaleString('id-ID')} pcs kaos fisik di Gudang Utama (Nilai HPP)</span>
+                    <span>• {totalPcsKaosStok.toLocaleString('id-ID')} pcs kaos di gudang + reseller × HPP (SKU stok minus tidak dihitung)</span>
                     <span className="font-mono">Rp {totalPersediaanKaos.toLocaleString('id-ID')}</span>
                   </div>
                 </div>
@@ -873,10 +876,10 @@ export const BalanceSheetSection: React.FC = () => {
             <div className="space-y-2.5 pt-3">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
                 <span className="font-bold text-slate-200 uppercase tracking-wider text-xs flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                  <Building2 className="w-3.5 h-3.5 text-slate-900" />
                   2. Aset Tetap & Peralatan (Fixed Assets)
                 </span>
-                <span className="font-mono font-bold text-blue-400 text-xs">
+                <span className="font-mono font-bold text-slate-900 text-xs">
                   Rp {fixedAssetSummary.totalNilaiBuku.toLocaleString('id-ID')}
                 </span>
               </div>
@@ -891,14 +894,14 @@ export const BalanceSheetSection: React.FC = () => {
 
                 <div className="flex items-center justify-between text-slate-400">
                   <span>Akumulasi Penyusutan Aset Tetap (-)</span>
-                  <span className="font-mono text-rose-400">
+                  <span className="font-mono text-rose-700">
                     (Rp {fixedAssetSummary.totalAkumulasiPenyusutan.toLocaleString('id-ID')})
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-slate-200 font-bold pt-1 border-t border-slate-800/80">
                   <span>Nilai Buku Bersih Aset Tetap</span>
-                  <span className="font-mono text-blue-300">
+                  <span className="font-mono text-slate-900">
                     Rp {fixedAssetSummary.totalNilaiBuku.toLocaleString('id-ID')}
                   </span>
                 </div>
@@ -916,7 +919,7 @@ export const BalanceSheetSection: React.FC = () => {
                               setEditingAsset(asset);
                               setIsAssetModalOpen(true);
                             }}
-                            className="text-slate-500 hover:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
+                            className="text-slate-500 hover:text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity p-0.5"
                           >
                             <Edit2 className="w-3 h-3" />
                           </button>
@@ -932,7 +935,7 @@ export const BalanceSheetSection: React.FC = () => {
                       setEditingAsset(null);
                       setIsAssetModalOpen(true);
                     }}
-                    className="text-xs text-amber-400 hover:underline flex items-center gap-1 mt-2 cursor-pointer"
+                    className="text-xs text-slate-900 hover:underline flex items-center gap-1 mt-2 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Kelola / Tambah Aset Tetap</span>
@@ -944,7 +947,7 @@ export const BalanceSheetSection: React.FC = () => {
             {/* TOTAL ASET FOOTER */}
             <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 flex items-center justify-between font-bold text-sm">
               <span className="text-white">TOTAL ASET (AKTIVA)</span>
-              <span className="font-mono text-emerald-400 text-base">
+              <span className="font-mono text-indigo-700 text-base">
                 Rp {totalAset.toLocaleString('id-ID')}
               </span>
             </div>
@@ -960,7 +963,7 @@ export const BalanceSheetSection: React.FC = () => {
               <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
               KEWAJIBAN & EKUITAS (PASIVA)
             </h3>
-            <span className="font-mono font-bold text-blue-400 text-sm">
+            <span className="font-mono font-bold text-slate-900 text-sm">
               Rp {totalPasiva.toLocaleString('id-ID')}
             </span>
           </div>
@@ -970,10 +973,10 @@ export const BalanceSheetSection: React.FC = () => {
             <div className="space-y-2.5">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
                 <span className="font-bold text-slate-200 uppercase tracking-wider text-xs flex items-center gap-1.5">
-                  <CreditCard className="w-3.5 h-3.5 text-rose-400" />
+                  <CreditCard className="w-3.5 h-3.5 text-rose-700" />
                   1. Kewajiban Lancar (Liabilities / Hutang)
                 </span>
-                <span className="font-mono font-bold text-rose-400 text-xs">
+                <span className="font-mono font-bold text-rose-700 text-xs">
                   Rp {liabilitiesSummary.totalKewajiban.toLocaleString('id-ID')}
                 </span>
               </div>
@@ -991,7 +994,7 @@ export const BalanceSheetSection: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setActiveSubView('buku_besar')}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 text-[11px] font-medium transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-indigo-700 border border-emerald-500/25 text-[11px] font-medium transition-colors cursor-pointer"
                       title="Klik untuk membuka Buku Besar Pembantu Utang Dagang" aria-label="Klik untuk membuka Buku Besar Pembantu Utang Dagang"
                     >
                       <span>Buku Besar</span>
@@ -999,7 +1002,7 @@ export const BalanceSheetSection: React.FC = () => {
                     </button>
                   </div>
                 </div>
-                <div className="text-[11px] text-emerald-400/80 flex items-center gap-1">
+                <div className="text-[11px] text-indigo-700/80 flex items-center gap-1">
                   <span>Terdebit otomatis mengurangi kewajiban saat dibayar</span>
                 </div>
                 <div className="pl-3 space-y-1 text-xs text-slate-400 border-l border-slate-800">
@@ -1027,10 +1030,10 @@ export const BalanceSheetSection: React.FC = () => {
             <div className="space-y-2.5 pt-3">
               <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
                 <span className="font-bold text-slate-200 uppercase tracking-wider text-xs flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-blue-400" />
+                  <Building2 className="w-3.5 h-3.5 text-slate-900" />
                   2. Ekuitas & Permodalan (Owner's Equity)
                 </span>
-                <span className="font-mono font-bold text-blue-400 text-xs">
+                <span className="font-mono font-bold text-slate-900 text-xs">
                   Rp {equitySummary.totalEkuitas.toLocaleString('id-ID')}
                 </span>
               </div>
@@ -1047,7 +1050,7 @@ export const BalanceSheetSection: React.FC = () => {
                 {/* Laba Ditahan */}
                 <div className="flex items-center justify-between text-slate-300">
                   <span>Laba Ditahan (Retained Earnings Periode Lalu)</span>
-                  <span className="font-mono text-emerald-400">
+                  <span className="font-mono text-indigo-700">
                     Rp {equitySummary.labaDitahan.toLocaleString('id-ID')}
                   </span>
                 </div>
@@ -1058,7 +1061,7 @@ export const BalanceSheetSection: React.FC = () => {
                     <span>Laba Bersih Periode Berjalan</span>
                     <span className="text-[11px] text-slate-500">(Laba Rugi Real-Time)</span>
                   </div>
-                  <span className={`font-mono font-bold ${equitySummary.labaPeriodeBerjalan >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <span className={`font-mono font-bold ${equitySummary.labaPeriodeBerjalan >= 0 ? 'text-indigo-700' : 'text-rose-700'}`}>
                     Rp {equitySummary.labaPeriodeBerjalan.toLocaleString('id-ID')}
                   </span>
                 </div>
@@ -1067,7 +1070,7 @@ export const BalanceSheetSection: React.FC = () => {
                 {equitySummary.prive > 0 && (
                   <div className="flex items-center justify-between text-slate-400">
                     <span>Prive / Pengambilan Pribadi Pemilik (-)</span>
-                    <span className="font-mono text-rose-400">
+                    <span className="font-mono text-rose-700">
                       (Rp {equitySummary.prive.toLocaleString('id-ID')})
                     </span>
                   </div>
@@ -1075,7 +1078,7 @@ export const BalanceSheetSection: React.FC = () => {
 
                 <div className="flex items-center justify-between text-slate-200 font-bold pt-1.5 border-t border-slate-800/80">
                   <span>Total Ekuitas Pemilik</span>
-                  <span className="font-mono text-blue-300">
+                  <span className="font-mono text-slate-900">
                     Rp {equitySummary.totalEkuitas.toLocaleString('id-ID')}
                   </span>
                 </div>
@@ -1085,7 +1088,7 @@ export const BalanceSheetSection: React.FC = () => {
             {/* TOTAL PASIVA FOOTER */}
             <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 flex items-center justify-between font-bold text-sm">
               <span className="text-white">TOTAL KEWAJIBAN & EKUITAS</span>
-              <span className="font-mono text-blue-400 text-base">
+              <span className="font-mono text-slate-900 text-base">
                 Rp {totalPasiva.toLocaleString('id-ID')}
               </span>
             </div>
@@ -1098,7 +1101,7 @@ export const BalanceSheetSection: React.FC = () => {
         {/* Chart 1: Donut Komposisi Aset */}
         <div className="bg-[#121620] p-5 rounded-3xl border border-slate-800/80 shadow-sm space-y-3">
           <h4 className="text-xs font-bold text-white flex items-center gap-2">
-            <PieChartIcon className="w-3.5 h-3.5 text-emerald-400" />
+            <PieChartIcon className="w-3.5 h-3.5 text-indigo-700" />
             Struktur Komposisi Aset (Aktiva)
           </h4>
           <div className="h-52 w-full">
@@ -1138,7 +1141,7 @@ export const BalanceSheetSection: React.FC = () => {
         {/* Chart 2: Donut Komposisi Pasiva */}
         <div className="bg-[#121620] p-5 rounded-3xl border border-slate-800/80 shadow-sm space-y-3">
           <h4 className="text-xs font-bold text-white flex items-center gap-2">
-            <PieChartIcon className="w-3.5 h-3.5 text-blue-400" />
+            <PieChartIcon className="w-3.5 h-3.5 text-slate-900" />
             Struktur Pendanaan & Modal (Pasiva)
           </h4>
           <div className="h-52 w-full">
@@ -1178,7 +1181,7 @@ export const BalanceSheetSection: React.FC = () => {
         {/* Chart 3: Bar Komparasi Aset vs Liabilitas vs Ekuitas */}
         <div className="bg-[#121620] p-5 rounded-3xl border border-slate-800/80 shadow-sm space-y-3">
           <h4 className="text-xs font-bold text-white flex items-center gap-2">
-            <Layers className="w-3.5 h-3.5 text-purple-400" />
+            <Layers className="w-3.5 h-3.5 text-slate-900" />
             Perbandingan Aset vs Hutang vs Ekuitas
           </h4>
           <div className="h-52 w-full">
@@ -1198,7 +1201,7 @@ export const BalanceSheetSection: React.FC = () => {
             </ResponsiveContainer>
           </div>
           <div className="text-xs text-slate-400 text-center">
-            Persamaan Neraca: <strong className="text-emerald-400">Aset</strong> = <strong className="text-rose-400">Kewajiban</strong> + <strong className="text-blue-400">Ekuitas</strong>
+            Persamaan Neraca: <strong className="text-indigo-700">Aset</strong> = <strong className="text-rose-700">Kewajiban</strong> + <strong className="text-slate-900">Ekuitas</strong>
           </div>
         </div>
       </div>
@@ -1213,7 +1216,7 @@ export const BalanceSheetSection: React.FC = () => {
           {/* Explanation Banner */}
           <div className="bg-[#FDFAF3] p-4 rounded-2xl border border-blue-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
             <div className="flex items-start gap-3">
-              <span className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0 mt-0.5">
+              <span className="p-2 rounded-xl bg-blue-500/10 text-slate-900 border border-blue-500/20 shrink-0 mt-0.5">
                 <BookOpen className="w-5 h-5" />
               </span>
               <div className="space-y-1">
@@ -1221,19 +1224,19 @@ export const BalanceSheetSection: React.FC = () => {
                   <h3 className="font-bold text-white text-sm">
                     Buku Jurnal Umum (General Journal) - Penjurnalan Akuntansi Berpasangan
                   </h3>
-                  <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold text-[11px]">
+                  <span className="bg-emerald-500/10 text-indigo-700 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold text-[11px]">
                     Double-Entry System
                   </span>
                 </div>
                 <p className="text-slate-300 leading-relaxed text-xs">
-                  Setiap pembayaran utang vendor diposting secara otomatis dengan mendebit akun <strong className="text-emerald-300">2-10100 Utang Dagang</strong> (mengurangi kewajiban) dan mengkredit akun <strong className="text-rose-300">1-10100 Kas & Bank</strong> (mengurangi dana kas). Total debit dan kredit selalu 100% seimbang.
+                  Setiap pembayaran utang vendor diposting secara otomatis dengan mendebit akun <strong className="text-indigo-700">2-10100 Utang Dagang</strong> (mengurangi kewajiban) dan mengkredit akun <strong className="text-rose-700">1-10100 Kas & Bank</strong> (mengurangi dana kas). Total debit dan kredit selalu 100% seimbang.
                 </p>
               </div>
             </div>
 
             <button
               onClick={() => setActiveSubView('buku_besar')}
-              className="px-3.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-xl font-semibold flex items-center gap-1.5 shrink-0 self-start md:self-auto cursor-pointer"
+              className="px-3.5 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-slate-900 border border-blue-500/30 rounded-xl font-semibold flex items-center gap-1.5 shrink-0 self-start md:self-auto cursor-pointer"
             >
               <span>Buka Buku Besar Utang</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1250,7 +1253,7 @@ export const BalanceSheetSection: React.FC = () => {
 
             <div className="bg-[#121620] p-3.5 rounded-2xl border border-slate-800">
               <span className="text-slate-400 text-xs block mb-1">Total Terdebit (Debit)</span>
-              <div className="text-lg font-bold font-mono text-emerald-400">
+              <div className="text-lg font-bold font-mono text-indigo-700">
                 Rp {filteredJournalEntries.reduce((s, j) => s + j.totalDebit, 0).toLocaleString('id-ID')}
               </div>
               <span className="text-[11px] text-slate-500 mt-0.5 block">Mengurangi utang & aset</span>
@@ -1258,7 +1261,7 @@ export const BalanceSheetSection: React.FC = () => {
 
             <div className="bg-[#121620] p-3.5 rounded-2xl border border-slate-800">
               <span className="text-slate-400 text-xs block mb-1">Total Terkredit (Kredit)</span>
-              <div className="text-lg font-bold font-mono text-rose-300">
+              <div className="text-lg font-bold font-mono text-rose-700">
                 Rp {filteredJournalEntries.reduce((s, j) => s + j.totalKredit, 0).toLocaleString('id-ID')}
               </div>
               <span className="text-[11px] text-slate-500 mt-0.5 block">Mengurangi kas / aset</span>
@@ -1266,11 +1269,11 @@ export const BalanceSheetSection: React.FC = () => {
 
             <div className="bg-[#121620] p-3.5 rounded-2xl border border-slate-800">
               <span className="text-slate-400 text-xs block mb-1">Keseimbangan Pembukuan</span>
-              <div className="text-sm font-bold font-mono text-emerald-400 flex items-center gap-1.5 mt-1">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <div className="text-sm font-bold font-mono text-indigo-700 flex items-center gap-1.5 mt-1">
+                <CheckCircle2 className="w-4 h-4 text-indigo-700" />
                 <span>100% Balans</span>
               </div>
-              <span className="text-[11px] text-emerald-400/80 mt-0.5 block">Debit = Kredit (Selisih Rp 0)</span>
+              <span className="text-[11px] text-indigo-700/80 mt-0.5 block">Debit = Kredit (Selisih Rp 0)</span>
             </div>
           </div>
 
@@ -1282,7 +1285,7 @@ export const BalanceSheetSection: React.FC = () => {
                 onClick={() => setJournalFilter('all')}
                 className={`px-3 py-1 rounded-xl font-medium cursor-pointer transition-colors ${
                   journalFilter === 'all'
-                    ? 'bg-amber-500 text-slate-950 font-bold'
+                    ? 'segmented-pill-active font-bold'
                     : 'bg-slate-900 text-slate-400 hover:text-white'
                 }`}
               >
@@ -1293,7 +1296,7 @@ export const BalanceSheetSection: React.FC = () => {
                 onClick={() => setJournalFilter('pembayaran_utang_vendor')}
                 className={`px-3 py-1 rounded-xl font-medium cursor-pointer transition-colors ${
                   journalFilter === 'pembayaran_utang_vendor'
-                    ? 'bg-amber-500 text-slate-950 font-bold'
+                    ? 'segmented-pill-active font-bold'
                     : 'bg-slate-900 text-slate-400 hover:text-white'
                 }`}
               >
@@ -1304,7 +1307,7 @@ export const BalanceSheetSection: React.FC = () => {
                 onClick={() => setJournalFilter('kas_bank')}
                 className={`px-3 py-1 rounded-xl font-medium cursor-pointer transition-colors ${
                   journalFilter === 'kas_bank'
-                    ? 'bg-amber-500 text-slate-950 font-bold'
+                    ? 'segmented-pill-active font-bold'
                     : 'bg-slate-900 text-slate-400 hover:text-white'
                 }`}
               >
@@ -1341,12 +1344,12 @@ export const BalanceSheetSection: React.FC = () => {
                   {/* Voucher Header */}
                   <div className="px-4 py-3 bg-slate-900/80 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-mono font-bold text-amber-400 text-sm">{je.noJurnal}</span>
+                      <span className="font-mono font-bold text-slate-900 text-sm">{je.noJurnal}</span>
                       <span className="text-slate-400 font-mono text-xs">• {je.tanggal} {je.waktu || '10:00'}</span>
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-indigo-700 border border-emerald-500/20">
                         {je.tipe === 'pembayaran_utang_vendor' ? 'Pembayaran Utang Vendor' : je.tipe}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-blue-500/10 text-slate-900 border border-blue-500/20 flex items-center gap-1">
                         <Check className="w-2.5 h-2.5" /> Seimbang
                       </span>
                     </div>
@@ -1372,8 +1375,8 @@ export const BalanceSheetSection: React.FC = () => {
                           <th className="px-4 py-2 w-28">Kode Akun</th>
                           <th className="px-4 py-2">Nama Akun Rekening</th>
                           <th className="px-4 py-2 w-28 text-center">Kategori</th>
-                          <th className="px-4 py-2 text-right w-36 text-emerald-400">Posisi Debet (Rp)</th>
-                          <th className="px-4 py-2 text-right w-36 text-rose-400">Posisi Kredit (Rp)</th>
+                          <th className="px-4 py-2 text-right w-36 text-indigo-700">Posisi Debet (Rp)</th>
+                          <th className="px-4 py-2 text-right w-36 text-rose-700">Posisi Kredit (Rp)</th>
                           <th className="px-4 py-2">Memo Penjelas</th>
                         </tr>
                       </thead>
@@ -1399,16 +1402,16 @@ export const BalanceSheetSection: React.FC = () => {
                             <td className="px-4 py-2.5 text-center">
                               <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
                                 it.category === 'Kewajiban'
-                                  ? 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
-                                  : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                                  ? 'bg-rose-500/10 text-rose-700 border border-rose-500/20'
+                                  : 'bg-emerald-500/10 text-indigo-700 border border-emerald-500/20'
                               }`}>
                                 {it.category}
                               </span>
                             </td>
-                            <td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-400">
+                            <td className="px-4 py-2.5 text-right font-mono font-bold text-indigo-700">
                               {it.debit > 0 ? `Rp ${it.debit.toLocaleString('id-ID')}` : '-'}
                             </td>
-                            <td className="px-4 py-2.5 text-right font-mono font-bold text-rose-300">
+                            <td className="px-4 py-2.5 text-right font-mono font-bold text-rose-700">
                               {it.kredit > 0 ? `Rp ${it.kredit.toLocaleString('id-ID')}` : '-'}
                             </td>
                             <td className="px-4 py-2.5 text-slate-400 text-xs">
@@ -1422,13 +1425,13 @@ export const BalanceSheetSection: React.FC = () => {
                           <td colSpan={4} className="px-4 py-2 text-right text-slate-300">
                             Total Keseimbangan Ayat Jurnal:
                           </td>
-                          <td className="px-4 py-2 text-right font-mono text-emerald-400">
+                          <td className="px-4 py-2 text-right font-mono text-indigo-700">
                             Rp {je.totalDebit.toLocaleString('id-ID')}
                           </td>
-                          <td className="px-4 py-2 text-right font-mono text-rose-300">
+                          <td className="px-4 py-2 text-right font-mono text-rose-700">
                             Rp {je.totalKredit.toLocaleString('id-ID')}
                           </td>
-                          <td className="px-4 py-2 text-emerald-400 font-mono text-xs">
+                          <td className="px-4 py-2 text-indigo-700 font-mono text-xs">
                             Balance (Klop)
                           </td>
                         </tr>
@@ -1450,7 +1453,7 @@ export const BalanceSheetSection: React.FC = () => {
           {/* Header Banner */}
           <div className="bg-[#FDFAF3] p-4 rounded-2xl border border-emerald-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
             <div className="flex items-start gap-3">
-              <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 mt-0.5">
+              <span className="p-2 rounded-xl bg-emerald-500/10 text-indigo-700 border border-emerald-500/20 shrink-0 mt-0.5">
                 <CreditCard className="w-5 h-5" />
               </span>
               <div className="space-y-1">
@@ -1470,7 +1473,7 @@ export const BalanceSheetSection: React.FC = () => {
 
             <button
               onClick={() => setActiveSubView('neraca')}
-              className="px-3.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl font-semibold flex items-center gap-1.5 shrink-0 self-start md:self-auto cursor-pointer"
+              className="px-3.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-indigo-700 border border-emerald-500/30 rounded-xl font-semibold flex items-center gap-1.5 shrink-0 self-start md:self-auto cursor-pointer"
             >
               <span>Lihat di Neraca</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1487,7 +1490,7 @@ export const BalanceSheetSection: React.FC = () => {
 
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800">
               <span className="text-slate-400 text-xs block mb-1">Total Tagihan PO (Kredit +)</span>
-              <div className="text-lg font-bold font-mono text-rose-300">
+              <div className="text-lg font-bold font-mono text-rose-700">
                 Rp {apLedgerData.totalKreditUtang.toLocaleString('id-ID')}
               </div>
               <span className="text-xs text-slate-500 mt-1 block">Kewajiban pengadaan bahan</span>
@@ -1495,7 +1498,7 @@ export const BalanceSheetSection: React.FC = () => {
 
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800">
               <span className="text-slate-400 text-xs block mb-1">Total Pelunasan (Debit -)</span>
-              <div className="text-lg font-bold font-mono text-emerald-400">
+              <div className="text-lg font-bold font-mono text-indigo-700">
                 Rp {apLedgerData.totalDebitPelunasan.toLocaleString('id-ID')}
               </div>
               <span className="text-xs text-slate-500 mt-1 block">Dibayar via Kas & Bank</span>
@@ -1503,17 +1506,17 @@ export const BalanceSheetSection: React.FC = () => {
 
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800 bg-rose-950/20">
               <span className="text-slate-400 text-xs block mb-1">Saldo Akhir Kewajiban</span>
-              <div className="text-lg font-bold font-mono text-rose-400">
+              <div className="text-lg font-bold font-mono text-rose-700">
                 Rp {apLedgerData.saldoAkhirUtang.toLocaleString('id-ID')}
               </div>
-              <span className="text-xs text-rose-300/80 mt-1 block">Muncul di Pasiva Neraca</span>
+              <span className="text-xs text-rose-700/80 mt-1 block">Muncul di Pasiva Neraca</span>
             </div>
           </div>
 
           {/* Breakdown per Vendor Rekanan */}
           <div className="space-y-3">
             <h4 className="font-bold text-white text-xs flex items-center gap-2">
-              <Building2 className="w-3.5 h-3.5 text-amber-400" />
+              <Building2 className="w-3.5 h-3.5 text-slate-900" />
               <span>Rincian Saldo Kewajiban per Mitra Vendor:</span>
             </h4>
 
@@ -1533,8 +1536,8 @@ export const BalanceSheetSection: React.FC = () => {
                       <span
                         className={`px-2 py-0.5 rounded-full text-[11px] font-bold border ${
                           vb.sisaHutang === 0
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25'
-                            : 'bg-rose-500/10 text-rose-400 border border-rose-500/25'
+                            ? 'bg-emerald-500/10 text-indigo-700 border-emerald-500/25'
+                            : 'bg-rose-500/10 text-rose-700 border border-rose-500/25'
                         }`}
                       >
                         {vb.sisaHutang === 0 ? 'Lunas' : 'Ada Sisa'}
@@ -1564,11 +1567,11 @@ export const BalanceSheetSection: React.FC = () => {
                       </div>
                       <div className="flex justify-between text-slate-400">
                         <span>Telah Dibayar:</span>
-                        <span className="font-mono text-emerald-400 font-medium">Rp {vb.totalTerbayar.toLocaleString('id-ID')}</span>
+                        <span className="font-mono text-indigo-700 font-medium">Rp {vb.totalTerbayar.toLocaleString('id-ID')}</span>
                       </div>
                       <div className="flex justify-between text-slate-200 font-bold pt-1 border-t border-slate-800">
                         <span>Sisa Kewajiban:</span>
-                        <span className="font-mono text-rose-400">Rp {vb.sisaHutang.toLocaleString('id-ID')}</span>
+                        <span className="font-mono text-rose-700">Rp {vb.sisaHutang.toLocaleString('id-ID')}</span>
                       </div>
                     </div>
                   </div>
@@ -1581,7 +1584,7 @@ export const BalanceSheetSection: React.FC = () => {
           <div className="bg-[#121620] rounded-2xl border border-slate-800 overflow-hidden shadow-sm space-y-2">
             <div className="px-5 py-3.5 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between">
               <h4 className="font-bold text-white text-xs flex items-center gap-2">
-                <FileText className="w-3.5 h-3.5 text-blue-400" />
+                <FileText className="w-3.5 h-3.5 text-slate-900" />
                 <span>Kartu Mutasi Buku Besar Pembantu Utang (Akun 2-10100)</span>
               </h4>
               <span className="text-xs text-slate-400 font-mono">
@@ -1598,8 +1601,8 @@ export const BalanceSheetSection: React.FC = () => {
                     <th className="px-4 py-2.5">Vendor Rekanan</th>
                     <th className="px-4 py-2.5">Uraian Transaksi</th>
                     <th className="px-4 py-2.5">Akun Lawan</th>
-                    <th className="px-4 py-2.5 text-right text-emerald-400">Debit (-) Pelunasan</th>
-                    <th className="px-4 py-2.5 text-right text-rose-400">Kredit (+) Tagihan Baru</th>
+                    <th className="px-4 py-2.5 text-right text-indigo-700">Debit (-) Pelunasan</th>
+                    <th className="px-4 py-2.5 text-right text-rose-700">Kredit (+) Tagihan Baru</th>
                     <th className="px-4 py-2.5 text-right">Saldo Utang Berjalan</th>
                   </tr>
                 </thead>
@@ -1609,7 +1612,7 @@ export const BalanceSheetSection: React.FC = () => {
                       <td className="px-4 py-2.5 font-mono text-slate-300 text-xs whitespace-nowrap">
                         {r.tanggal}
                       </td>
-                      <td className="px-4 py-2.5 font-mono font-bold text-amber-400 text-xs whitespace-nowrap">
+                      <td className="px-4 py-2.5 font-mono font-bold text-slate-900 text-xs whitespace-nowrap">
                         {r.referensi}
                       </td>
                       <td className="px-4 py-2.5 font-semibold text-white whitespace-nowrap">
@@ -1618,13 +1621,13 @@ export const BalanceSheetSection: React.FC = () => {
                       <td className="px-4 py-2.5 text-slate-300">
                         {r.deskripsi}
                       </td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-blue-300 whitespace-nowrap">
+                      <td className="px-4 py-2.5 font-mono text-xs text-slate-900 whitespace-nowrap">
                         {r.akunLawan}
                       </td>
-                      <td className="px-4 py-2.5 text-right font-mono font-bold text-emerald-400 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-right font-mono font-bold text-indigo-700 whitespace-nowrap">
                         {r.debit > 0 ? `-Rp ${r.debit.toLocaleString('id-ID')}` : '-'}
                       </td>
-                      <td className="px-4 py-2.5 text-right font-mono font-bold text-rose-400 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-right font-mono font-bold text-rose-700 whitespace-nowrap">
                         {r.kredit > 0 ? `+Rp ${r.kredit.toLocaleString('id-ID')}` : '-'}
                       </td>
                       <td className="px-4 py-2.5 text-right font-mono font-bold text-white whitespace-nowrap">
@@ -1762,7 +1765,7 @@ const BalanceConfigModal: React.FC<BalanceConfigModalProps> = ({
       <div className="bg-[#121620] border border-slate-800 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 text-xs text-slate-300">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span className="p-2 rounded-xl bg-slate-100 text-slate-900 border border-slate-200">
               <Building2 className="w-4 h-4" />
             </span>
             <div>
@@ -1799,7 +1802,7 @@ const BalanceConfigModal: React.FC<BalanceConfigModalProps> = ({
               min="0"
               value={labaDitahanTahunLalu}
               onChange={(e) => setLabaDitahanTahunLalu(parseInt(e.target.value, 10) || 0)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-right font-mono text-emerald-400 focus:outline-none focus:border-amber-500"
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-right font-mono text-indigo-700 focus:outline-none focus:border-amber-500"
             />
           </div>
 
@@ -1812,7 +1815,7 @@ const BalanceConfigModal: React.FC<BalanceConfigModalProps> = ({
               min="0"
               value={privePemilik}
               onChange={(e) => setPrivePemilik(parseInt(e.target.value, 10) || 0)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-right font-mono text-rose-400 focus:outline-none focus:border-amber-500"
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-right font-mono text-rose-700 focus:outline-none focus:border-amber-500"
             />
           </div>
 
@@ -1854,7 +1857,7 @@ const BalanceConfigModal: React.FC<BalanceConfigModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl flex items-center gap-1 shadow-md cursor-pointer"
+              className="px-5 py-2 segmented-pill-active hover:opacity-90 font-bold rounded-xl flex items-center gap-1 shadow-md cursor-pointer"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Simpan Pengaturan</span>
@@ -1923,7 +1926,7 @@ const FixedAssetFormModal: React.FC<FixedAssetFormModalProps> = ({
       <div className="bg-[#121620] border border-slate-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 text-xs text-slate-300">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <span className="p-2 rounded-xl bg-blue-500/10 text-slate-900 border border-blue-500/20">
               <Building2 className="w-4 h-4" />
             </span>
             <div>
@@ -2000,7 +2003,7 @@ const FixedAssetFormModal: React.FC<FixedAssetFormModalProps> = ({
                 max={hargaPerolehan}
                 value={akumulasiPenyusutan}
                 onChange={(e) => setAkumulasiPenyusutan(parseInt(e.target.value, 10) || 0)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-right font-mono text-rose-400 focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-right font-mono text-rose-700 focus:outline-none focus:border-amber-500"
               />
             </div>
           </div>
@@ -2008,7 +2011,7 @@ const FixedAssetFormModal: React.FC<FixedAssetFormModalProps> = ({
           {/* Nilai Buku Preview */}
           <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-850 flex justify-between items-center text-xs">
             <span className="text-slate-400">Nilai Buku Bersih (Net Book Value):</span>
-            <span className="font-mono font-bold text-blue-300">Rp {nilaiBuku.toLocaleString('id-ID')}</span>
+            <span className="font-mono font-bold text-slate-900">Rp {nilaiBuku.toLocaleString('id-ID')}</span>
           </div>
 
           <div>
@@ -2031,7 +2034,7 @@ const FixedAssetFormModal: React.FC<FixedAssetFormModalProps> = ({
                     onDelete(editingAsset.id);
                   }
                 }}
-                className="px-3 py-2 text-rose-400 hover:bg-rose-500/10 rounded-xl font-semibold"
+                className="px-3 py-2 text-rose-700 hover:bg-rose-500/10 rounded-xl font-semibold"
               >
                 Hapus
               </button>
@@ -2115,7 +2118,7 @@ const PrintBalanceSheetModal: React.FC<PrintBalanceSheetModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md"
+              className="px-4 py-1.5 segmented-pill-active hover:opacity-90 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Cetak / Simpan PDF</span>
