@@ -24,11 +24,15 @@ import {
   cashFlowForMonth,
   grossMarginPercent,
   negativeStock,
+  opexTotal,
   percentChange,
   periodRange,
   PERIOD_LABELS,
   salesSummary,
+  stockCover,
   stockValue,
+  STOCK_COVER_WINDOW_DAYS,
+  topProducts,
   type ActionItemId,
   type DashboardPeriod,
 } from '../services/dashboardMetrics';
@@ -36,7 +40,7 @@ import { pushPendingSearch } from '../services/searchHandoff';
 import { MonthlySalesPerformanceChart } from '../components/MonthlySalesPerformanceChart';
 
 const MONTHLY_QUOTA_PCS = 1500;
-const RECENT_ORDER_COUNT = 6;
+const RECENT_ORDER_COUNT = 5;
 
 const rupiah = (value: number): string => `Rp ${Math.round(value).toLocaleString('id-ID')}`;
 
@@ -111,7 +115,7 @@ const KpiCard: React.FC<{
 );
 
 export const DashboardView: React.FC = () => {
-  const { isOwner, orders, skus, channels, calculateStockSummary, getLowStockSKUs, setCurrentView, cashAccounts, cashMutations, purchaseOrders } = useApp();
+  const { isOwner, orders, skus, channels, calculateStockSummary, getLowStockSKUs, setCurrentView, cashAccounts, cashMutations, purchaseOrders, biayaOperasional } = useApp();
 
   const [period, setPeriod] = useState<DashboardPeriod>('this_month');
   const today = todayIso();
@@ -121,6 +125,11 @@ export const DashboardView: React.FC = () => {
   const current = useMemo(() => salesSummary(orders, range.start, range.end), [orders, range.start, range.end]);
   const previous = useMemo(() => salesSummary(orders, range.prevStart, range.prevEnd), [orders, range.prevStart, range.prevEnd]);
   const margin = grossMarginPercent(current.omzet, current.laba);
+  const currentOpex = useMemo(() => opexTotal(biayaOperasional, range.start, range.end), [biayaOperasional, range.start, range.end]);
+  const previousOpex = useMemo(() => opexTotal(biayaOperasional, range.prevStart, range.prevEnd), [biayaOperasional, range.prevStart, range.prevEnd]);
+  const netProfit = current.laba - currentOpex;
+  const previousNetProfit = previous.laba - previousOpex;
+  const bestSellers = useMemo(() => topProducts(orders, range.start, range.end), [orders, range.start, range.end]);
 
   const lastOrderDate = useMemo(
     () => orders.reduce((latest, order) => (order.statusOrder !== 'batal' && order.tanggal > latest ? order.tanggal : latest), ''),
@@ -137,6 +146,13 @@ export const DashboardView: React.FC = () => {
   const totalStockGudang = Object.values(stockSummary).reduce((sum, entry) => sum + entry.gudang, 0);
   const totalStockReseller = Object.values(stockSummary).reduce((sum, entry) => sum + entry.reseller, 0);
   const stockValueTotal = useMemo(() => stockValue(skus, stockSummary, 'total'), [skus, stockSummary]);
+  const coverAll = useMemo(
+    () => stockCover(orders, Object.fromEntries(Object.entries(stockSummary).map(([sku, entry]) => [sku, entry.gudang])), today, { limit: Infinity }),
+    [orders, stockSummary, today],
+  );
+  // SKU laris yang stoknya sudah 0/minus sudah tercakup di "Perlu Tindakan"; daftar ini fokus ke yang masih ada stoknya.
+  const runningOut = coverAll.filter((product) => product.stock > 0).slice(0, 5);
+  const soldOutBestSellers = coverAll.filter((product) => product.stock <= 0).length;
   const openPurchaseOrders = purchaseOrders.filter((po) => !['diterima', 'batal'].includes(po.statusPO));
 
   const actions = useMemo(
@@ -207,9 +223,17 @@ export const DashboardView: React.FC = () => {
         </KpiCard>
 
         {isOwner ? (
-          <KpiCard icon={CheckCircle2} label="Laba Kotor" value={rupiah(current.laba)} linkLabel="Lihat keuangan" onClick={() => setCurrentView('finance')}>
-            <ChangeBadge change={percentChange(current.laba, previous.laba)} previousLabel={labels.previous} />
-            <span className="block text-xs text-slate-500">Margin {margin === null ? '–' : `${margin}%`}</span>
+          <KpiCard icon={CheckCircle2} label="Laba Bersih" value={rupiah(netProfit)} linkLabel="Lihat laba rugi" onClick={() => setCurrentView('finance')}>
+            {previousNetProfit > 0 ? (
+              <ChangeBadge change={percentChange(netProfit, previousNetProfit)} previousLabel={labels.previous} />
+            ) : (
+              <span className="block text-xs text-slate-500">
+                {labels.previous}: <span className={previousNetProfit < 0 ? 'text-rose-700 font-semibold' : ''}>{previousNetProfit < 0 ? '−' : ''}{rupiah(Math.abs(previousNetProfit))}</span>
+              </span>
+            )}
+            <span className="block text-xs text-slate-500">
+              Laba kotor {rupiah(current.laba)} (margin {margin === null ? '–' : `${margin}%`}) − OPEX {rupiah(currentOpex)}
+            </span>
           </KpiCard>
         ) : (
           <KpiCard icon={ShoppingBag} label="Jumlah Order" value={`${current.count}`} linkLabel="Lihat penjualan" onClick={() => setCurrentView('sales')}>
@@ -325,6 +349,95 @@ export const DashboardView: React.FC = () => {
               </li>
             ))}
           </ul>
+        </section>
+      </div>
+
+      {/* Produk terlaris + stok laris hampir habis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section className="bg-white p-5 rounded-[20px] border border-slate-200 space-y-3" aria-labelledby="dashboard-bestsellers">
+          <div className="flex items-center justify-between gap-2">
+            <h3 id="dashboard-bestsellers" className="text-sm font-bold text-slate-900">
+              Produk Terlaris · {labels.label}
+            </h3>
+            <button type="button" onClick={() => setCurrentView('products')} className="text-xs font-semibold text-indigo-700 hover:underline flex items-center gap-1 cursor-pointer">
+              Master SKU <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </div>
+          {bestSellers.length === 0 ? (
+            <p className="text-sm text-slate-500">Belum ada penjualan di periode ini.</p>
+          ) : (
+            <ol className="space-y-2.5">
+              {bestSellers.map((product, index) => {
+                const share = Math.round((product.qty / bestSellers[0].qty) * 100);
+                return (
+                  <li key={product.sku} className="space-y-1">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="min-w-0 truncate">
+                        <span className="text-slate-500 tabular-nums mr-1.5">{index + 1}.</span>
+                        <span className="font-semibold text-slate-900">{product.label}</span>
+                      </span>
+                      <span className="shrink-0 text-right tabular-nums whitespace-nowrap">
+                        <span className="font-bold text-slate-900">{product.qty} pcs</span>
+                        <span className="text-xs text-slate-500"> · {rupiah(product.omzet)}</span>
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-indigo-600 h-full rounded-full" style={{ width: `${share}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+
+        <section className="bg-white p-5 rounded-[20px] border border-slate-200 space-y-3" aria-labelledby="dashboard-runningout">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h3 id="dashboard-runningout" className="text-sm font-bold text-slate-900">
+                Stok Laris Hampir Habis
+              </h3>
+              <p className="text-xs text-slate-500">Stok gudang ÷ rata-rata penjualan {STOCK_COVER_WINDOW_DAYS} hari terakhir</p>
+            </div>
+            <button type="button" onClick={() => setCurrentView('purchases')} className="shrink-0 text-xs font-semibold text-indigo-700 hover:underline flex items-center gap-1 cursor-pointer">
+              Buat PO <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </div>
+          {soldOutBestSellers > 0 && (
+            <button
+              type="button"
+              onClick={() => setCurrentView('inventory')}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-rose-50 text-rose-700 text-xs font-semibold text-left cursor-pointer hover:underline"
+            >
+              {soldOutBestSellers} SKU yang laku {STOCK_COVER_WINDOW_DAYS} hari terakhir stoknya sudah habis atau minus
+              <ChevronRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </button>
+          )}
+          {runningOut.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              {coverAll.length === 0 ? `Belum ada penjualan dalam ${STOCK_COVER_WINDOW_DAYS} hari terakhir.` : 'Tidak ada SKU laris yang masih berstok.'}
+            </p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {runningOut.map((product) => {
+                const tone =
+                  product.daysLeft <= 7 ? 'bg-rose-50 text-rose-700' : product.daysLeft <= 30 ? 'bg-amber-50 text-amber-800' : 'bg-indigo-100 text-indigo-800';
+                return (
+                  <li key={product.sku} className="flex items-center justify-between gap-3 py-2">
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-slate-900 truncate">{product.label}</span>
+                      <span className="block text-xs text-slate-500 tabular-nums">
+                        Stok {product.stock.toLocaleString('id-ID')} pcs · terjual {product.sold} pcs / {STOCK_COVER_WINDOW_DAYS} hari
+                      </span>
+                    </span>
+                    <span className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold tabular-nums whitespace-nowrap ${tone}`}>
+                      {product.daysLeft > 365 ? '> 1 tahun' : `± ${product.daysLeft} hari`}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </section>
       </div>
 

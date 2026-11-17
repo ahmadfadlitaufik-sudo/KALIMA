@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { actionItems, cashFlowForMonth, grossMarginPercent, negativeStock, percentChange, periodRange, qtySoldInMonth, salesSummary, stockValue } from './dashboardMetrics';
+import { actionItems, cashFlowForMonth, opexTotal, stockCover, topProducts, grossMarginPercent, negativeStock, percentChange, periodRange, qtySoldInMonth, salesSummary, stockValue } from './dashboardMetrics';
 
 describe('cashFlowForMonth', () => {
   it('sums money in and out for the given month only, ignoring transfers', () => {
@@ -107,5 +107,59 @@ describe('actionItems', () => {
 
   it('returns nothing when all is in order', () => {
     expect(actionItems({ ...base, orders: [] })).toEqual([]);
+  });
+});
+
+const item = (sku: string, qty: number, subtotal = qty * 100) => ({ sku, namaProduk: 'Kaos 290', colorName: 'Hitam', size: 'L', qty, subtotal });
+
+describe('topProducts', () => {
+  it('ranks SKUs by pieces sold in the period, skipping cancelled orders', () => {
+    const orders = [
+      { tanggal: '2026-11-02', statusOrder: 'selesai', items: [item('A', 3), item('B', 5)] },
+      { tanggal: '2026-11-03', statusOrder: 'selesai', items: [item('A', 4)] },
+      { tanggal: '2026-11-04', statusOrder: 'batal', items: [item('C', 50)] },
+      { tanggal: '2026-10-30', statusOrder: 'selesai', items: [item('D', 99)] },
+    ];
+    expect(topProducts(orders, '2026-11-01', '2026-11-30', 2)).toEqual([
+      { sku: 'A', label: 'Kaos 290 · Hitam L', qty: 7, omzet: 700 },
+      { sku: 'B', label: 'Kaos 290 · Hitam L', qty: 5, omzet: 500 },
+    ]);
+  });
+});
+
+describe('topProducts label', () => {
+  it('does not repeat colour and size already in the product name', () => {
+    const orders = [
+      { tanggal: '2026-11-02', statusOrder: 'selesai', items: [{ sku: 'E', namaProduk: 'Kalima Essential – BEIGE (L)', colorName: 'BEIGE', size: 'L', qty: 1, subtotal: 100 }] },
+    ];
+    expect(topProducts(orders, '2026-11-01', '2026-11-30')[0].label).toBe('Kalima Essential – BEIGE (L)');
+  });
+});
+
+describe('stockCover', () => {
+  it('estimates days of stock left for SKUs sold in the last 30 days, shortest first', () => {
+    const orders = [
+      { tanggal: '2026-11-10', statusOrder: 'selesai', items: [item('A', 30)] },
+      { tanggal: '2026-11-15', statusOrder: 'selesai', items: [item('B', 6)] },
+      { tanggal: '2026-11-16', statusOrder: 'selesai', items: [item('C', 3)] },
+      { tanggal: '2026-09-01', statusOrder: 'selesai', items: [item('D', 90)] },
+    ];
+    const stock = { A: 10, B: 60, C: -2, D: 1 };
+    expect(stockCover(orders, stock, '2026-11-18', { windowDays: 30 })).toEqual([
+      { sku: 'C', label: 'Kaos 290 · Hitam L', stock: -2, sold: 3, daysLeft: 0 },
+      { sku: 'A', label: 'Kaos 290 · Hitam L', stock: 10, sold: 30, daysLeft: 10 },
+      { sku: 'B', label: 'Kaos 290 · Hitam L', stock: 60, sold: 6, daysLeft: 300 },
+    ]);
+  });
+});
+
+describe('opexTotal', () => {
+  it('sums operating expenses between two dates', () => {
+    const opex = [
+      { tanggal: '2026-11-01', jumlah: 100 },
+      { tanggal: '2026-11-30', jumlah: 50 },
+      { tanggal: '2026-12-01', jumlah: 999 },
+    ];
+    expect(opexTotal(opex, '2026-11-01', '2026-11-30')).toBe(150);
   });
 });

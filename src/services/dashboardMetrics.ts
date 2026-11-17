@@ -151,3 +151,64 @@ export const actionItems = (input: {
   ];
   return items.filter((item) => item.count > 0);
 };
+
+type SoldItem = { sku: string; namaProduk: string; colorName: string; size: string; qty: number; subtotal: number };
+type OrderWithItems = { tanggal: string; statusOrder: string; items: SoldItem[] };
+
+/** Nama produk; warna & ukuran ditambahkan hanya bila belum tertulis di nama. */
+const itemLabel = (item: SoldItem): string =>
+  item.namaProduk.toLowerCase().includes(item.colorName.toLowerCase()) ? item.namaProduk : `${item.namaProduk} · ${item.colorName} ${item.size}`;
+
+/** Pcs & omzet per SKU (tanpa order batal) di antara dua tanggal. */
+const salesBySku = (orders: OrderWithItems[], start: string, end: string): Map<string, { label: string; qty: number; omzet: number }> => {
+  const totals = new Map<string, { label: string; qty: number; omzet: number }>();
+  for (const order of orders) {
+    if (order.statusOrder === 'batal' || order.tanggal < start || order.tanggal > end) {
+      continue;
+    }
+    for (const item of order.items) {
+      const entry = totals.get(item.sku) ?? { label: itemLabel(item), qty: 0, omzet: 0 };
+      entry.qty += item.qty;
+      entry.omzet += item.subtotal;
+      totals.set(item.sku, entry);
+    }
+  }
+  return totals;
+};
+
+/** SKU terlaris (berdasarkan pcs) di periode, maksimal `limit`. */
+export const topProducts = (
+  orders: OrderWithItems[],
+  start: string,
+  end: string,
+  limit = 5,
+): { sku: string; label: string; qty: number; omzet: number }[] =>
+  [...salesBySku(orders, start, end).entries()]
+    .map(([sku, entry]) => ({ sku, ...entry }))
+    .sort((a, b) => b.qty - a.qty)
+    .slice(0, limit);
+
+export const STOCK_COVER_WINDOW_DAYS = 90;
+
+/**
+ * Perkiraan sisa hari stok untuk SKU yang terjual dalam `windowDays` hari terakhir:
+ * stok ÷ rata-rata pcs per hari. Stok nol atau minus berarti 0 hari. Urut dari yang paling cepat habis.
+ */
+export const stockCover = (
+  orders: OrderWithItems[],
+  stockBySku: Record<string, number>,
+  today: string,
+  { windowDays = STOCK_COVER_WINDOW_DAYS, limit = 5 }: { windowDays?: number; limit?: number } = {},
+): { sku: string; label: string; stock: number; sold: number; daysLeft: number }[] =>
+  [...salesBySku(orders, addDays(today, -windowDays), today).entries()]
+    .map(([sku, entry]) => {
+      const stock = stockBySku[sku] ?? 0;
+      const perDay = entry.qty / windowDays;
+      return { sku, label: entry.label, stock, sold: entry.qty, daysLeft: stock <= 0 ? 0 : Math.floor(stock / perDay) };
+    })
+    .sort((a, b) => a.daysLeft - b.daysLeft || b.sold - a.sold)
+    .slice(0, limit);
+
+/** Total biaya operasional (OPEX) di antara dua tanggal. */
+export const opexTotal = (opex: { tanggal: string; jumlah: number }[], start: string, end: string): number =>
+  opex.reduce((sum, entry) => (entry.tanggal >= start && entry.tanggal <= end ? sum + entry.jumlah : sum), 0);
