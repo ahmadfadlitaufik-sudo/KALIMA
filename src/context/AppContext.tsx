@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useMemo,
 import { ApiError, WorkspaceDocId, api, onUnauthorized } from '../services/api';
 import { SyncBase, docsToRefetch, isFreshBrowser, loadSyncBase, markServerLoaded, pickInitial, snapshotDoc, storeSyncBase } from '../services/workspaceSync';
 import { ListSnapshot, mergeList, mergeValue } from '../services/threeWayMerge';
+import { pathToView, viewToPath } from '../services/viewRoute';
 import { NotLoadedError, createWorkspaceSaver } from '../services/workspaceSaver';
 
 /** Selang cek perubahan data di server (ms) selama tab terlihat. */
@@ -345,7 +346,20 @@ export const AppProvider: React.FC<{
 }> = ({ children, authUser, onSignOut }) => {
   const currentUser = authUser;
 
-  const [currentView, setCurrentView] = useState<AppView>('dashboard');
+  const [currentView, setCurrentViewState] = useState<AppView>(() => pathToView(window.location.pathname));
+  /** Ganti halaman dan catat di riwayat browser (refresh, bookmark, dan tombol Back ikut berfungsi). */
+  const setCurrentView = useCallback((view: AppView) => {
+    setCurrentViewState(view);
+    const path = viewToPath(view);
+    if (window.location.pathname !== path) {
+      window.history.pushState(null, '', path);
+    }
+  }, []);
+  useEffect(() => {
+    const handlePopState = () => setCurrentViewState(pathToView(window.location.pathname));
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickOrderModalOpen, setQuickOrderModalOpen] = useState(false);
 
