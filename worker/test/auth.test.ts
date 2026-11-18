@@ -4,7 +4,7 @@ import { OWNER_EMAIL, OWNER_PASSWORD, call, countUsers, loginAs, sessionCookie, 
 
 describe('setup', () => {
   it('creates the locked owner once, with a valid token', async () => {
-    expect(await (await call('GET', '/api/setup')).json()).toEqual({ needed: true });
+    expect(await (await call('GET', '/api/setup')).json()).toEqual({ needed: true, email: OWNER_EMAIL });
 
     const res = await call('POST', '/api/setup', { token: 'test-setup-token', name: 'Fadli', password: OWNER_PASSWORD });
 

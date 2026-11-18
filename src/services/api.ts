@@ -87,9 +87,9 @@ export const api = {
   changePassword: (currentPassword: string, newPassword: string): Promise<void> =>
     request('POST', '/api/auth/password', { currentPassword, newPassword }),
 
-  /** true bila Owner pertama belum dibuat. */
-  setupStatus: async (): Promise<boolean> =>
-    (await request<{ needed: boolean }>('GET', '/api/setup', undefined, false)).needed,
+  /** needed = Owner pertama belum dibuat; email Owner hanya ikut dikirim saat needed. */
+  setupStatus: async (): Promise<{ needed: boolean; email?: string }> =>
+    request<{ needed: boolean; email?: string }>('GET', '/api/setup', undefined, false),
 
   setup: async (token: string, name: string, password: string): Promise<SessionUser> =>
     (await request<{ user: SessionUser }>('POST', '/api/setup', { token, name, password }, false)).user,

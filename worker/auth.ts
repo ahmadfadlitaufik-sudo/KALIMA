@@ -152,7 +152,11 @@ export const setPassword = async (env: Env, userId: number, password: string): P
 const hasAnyUser = async (env: Env): Promise<boolean> =>
   (await env.DB.prepare('SELECT 1 FROM users LIMIT 1').first()) !== null;
 
-const setupStatus = async (env: Env): Promise<Response> => json({ needed: !await hasAnyUser(env) });
+/** Email Owner hanya dibagikan selama pengaturan awal masih terbuka; setelah itu tidak ada yang dibuka ke publik. */
+const setupStatus = async (env: Env): Promise<Response> => {
+  const needed = !await hasAnyUser(env);
+  return json(needed ? { needed, email: FIRST_OWNER_EMAIL } : { needed });
+};
 
 const setup = async (req: Request, env: Env): Promise<Response> => {
   const body = await readJson<{ token: string; name: string; password: string }>(req);

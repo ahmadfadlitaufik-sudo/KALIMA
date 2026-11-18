@@ -8,6 +8,8 @@ interface AuthContextType {
   status: AuthStatus;
   /** Pengguna aplikasi; hanya terisi saat status = 'authorized'. */
   appUser: User | null;
+  /** Email akun Owner yang akan dibuat; hanya terisi saat status = 'setup'. */
+  setupEmail: string | null;
   errorMessage: string | null;
   /** Kembalikan pesan error, atau null bila berhasil. */
   signIn: (email: string, password: string) => Promise<string | null>;
@@ -36,6 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [appUser, setAppUser] = useState<User | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [setupEmail, setSetupEmail] = useState<string | null>(null);
 
   const authorize = (user: SessionUser) => {
     setAppUser(toAppUser(user));
@@ -50,7 +53,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           authorize(user);
           return;
         }
-        setStatus((await api.setupStatus()) ? 'setup' : 'signedOut');
+        const setup = await api.setupStatus();
+        setSetupEmail(setup.needed ? setup.email ?? null : null);
+        setStatus(setup.needed ? 'setup' : 'signedOut');
       } catch (error) {
         setErrorMessage(messageOf(error));
         setStatus('error');
@@ -67,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = useMemo<AuthContextType>(() => ({
     status,
     appUser,
+    setupEmail,
     errorMessage,
     signIn: async (email, password) => {
       try {
@@ -100,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     },
     markSignedOut,
-  }), [status, appUser, errorMessage, markSignedOut]);
+  }), [status, appUser, setupEmail, errorMessage, markSignedOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
