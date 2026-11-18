@@ -2287,25 +2287,37 @@ export const AppProvider: React.FC<{
     const reseller = resellers.find((r) => r.id === resellerId);
     if (!reseller) return;
 
-    // Find unpaid orders for this reseller and apply payment
-    let remainingAmount = jumlah;
-    setOrders((prev) =>
-      prev.map((ord) => {
-        if (ord.channel === 'Reseller' && ord.customerId === resellerId && ord.sisaPiutang > 0 && remainingAmount > 0) {
+    // Lunasi order tertua lebih dulu: order atas nama mitra maupun customer CRM yang ditautkan ke mitra.
+    const payerIds = new Set([resellerId, ...customers.filter((c) => c.resellerIdRef === resellerId).map((c) => c.id)]);
+    setOrders((prev) => {
+      let remainingAmount = jumlah;
+      const deductions = new Map<string, number>();
+      prev
+        .filter((ord) => payerIds.has(ord.customerId) && ord.statusOrder !== 'batal' && ord.sisaPiutang > 0)
+        .sort((a, b) => a.tanggal.localeCompare(b.tanggal))
+        .forEach((ord) => {
+          if (remainingAmount <= 0) {
+            return;
+          }
           const deduction = Math.min(remainingAmount, ord.sisaPiutang);
           remainingAmount -= deduction;
-          const newTerbayar = ord.totalTerbayar + deduction;
-          const newSisa = ord.totalTagihan - newTerbayar;
-          return {
-            ...ord,
-            totalTerbayar: newTerbayar,
-            sisaPiutang: newSisa,
-            statusBayar: (newSisa === 0 ? 'lunas' : 'sebagian') as PaymentStatus,
-          };
+          deductions.set(ord.id, deduction);
+        });
+      return prev.map((ord) => {
+        const deduction = deductions.get(ord.id);
+        if (!deduction) {
+          return ord;
         }
-        return ord;
-      })
-    );
+        const newTerbayar = ord.totalTerbayar + deduction;
+        const newSisa = ord.totalTagihan - newTerbayar;
+        return {
+          ...ord,
+          totalTerbayar: newTerbayar,
+          sisaPiutang: newSisa,
+          statusBayar: (newSisa === 0 ? 'lunas' : 'sebagian') as PaymentStatus,
+        };
+      });
+    });
 
     // Otomatis catat mutasi kas masuk ke akun terkait
     let accToCredit = accountId ? cashAccounts.find((a) => a.id === accountId) : undefined;
