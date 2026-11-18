@@ -69,14 +69,14 @@ export const SalesView: React.FC = () => {
 
   // Available Months for dropdown
   const availableMonths = useMemo(() => {
-    const monthsSet = new Set<string>();
+    const monthsSet = new Set<string>([currentMonthStr, selectedMonth]);
     orders.forEach((o) => {
       if (o.tanggal && o.tanggal.length >= 7) {
         monthsSet.add(o.tanggal.substring(0, 7));
       }
     });
     return Array.from(monthsSet).sort().reverse();
-  }, [orders]);
+  }, [orders, currentMonthStr, selectedMonth]);
 
   // Modals
   const [selectedReceiptOrder, setSelectedReceiptOrder] = useState<Order | null>(null);
@@ -503,7 +503,7 @@ export const SalesView: React.FC = () => {
                 >
                   {availableMonths.map((m) => (
                     <option key={m} value={m}>
-                      Bulan {m}
+                      {new Date(`${m}-01T00:00:00`).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
                     </option>
                   ))}
                 </select>
