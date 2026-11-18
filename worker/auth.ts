@@ -124,6 +124,23 @@ const changePassword = async (req: Request, env: Env): Promise<Response> => {
   return noContent();
 };
 
+const MAX_NAME_LENGTH = 60;
+
+/** Ubah nama tampilan milik sendiri; peran dan email tidak bisa diubah dari sini. */
+const updateProfile = async (req: Request, env: Env): Promise<Response> => {
+  const user = await requireUser(req, env);
+  const body = await readJson<{ name?: unknown }>(req);
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (!name) {
+    throw new HttpError(400, 'Nama tidak boleh kosong.');
+  }
+  if (name.length > MAX_NAME_LENGTH) {
+    throw new HttpError(400, `Nama maksimal ${MAX_NAME_LENGTH} karakter.`);
+  }
+  await env.DB.prepare('UPDATE users SET name = ? WHERE id = ?').bind(name, user.id).run();
+  return json({ user: { ...user, name } });
+};
+
 /** Simpan kata sandi baru (hash + salt baru). */
 export const setPassword = async (env: Env, userId: number, password: string): Promise<void> => {
   const salt = randomHex(16);
@@ -177,6 +194,8 @@ export const handleAuth = async (req: Request, env: Env, path: string): Promise<
       return json({ user: await requireUser(req, env) });
     case 'POST /api/auth/password':
       return changePassword(req, env);
+    case 'PATCH /api/auth/profile':
+      return updateProfile(req, env);
     case 'GET /api/setup':
       return setupStatus(env);
     case 'POST /api/setup':

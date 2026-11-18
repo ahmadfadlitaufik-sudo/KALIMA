@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { VIEW_TITLES } from '../services/viewRoute';
-import { ChangePasswordModal } from './ChangePasswordModal';
 import { GlobalSearch } from './GlobalSearch';
 
 export const Header: React.FC = () => {
@@ -29,13 +28,13 @@ export const Header: React.FC = () => {
     orders,
     getLowStockSKUs,
     setQuickOrderModalOpen,
+    setCurrentView,
     cloudSyncStatus,
     lastSyncedAt,
     syncToCloudNow,
     logout,
   } = useApp();
 
-  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const [syncSuccessMessage, setSyncSuccessMessage] = useState<string | null>(null);
 
@@ -168,8 +167,8 @@ export const Header: React.FC = () => {
         {/* Akun yang sedang masuk (peran ditentukan Owner di menu Pengguna) */}
         <button
           type="button"
-          onClick={() => setChangePasswordOpen(true)}
-          title={`${currentUser.name} — ${currentUser.email}. Klik untuk ganti kata sandi.`} aria-label={`${currentUser.name} — ${currentUser.email}. Klik untuk ganti kata sandi.`}
+          onClick={() => setCurrentView('profile')}
+          title={`${currentUser.name} — ${currentUser.email}. Buka profil saya.`} aria-label={`${currentUser.name} — ${currentUser.email}. Buka profil saya.`}
           className="px-3 py-2 rounded-full bg-white border border-slate-200/80 shadow-sm text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer"
         >
           {isOwner ? (
@@ -182,7 +181,6 @@ export const Header: React.FC = () => {
             {currentUser.role}
           </span>
         </button>
-        {changePasswordOpen && <ChangePasswordModal onClose={() => setChangePasswordOpen(false)} />}
 
         {/* Logout Button */}
         <button

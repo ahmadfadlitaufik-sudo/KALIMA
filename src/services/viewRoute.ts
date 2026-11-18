@@ -13,6 +13,7 @@ const VIEW_PATHS: Record<AppView, string> = {
   import_export: '/impor-ekspor',
   audit: '/audit',
   users: '/pengguna',
+  profile: '/profil',
 };
 
 export const viewToPath = (view: AppView): string => VIEW_PATHS[view];
@@ -37,4 +38,5 @@ export const VIEW_TITLES: Record<AppView, string> = {
   import_export: 'Impor & Ekspor',
   audit: 'Jejak Audit',
   users: 'Pengguna',
+  profile: 'Profil Saya',
 };

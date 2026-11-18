@@ -251,11 +251,17 @@ export const Sidebar: React.FC = () => {
         {/* Bottom: User Avatar Ring & Expand Toggle (Reference Image Style) */}
         <div className="px-3 pt-2 flex flex-col items-center gap-2 border-t border-slate-100">
           <div className="w-full flex items-center justify-between gap-1.5">
-            <div
-              className={`flex items-center gap-2.5 p-1 rounded-2xl flex-1 min-w-0 ${
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentView('profile');
+                setMobileMenuOpen(false);
+              }}
+              className={`flex items-center gap-2.5 p-1 rounded-2xl flex-1 min-w-0 text-left cursor-pointer hover:bg-slate-50 ${
                 !expanded && !mobileMenuOpen ? 'justify-center' : ''
               }`}
-              title={`Login: ${currentUser.name} (${currentUser.role}) — ${currentUser.email}`}
+              title={`${currentUser.name} (${currentUser.role}) — ${currentUser.email}. Buka profil saya.`}
+              aria-label={`Profil saya: ${currentUser.name}`}
             >
               {/* Circular Avatar with Ring (Reference: Bottom-left avatar in reference image) */}
               <div className="relative shrink-0">
@@ -288,7 +294,7 @@ export const Sidebar: React.FC = () => {
                   </span>
                 </div>
               )}
-            </div>
+            </button>
 
             {/* Logout button */}
             <button

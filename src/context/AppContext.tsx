@@ -83,7 +83,8 @@ export type AppView =
   | 'finance'
   | 'import_export'
   | 'audit'
-  | 'users';
+  | 'users'
+  | 'profile';
 
 export type ThemeMode = 'dark' | 'light';
 

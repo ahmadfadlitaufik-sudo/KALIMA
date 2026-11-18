@@ -22,6 +22,7 @@ const PurchasesView = lazy(() => import('./views/PurchasesView').then(m => ({ de
 const ImportExportView = lazy(() => import('./views/ImportExportView').then(m => ({ default: m.ImportExportView })));
 const AuditLogView = lazy(() => import('./views/AuditLogView').then(m => ({ default: m.AuditLogView })));
 const UsersView = lazy(() => import('./views/UsersView').then(m => ({ default: m.UsersView })));
+const ProfileView = lazy(() => import('./views/ProfileView').then(m => ({ default: m.ProfileView })));
 
 const MainLayout: React.FC = () => {
   const { currentView, quickOrderModalOpen, setQuickOrderModalOpen, theme, isOwner } = useApp();
@@ -105,6 +106,7 @@ const MainLayout: React.FC = () => {
             {currentView === 'import_export' && isOwner && <ImportExportView />}
             {currentView === 'audit' && <AuditLogView />}
             {currentView === 'users' && isOwner && <UsersView />}
+            {currentView === 'profile' && <ProfileView />}
           </Suspense>
         </main>
       </div>

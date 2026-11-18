@@ -169,6 +169,36 @@ describe('change password', () => {
   });
 });
 
+describe('profile', () => {
+  it('lets a user rename themselves and returns the updated session user', async () => {
+    const cookie = await setupOwner();
+
+    const res = await call('PATCH', '/api/auth/profile', { name: '  Ahmad Fadli  ' }, cookie);
+
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { user: unknown }).user).toMatchObject({ email: OWNER_EMAIL, name: 'Ahmad Fadli', role: 'owner' });
+    expect(((await (await call('GET', '/api/auth/me', undefined, cookie)).json()) as { user: { name: string } }).user.name).toBe('Ahmad Fadli');
+  });
+
+  it('rejects an empty or overlong name and keeps the old one', async () => {
+    const cookie = await setupOwner();
+
+    expect((await call('PATCH', '/api/auth/profile', { name: '   ' }, cookie)).status).toBe(400);
+    expect((await call('PATCH', '/api/auth/profile', { name: 'x'.repeat(61) }, cookie)).status).toBe(400);
+    expect((await call('PATCH', '/api/auth/profile', {}, cookie)).status).toBe(400);
+    expect(((await (await call('GET', '/api/auth/me', undefined, cookie)).json()) as { user: { name: string } }).user.name).toBe('Fadli');
+  });
+
+  it('requires a session and never changes role or email', async () => {
+    expect((await call('PATCH', '/api/auth/profile', { name: 'Siapa' })).status).toBe(401);
+
+    const cookie = await setupOwner();
+    const res = await call('PATCH', '/api/auth/profile', { name: 'Baru', role: 'admin', email: 'x@y.com' }, cookie);
+
+    expect(((await res.json()) as { user: unknown }).user).toMatchObject({ email: OWNER_EMAIL, role: 'owner' });
+  });
+});
+
 describe('routing', () => {
   it('unknown /api paths return a JSON 404', async () => {
     const res = await call('GET', '/api/tidak-ada');

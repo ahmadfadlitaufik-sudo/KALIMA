@@ -80,6 +80,10 @@ export const api = {
     }
   },
 
+  /** Ubah nama tampilan sendiri; mengembalikan data pengguna terbaru. */
+  updateProfile: async (name: string): Promise<SessionUser> =>
+    (await request<{ user: SessionUser }>('PATCH', '/api/auth/profile', { name })).user,
+
   changePassword: (currentPassword: string, newPassword: string): Promise<void> =>
     request('POST', '/api/auth/password', { currentPassword, newPassword }),
 

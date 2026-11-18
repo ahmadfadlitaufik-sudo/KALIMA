@@ -28,4 +28,10 @@ describe('view routes', () => {
     expect(pathToView('/customers')).toBe('customers');
     expect(pathToView('/products/')).toBe('products');
   });
+
+  it('opens the profile page at /profil and its English alias', () => {
+    expect(pathToView('/profil')).toBe('profile');
+    expect(pathToView('/profile')).toBe('profile');
+    expect(viewToPath('profile')).toBe('/profil');
+  });
 });

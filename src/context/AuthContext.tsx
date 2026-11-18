@@ -14,6 +14,8 @@ interface AuthContextType {
   /** Buat Owner pertama; kembalikan pesan error, atau null bila berhasil. */
   completeSetup: (token: string, name: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
+  /** Ganti nama tampilan sendiri; kembalikan pesan error, atau null bila berhasil. */
+  updateName: (name: string) => Promise<string | null>;
   /** Kembali ke halaman login tanpa memanggil server (sesi sudah habis). */
   markSignedOut: () => void;
 }
@@ -87,6 +89,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await api.logout();
       } finally {
         markSignedOut();
+      }
+    },
+    updateName: async (name) => {
+      try {
+        setAppUser(toAppUser(await api.updateProfile(name)));
+        return null;
+      } catch (error) {
+        return messageOf(error);
       }
     },
     markSignedOut,
