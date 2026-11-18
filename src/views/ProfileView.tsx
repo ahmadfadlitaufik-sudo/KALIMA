@@ -85,9 +85,7 @@ export const ProfileView: React.FC = () => {
   const passwordType = showPasswords ? 'text' : 'password';
 
   return (
-    <div className="space-y-5 pb-12 max-w-2xl">
-      <p className="text-xs text-slate-600">Atur nama dan kata sandi akun Anda sendiri.</p>
-
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start pb-12">
       <form onSubmit={handleSaveName} className={CARD}>
         <h2 className="text-sm font-bold text-slate-900">Info akun</h2>
         <Notice message={nameMessage} />
@@ -117,7 +115,8 @@ export const ProfileView: React.FC = () => {
           </div>
         </div>
         <p className="text-[11px] text-slate-500">Email dan peran diatur oleh Owner di menu Pengguna.</p>
-        <div className="flex justify-end">
+        <div className="flex items-center justify-end gap-3">
+          {!nameChanged && !savingName && <span className="text-[11px] text-slate-500">Ubah nama dulu untuk menyimpan.</span>}
           <button type="submit" disabled={savingName || !nameChanged || !trimmedName} className={PRIMARY_BUTTON}>
             {savingName ? 'Menyimpan…' : 'Simpan nama'}
           </button>

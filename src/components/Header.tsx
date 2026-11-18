@@ -14,6 +14,7 @@ import {
   Sparkles,
   Activity,
   LogOut,
+  ChevronRight,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { VIEW_TITLES } from '../services/viewRoute';
@@ -42,20 +43,21 @@ export const Header: React.FC = () => {
   const pendingCancellations = orders.filter(
     (o) => o.statusOrder === 'menunggu_approval_batal'
   ).length;
+  /** SKU di bawah stok minimum, ditambah permintaan pembatalan yang menunggu (hanya Owner yang bisa menyetujui). */
+  const notificationCount = lowStockCount + (isOwner ? pendingCancellations : 0);
 
 
   return (
-    <header className="w-full flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
+    <header className="w-full">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
       {/* Left: Brand Badge & Segmented Top Nav Pills (Exact match to Reference Image) */}
       <div className="flex items-center gap-3 min-w-0">
-        {/* Mobile menu trigger */}
-        <button
-          onClick={() => setMobileMenuOpen(true)}
-          className="btn-circle-action lg:hidden shrink-0"
-          aria-label="Buka Menu"
-        >
-          <Menu className="w-4 h-4 text-slate-700" />
-        </button>
+        {/* Tombol menu hanya untuk layar kecil; di laptop sidebar sudah terbuka */}
+        <span className="lg:hidden shrink-0">
+          <button onClick={() => setMobileMenuOpen(true)} className="btn-circle-action" aria-label="Buka Menu">
+            <Menu className="w-4 h-4 text-slate-700" />
+          </button>
+        </span>
 
         <h1 className="text-lg font-extrabold text-slate-900 tracking-tight truncate">{VIEW_TITLES[currentView]}</h1>
       </div>
@@ -68,12 +70,16 @@ export const Header: React.FC = () => {
         <div className="relative">
           <button
             onClick={() => setShowNotificationPopup(!showNotificationPopup)}
-            title="Notifikasi & Peringatan Sistem" aria-label="Notifikasi & Peringatan Sistem"
+            title={notificationCount > 0 ? `${notificationCount} pemberitahuan` : 'Tidak ada pemberitahuan'}
+            aria-label={notificationCount > 0 ? `Pemberitahuan: ${notificationCount} perlu perhatian` : 'Pemberitahuan: tidak ada'}
+            aria-expanded={showNotificationPopup}
             className="btn-circle-action cursor-pointer relative"
           >
             <Bell className="w-4 h-4 text-slate-600" />
-            {(lowStockCount > 0 || pendingCancellations > 0) && (
-              <span className="w-2.5 h-2.5 rounded-full bg-[#f43f5e] ring-2 ring-white absolute top-2 right-2 animate-pulse" />
+            {notificationCount > 0 && (
+              <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold leading-[18px] text-center ring-2 ring-white absolute -top-1 -right-1" aria-hidden="true">
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
             )}
           </button>
 
@@ -139,7 +145,7 @@ export const Header: React.FC = () => {
               <>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
                 <CloudCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="hidden sm:inline font-medium text-xs">Sync Cloud</span>
+                <span className="sr-only">Server terhubung</span>
               </>
             ) : cloudSyncStatus === 'syncing' ? (
               <>
@@ -177,9 +183,10 @@ export const Header: React.FC = () => {
             <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
           )}
           <span className="hidden sm:inline">{currentUser.name.split(' ')[0]}</span>
-          <span className="text-[11px] uppercase font-bold px-1.5 py-0.2 rounded-full bg-slate-100 text-slate-700">
-            {currentUser.role}
+          <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
+            {isOwner ? 'Owner' : 'Staf'}
           </span>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
         </button>
 
         {/* Logout Button */}
@@ -191,16 +198,18 @@ export const Header: React.FC = () => {
           <LogOut className="w-4 h-4" />
         </button>
 
-        {/* Quick Order CTA Button (Solid Dark Capsule Pill) */}
-        <button
-          onClick={() => setQuickOrderModalOpen(true)}
-          className="btn-primary-dark flex items-center gap-1.5 text-xs whitespace-nowrap cursor-pointer shadow-md"
-        >
-          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>Order Baru</span>
-        </button>
+        {/* Order baru ada di setiap halaman kerja, tidak di halaman profil */}
+        {currentView !== 'profile' && (
+          <button
+            onClick={() => setQuickOrderModalOpen(true)}
+            className="btn-primary-dark flex items-center gap-1.5 text-xs whitespace-nowrap cursor-pointer shadow-md"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Order Baru</span>
+          </button>
+        )}
       </div>
-
+      </div>
     </header>
   );
 };
