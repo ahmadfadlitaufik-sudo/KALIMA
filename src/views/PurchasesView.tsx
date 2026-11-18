@@ -53,6 +53,8 @@ import {
 } from '../types';
 import { VendorPerformanceSummary } from '../components/VendorPerformanceSummary';
 import { deliveryOverview, vendorDeliveryStats } from '../services/vendorPerformance';
+import { RESTOCK_TARGET_DAYS, RESTOCK_WINDOW_DAYS, restockSuggestions } from '../services/restockPlanning';
+import { getLocalDateString } from '../types';
 
 const CARD = 'bg-white rounded-2xl border border-slate-200';
 const SMALL_INPUT = 'bg-white border border-slate-300 px-3 py-2 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-slate-500';
@@ -65,6 +67,8 @@ const ICON_BUTTON = 'w-8 h-8 inline-flex items-center justify-center rounded-lg 
 export const PurchasesView: React.FC = () => {
   const {
     purchaseOrders,
+    orders,
+    calculateStockSummary,
     vendors,
     skus,
     series,
@@ -83,7 +87,7 @@ export const PurchasesView: React.FC = () => {
   } = useApp();
 
   // Navigation Tabs: 'orders' | 'tracking' | 'inbound' | 'vendors' | 'performance'
-  const [activeTab, setActiveTab] = useState<'orders' | 'tracking' | 'inbound' | 'vendors' | 'performance'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'restock' | 'tracking' | 'inbound' | 'vendors' | 'performance'>('orders');
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,6 +98,33 @@ export const PurchasesView: React.FC = () => {
 
   // Modals
   const [isCreatePOModalOpen, setIsCreatePOModalOpen] = useState(false);
+  const [restockPrefill, setRestockPrefill] = useState<{ sku: string; qtyPesan: number; hargaBeliSatuan: number }[] | undefined>(undefined);
+
+  // Saran restok
+  const stockSummary = calculateStockSummary();
+  const suggestions = useMemo(
+    () =>
+      restockSuggestions({
+        orders,
+        skus,
+        stockBySku: Object.fromEntries(Object.entries(stockSummary).map(([code, entry]) => [code, entry.gudang])),
+        purchaseOrders,
+        today: getLocalDateString(),
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [orders, skus, purchaseOrders, stockSummary],
+  );
+  const [restockChecked, setRestockChecked] = useState<Record<string, boolean>>({});
+  const [restockQty, setRestockQty] = useState<Record<string, number>>({});
+  const qtyFor = (row: { sku: string; suggested: number }) => restockQty[row.sku] ?? row.suggested;
+  const restockSelected = suggestions.filter((row) => restockChecked[row.sku] && qtyFor(row) > 0);
+  const restockSearchMatch = (row: { sku: string; name: string }) =>
+    !searchQuery.trim() || `${row.sku} ${row.name}`.toLowerCase().includes(searchQuery.trim().toLowerCase());
+  const restockRows = suggestions.filter(restockSearchMatch);
+  const openRestockPO = () => {
+    setRestockPrefill(restockSelected.map((row) => ({ sku: row.sku, qtyPesan: qtyFor(row), hargaBeliSatuan: row.hpp })));
+    setIsCreatePOModalOpen(true);
+  };
   const [isShipModalOpen, setIsShipModalOpen] = useState(false);
   const [selectedPOForShipping, setSelectedPOForShipping] = useState<PurchaseOrder | null>(null);
 
@@ -350,6 +381,7 @@ export const PurchasesView: React.FC = () => {
 
   const tabs: { id: typeof activeTab; label: string }[] = [
     { id: 'orders', label: `Daftar PO (${purchaseOrders.length})` },
+    { id: 'restock', label: `Saran restok${suggestions.length ? ` (${suggestions.length})` : ''}` },
     { id: 'tracking', label: `Dalam perjalanan (${purchaseOrders.filter((p) => p.statusPO === 'dikirim').length})` },
     { id: 'inbound', label: 'Terima barang' },
     { id: 'vendors', label: `Vendor (${vendors.length})` },
@@ -602,6 +634,128 @@ export const PurchasesView: React.FC = () => {
       {/* ========================================================================= */}
       {/* TAB 2: PELACAKAN PENGIRIMAN & IN-TRANSIT KARGO */}
       {/* ========================================================================= */}
+      {activeTab === 'restock' && (
+        <div className="space-y-3">
+          <div className={`${CARD} p-4 text-xs text-slate-600 space-y-1`}>
+            <div className="text-sm font-bold text-slate-900">Perlu dipesan</div>
+            <p>
+              Usulan menjaga stok cukup {RESTOCK_TARGET_DAYS} hari, dari penjualan {RESTOCK_WINDOW_DAYS} hari terakhir, dikurangi stok gudang dan barang yang sudah dipesan tapi belum tiba.
+              Jumlah bisa diubah sebelum dibuat PO.
+            </p>
+            {suggestions.length > 0 && (
+              <p className="font-semibold text-slate-900">
+                {suggestions.length} SKU · {suggestions.reduce((sum, row) => sum + row.suggested, 0).toLocaleString('id-ID')} pcs usulan
+              </p>
+            )}
+          </div>
+
+          <div className={`${CARD} overflow-hidden`}>
+            <div className="p-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <label className="inline-flex items-center gap-2 text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={restockRows.length > 0 && restockRows.every((row) => restockChecked[row.sku])}
+                  onChange={(e) => setRestockChecked((prev) => ({ ...prev, ...Object.fromEntries(restockRows.map((row) => [row.sku, e.target.checked])) }))}
+                  className="w-4 h-4 rounded"
+                />
+                Pilih semua yang tampil
+              </label>
+              <button type="button" onClick={openRestockPO} disabled={restockSelected.length === 0} className={PRIMARY_BUTTON}>
+                <Plus className="w-3.5 h-3.5" /> Buat PO ({restockSelected.length} SKU)
+              </button>
+            </div>
+
+            {restockRows.length === 0 ? (
+              <p className="p-12 text-center text-xs text-slate-500">
+                {suggestions.length === 0
+                  ? `Tidak ada SKU yang perlu dipesan. Hanya SKU yang laku dalam ${RESTOCK_WINDOW_DAYS} hari terakhir dan stoknya kurang dari kebutuhan ${RESTOCK_TARGET_DAYS} hari yang muncul di sini.`
+                  : 'Tidak ada SKU yang cocok dengan pencarian.'}
+              </p>
+            ) : (
+              <>
+                <div className="hidden md:block">
+                  <table className="w-full text-left text-xs text-slate-700">
+                    <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] tracking-wider border-b border-slate-200">
+                      <tr>
+                        <th className="py-3 pl-4 pr-2 w-8" />
+                        <th className="py-3 px-3">Produk</th>
+                        <th className="py-3 px-3 text-right">Stok</th>
+                        <th className="py-3 px-3 text-right">Sudah dipesan</th>
+                        <th className="py-3 px-3 text-right">Laku / hari</th>
+                        <th className="py-3 px-3 text-right">Sisa hari</th>
+                        <th className="py-3 px-4 text-right">Pesan (pcs)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {restockRows.map((row) => (
+                        <tr key={row.sku} className="hover:bg-slate-50">
+                          <td className="py-2.5 pl-4 pr-2">
+                            <input
+                              type="checkbox"
+                              aria-label={`Pilih ${row.sku}`}
+                              checked={Boolean(restockChecked[row.sku])}
+                              onChange={(e) => setRestockChecked((prev) => ({ ...prev, [row.sku]: e.target.checked }))}
+                              className="w-4 h-4 rounded"
+                            />
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className="font-semibold text-slate-900">{row.name}</div>
+                            <div className="font-mono text-[11px] text-slate-500 whitespace-nowrap">{row.sku}</div>
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-mono">{row.stock}</td>
+                          <td className="py-2.5 px-3 text-right font-mono text-slate-500">{row.onOrder}</td>
+                          <td className="py-2.5 px-3 text-right font-mono">{row.perDay.toFixed(1)}</td>
+                          <td className={`py-2.5 px-3 text-right font-mono font-semibold ${row.daysLeft <= 7 ? 'text-rose-700' : 'text-slate-900'}`}>{row.daysLeft}</td>
+                          <td className="py-2.5 px-4 text-right">
+                            <input
+                              type="number"
+                              min="0"
+                              aria-label={`Jumlah pesan ${row.sku}`}
+                              value={qtyFor(row)}
+                              onChange={(e) => setRestockQty((prev) => ({ ...prev, [row.sku]: Math.max(0, Math.floor(Number(e.target.value) || 0)) }))}
+                              className={`${SMALL_INPUT} w-24 font-mono text-right`}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="md:hidden divide-y divide-slate-100">
+                  {restockRows.map((row) => (
+                    <div key={row.sku} className="p-4 flex items-start gap-3 text-xs">
+                      <input
+                        type="checkbox"
+                        aria-label={`Pilih ${row.sku}`}
+                        checked={Boolean(restockChecked[row.sku])}
+                        onChange={(e) => setRestockChecked((prev) => ({ ...prev, [row.sku]: e.target.checked }))}
+                        className="w-4 h-4 rounded mt-0.5"
+                      />
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="font-semibold text-slate-900">{row.name}</div>
+                        <div className="font-mono text-[11px] text-slate-500">{row.sku}</div>
+                        <div className="text-slate-600">
+                          Stok {row.stock} · dipesan {row.onOrder} · {row.perDay.toFixed(1)}/hari ·{' '}
+                          <span className={row.daysLeft <= 7 ? 'text-rose-700 font-semibold' : ''}>sisa {row.daysLeft} hari</span>
+                        </div>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        aria-label={`Jumlah pesan ${row.sku}`}
+                        value={qtyFor(row)}
+                        onChange={(e) => setRestockQty((prev) => ({ ...prev, [row.sku]: Math.max(0, Math.floor(Number(e.target.value) || 0)) }))}
+                        className={`${SMALL_INPUT} w-20 font-mono text-right`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {activeTab === 'tracking' && (
         <div className="space-y-4">
           <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs">
@@ -925,12 +1079,19 @@ export const PurchasesView: React.FC = () => {
       {isCreatePOModalOpen && (
         <CreatePOModal
           isOpen={isCreatePOModalOpen}
-          onClose={() => setIsCreatePOModalOpen(false)}
+          onClose={() => {
+            setIsCreatePOModalOpen(false);
+            setRestockPrefill(undefined);
+          }}
           vendors={vendors}
           skus={skus}
           cashAccounts={cashAccounts}
+          initialItems={restockPrefill}
           onCreated={(po) => {
             setIsCreatePOModalOpen(false);
+            setRestockPrefill(undefined);
+            setRestockChecked({});
+            setRestockQty({});
             showToast(`Purchase Order #${po.noPO} berhasil diterbitkan!`);
           }}
         />
@@ -1085,6 +1246,8 @@ interface CreatePOModalProps {
   vendors: Vendor[];
   skus: SKUItem[];
   cashAccounts: any[];
+  /** Isian awal, misalnya dari saran restok. */
+  initialItems?: { sku: string; qtyPesan: number; hargaBeliSatuan: number }[];
   onCreated: (po: PurchaseOrder) => void;
 }
 
@@ -1094,6 +1257,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
   vendors,
   skus,
   cashAccounts,
+  initialItems,
   onCreated,
 }) => {
   const { createPurchaseOrder } = useApp();
@@ -1120,14 +1284,18 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
   // Line items
   const [poItems, setPoItems] = useState<
     { sku: string; qtyPesan: number; hargaBeliSatuan: number; catatan: string }[]
-  >([
-    {
-      sku: skus[0]?.sku || '',
-      qtyPesan: 50,
-      hargaBeliSatuan: skus[0]?.hpp || 48000,
-      catatan: '',
-    },
-  ]);
+  >(() =>
+    initialItems && initialItems.length > 0
+      ? initialItems.map((item) => ({ ...item, catatan: '' }))
+      : [
+          {
+            sku: skus[0]?.sku || '',
+            qtyPesan: 50,
+            hargaBeliSatuan: skus[0]?.hpp || 48000,
+            catatan: '',
+          },
+        ],
+  );
 
   // Calculations
   const totalBiayaBahan = useMemo(() => {
