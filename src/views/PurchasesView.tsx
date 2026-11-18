@@ -52,6 +52,15 @@ import {
   ApparelSize,
 } from '../types';
 import { VendorPerformanceSummary } from '../components/VendorPerformanceSummary';
+import { deliveryOverview, vendorDeliveryStats } from '../services/vendorPerformance';
+
+const CARD = 'bg-white rounded-2xl border border-slate-200';
+const SMALL_INPUT = 'bg-white border border-slate-300 px-3 py-2 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-slate-500';
+const OUTLINE_BUTTON =
+  'inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
+const PRIMARY_BUTTON =
+  'segmented-pill-active inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
+const ICON_BUTTON = 'w-8 h-8 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 cursor-pointer';
 
 export const PurchasesView: React.FC = () => {
   const {
@@ -188,692 +197,404 @@ export const PurchasesView: React.FC = () => {
     }
   };
 
-  // Shipping Status Badge Component
-  const getShippingStatusBadge = (po: PurchaseOrder) => {
-    const shipKey = getShippingStatusKey(po);
+  const delivery = useMemo(
+    () => deliveryOverview([vendorDeliveryStats(purchaseOrders.filter((po) => po.statusPO !== 'batal'))]),
+    [purchaseOrders],
+  );
 
-    if (shipKey === 'diterima') {
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => {
-              setSelectedPOForTracking(po);
-              setIsTrackingModalOpen(true);
-            }}
-            title="Klik untuk melihat detail timeline tracking" aria-label="Klik untuk melihat detail timeline tracking"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 transition-all cursor-pointer group shadow-2xs"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="font-bold">Diterima</span>
-          </button>
-          <span className="text-[11px] text-emerald-700/80 font-mono">
-            {po.tanggalDiterima ? `Tiba: ${po.tanggalDiterima}` : 'Gudang Utama'}
-          </span>
-        </div>
-      );
-    }
+  const SHIPPING_LABEL: Record<'diproses' | 'dalam_perjalanan' | 'diterima', string> = {
+    diproses: 'Diproses vendor',
+    dalam_perjalanan: 'Dalam perjalanan',
+    diterima: 'Diterima',
+  };
 
-    if (shipKey === 'dalam_perjalanan') {
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => {
-              setSelectedPOForTracking(po);
-              setIsTrackingModalOpen(true);
-            }}
-            title="Klik untuk melihat detail timeline tracking" aria-label="Klik untuk melihat detail timeline tracking"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 transition-all cursor-pointer group shadow-2xs"
-          >
-            <Truck className="w-3.5 h-3.5 text-blue-600 animate-pulse shrink-0" />
-            <span className="font-bold">Dalam Perjalanan</span>
-          </button>
-          <span className="text-[11px] text-blue-700/80 font-mono max-w-[140px] truncate text-center">
-            {po.ekspedisi || 'Kargo'} {po.noResi ? `· ${po.noResi}` : ''}
-          </span>
-        </div>
-      );
-    }
+  const STATUS_LABEL: Record<PurchaseOrderStatus, string> = {
+    draft: 'Draf',
+    dipesan: 'Dipesan',
+    dikirim: 'Dikirim',
+    diterima_sebagian: 'Tiba sebagian',
+    diterima: 'Diterima',
+    batal: 'Batal',
+  };
 
+  const badge = (text: string, tone: 'neutral' | 'muted' | 'warn' | 'danger' = 'neutral') => (
+    <span
+      className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap border ${
+        tone === 'danger'
+          ? 'bg-rose-50 text-rose-700 border-rose-200'
+          : tone === 'warn'
+          ? 'bg-amber-50 text-amber-800 border-amber-200'
+          : tone === 'muted'
+          ? 'bg-slate-100 text-slate-600 border-slate-200'
+          : 'bg-white text-slate-700 border-slate-300'
+      }`}
+    >
+      {text}
+    </span>
+  );
+
+  const getStatusBadge = (status: PurchaseOrderStatus) => badge(STATUS_LABEL[status] || status, status === 'batal' ? 'danger' : status === 'diterima' ? 'muted' : 'neutral');
+
+  const getPaymentBadge = (status: PurchasePaymentStatus, sisa: number) =>
+    status === 'lunas' ? badge('Lunas', 'muted') : status === 'dp' ? badge(`DP · sisa Rp ${sisa.toLocaleString('id-ID')}`, 'warn') : badge('Belum bayar', 'danger');
+
+  const openTracking = (po: PurchaseOrder) => {
+    setSelectedPOForTracking(po);
+    setIsTrackingModalOpen(true);
+  };
+
+  const shippingSelect = (po: PurchaseOrder) => (
+    <select
+      aria-label={`Status pengiriman ${po.noPO}`}
+      value={getShippingStatusKey(po)}
+      disabled={po.statusPO === 'batal'}
+      onChange={(e) => handleQuickChangeShippingStatus(po, e.target.value as 'diproses' | 'dalam_perjalanan' | 'diterima')}
+      className="bg-white border border-slate-300 px-2 py-1.5 rounded-lg text-xs text-slate-800 cursor-pointer disabled:opacity-60"
+    >
+      {(Object.keys(SHIPPING_LABEL) as (keyof typeof SHIPPING_LABEL)[]).map((key) => (
+        <option key={key} value={key}>
+          {SHIPPING_LABEL[key]}
+        </option>
+      ))}
+    </select>
+  );
+
+  const payButton = (po: PurchaseOrder) =>
+    po.sisaHutang > 0 && po.statusPO !== 'batal' ? (
+      <button
+        type="button"
+        onClick={() => {
+          setSelectedPOForPayment(po);
+          setIsPaymentModalOpen(true);
+        }}
+        className={`${OUTLINE_BUTTON} py-1.5`}
+      >
+        Bayar
+      </button>
+    ) : null;
+
+  const receiveButton = (po: PurchaseOrder) =>
+    po.statusPO !== 'diterima' && po.statusPO !== 'batal' ? (
+      <button
+        type="button"
+        onClick={() => {
+          setSelectedPOForReceiving(po);
+          setIsReceiveModalOpen(true);
+        }}
+        className={`${OUTLINE_BUTTON} py-1.5`}
+      >
+        Terima barang
+      </button>
+    ) : null;
+
+  const rowActions = (po: PurchaseOrder, withPrimary = true) => {
+    const open = po.statusPO !== 'diterima' && po.statusPO !== 'batal';
     return (
-      <div className="flex flex-col items-center gap-1">
-        <button
-          onClick={() => {
-            setSelectedPOForTracking(po);
-            setIsTrackingModalOpen(true);
-          }}
-          title="Klik untuk melihat detail timeline tracking" aria-label="Klik untuk melihat detail timeline tracking"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200/80 transition-all cursor-pointer group shadow-2xs"
-        >
-          <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-          <span className="font-bold">Diproses</span>
+      <div className={`flex items-center justify-end gap-1.5 ${withPrimary ? 'flex-wrap' : 'flex-nowrap'}`}>
+        {withPrimary && payButton(po)}
+        {withPrimary && receiveButton(po)}
+        <button type="button" onClick={() => openTracking(po)} className={ICON_BUTTON} title="Lacak pengiriman" aria-label={`Lacak ${po.noPO}`}>
+          <Eye className="w-3.5 h-3.5" />
         </button>
-        <span className="text-[11px] text-amber-700/80 font-normal">
-          Vendor Pabrik / CMT
-        </span>
+        {open && (
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedPOForShipping(po);
+              setIsShipModalOpen(true);
+            }}
+            className={ICON_BUTTON}
+            title="Isi ekspedisi & resi"
+            aria-label={`Isi ekspedisi dan resi ${po.noPO}`}
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedPOForDocument(po);
+            setIsDocumentModalOpen(true);
+          }}
+          className={ICON_BUTTON}
+          title="Dokumen PO"
+          aria-label={`Dokumen ${po.noPO}`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+        </button>
+        {isOwner && (
+          <button
+            type="button"
+            onClick={async () => {
+              if (
+                await askConfirm(`${po.noPO} dihapus dari daftar PO. Stok yang sudah diterima dan pembayaran yang sudah tercatat tidak ikut terhapus.`, {
+                  title: 'Hapus PO?',
+                  confirmLabel: 'Ya, hapus',
+                  danger: true,
+                })
+              ) {
+                deletePurchaseOrder(po.id);
+                showToast(`${po.noPO} dihapus.`);
+              }
+            }}
+            className={`${ICON_BUTTON} text-rose-700`}
+            title="Hapus PO"
+            aria-label={`Hapus ${po.noPO}`}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
     );
   };
 
-  // Status Badge Helper
-  const getStatusBadge = (status: PurchaseOrderStatus) => {
-    switch (status) {
-      case 'draft':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
-            <Clock className="w-3 h-3 text-slate-500" /> Draf PO
-          </span>
-        );
-      case 'dipesan':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-            <Clock className="w-3 h-3 text-amber-600 animate-pulse" /> Dipesan ke Vendor
-          </span>
-        );
-      case 'dikirim':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <Truck className="w-3 h-3 text-blue-600" /> Dalam Pengiriman (Kargo)
-          </span>
-        );
-      case 'diterima_sebagian':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
-            <Layers className="w-3 h-3 text-purple-600" /> Tiba Sebagian
-          </span>
-        );
-      case 'diterima':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Diterima di Gudang
-          </span>
-        );
-      case 'batal':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-            <X className="w-3 h-3 text-rose-600" /> Dibatalkan
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getPaymentBadge = (status: PurchasePaymentStatus, sisa: number) => {
-    switch (status) {
-      case 'lunas':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
-            <Check className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Lunas</span>
-          </span>
-        );
-      case 'dp':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-            <Clock className="w-3 h-3 text-amber-600" />
-            <span>DP (Sisa Rp {sisa.toLocaleString('id-ID')})</span>
-          </span>
-        );
-      case 'belum_bayar':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-            <CreditCard className="w-3 h-3 text-rose-600" />
-            <span>Belum Bayar</span>
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
+  const tabs: { id: typeof activeTab; label: string }[] = [
+    { id: 'orders', label: `Daftar PO (${purchaseOrders.length})` },
+    { id: 'tracking', label: `Dalam perjalanan (${purchaseOrders.filter((p) => p.statusPO === 'dikirim').length})` },
+    { id: 'inbound', label: 'Terima barang' },
+    { id: 'vendors', label: `Vendor (${vendors.length})` },
+    { id: 'performance', label: 'Kinerja vendor' },
+  ];
+  const monthName = new Date().toLocaleDateString('id-ID', { month: 'long' });
+  const hasFilter = statusFilter !== 'ALL' || shippingFilter !== 'ALL' || vendorFilter !== 'ALL' || paymentFilter !== 'ALL' || Boolean(searchQuery);
 
   return (
-    <div className="space-y-6">
-      {/* Toast Feedback */}
+    <div className="space-y-5 pb-12">
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-white border border-slate-200/90 text-slate-800 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-3">
-          <div className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-200">
-            <Check className="w-3.5 h-3.5" />
-          </div>
-          <span className="text-xs font-medium">{toastMessage}</span>
-          <button aria-label="Tutup" data-modal-close onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-slate-600 p-1">
+        <div role="status" className="fixed top-5 right-5 z-50 bg-white border border-slate-200 text-slate-900 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-xs">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span className="font-semibold">{toastMessage}</span>
+          <button type="button" aria-label="Tutup pesan" onClick={() => setToastMessage(null)} className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="p-2.5 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/60 shadow-2xs">
-              <Truck className="w-5 h-5" />
-            </span>
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-                Pengadaan & Pembelian Kaos (Vendor PO)
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Alur lengkap order kaos polos ke pabrik/vendor konveksi, tracking ekspedisi logistik, hingga penerimaan stok gudang.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p className="text-xs text-slate-600">Pesan kaos ke vendor, lacak kirimannya, terima ke gudang, dan lunasi tagihannya.</p>
+        <div className="flex flex-wrap gap-2">
           <button
+            type="button"
             onClick={() => {
               setEditingVendor(null);
               setIsVendorModalOpen(true);
             }}
-            className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs cursor-pointer"
+            className={OUTLINE_BUTTON}
           >
-            <Building2 className="w-3.5 h-3.5 text-slate-500" />
-            <span>+ Vendor Baru</span>
+            <Building2 className="w-3.5 h-3.5" /> Tambah vendor
           </button>
-
-          <button
-            onClick={() => setIsCreatePOModalOpen(true)}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer hover:shadow-sm"
-          >
-            <Plus className="w-4 h-4 text-amber-400" />
-            <span>Buat PO Kaos Baru</span>
+          <button type="button" onClick={() => setIsCreatePOModalOpen(true)} className={PRIMARY_BUTTON}>
+            <Plus className="w-3.5 h-3.5" /> Buat PO
           </button>
         </div>
       </div>
 
-      {/* Top Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {/* PO Aktif */}
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-all relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-500 text-xs mb-1.5 font-medium">
-            <span>PO Aktif Berjalan</span>
-            <span className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
-              <Clock className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="text-2xl font-bold font-mono text-slate-900">
-            {kpiStats.activePOCount}{' '}
-            <span className="text-xs text-slate-400 font-sans font-normal">pesanan</span>
-          </div>
-          <div className="text-xs text-slate-400 mt-1">Dalam proses pabrik & kargo</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className={`${CARD} p-3`}>
+          <div className="text-xs font-semibold text-slate-600">PO berjalan</div>
+          <div className="text-xl font-bold text-slate-900 font-mono mt-1">{kpiStats.activePOCount}</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Dipesan, dikirim, atau tiba sebagian</div>
         </div>
-
-        {/* Sedang Dikirim (In-Transit) */}
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-all relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-500 text-xs mb-1.5 font-medium">
-            <span>Kaos In-Transit (Ekspedisi)</span>
-            <span className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-              <Truck className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="text-2xl font-bold font-mono text-blue-600">
-            {kpiStats.inTransitQty.toLocaleString('id-ID')}{' '}
-            <span className="text-xs text-slate-400 font-sans font-normal">pcs</span>
-          </div>
-          <div className="text-xs text-slate-400 mt-1">
-            {kpiStats.inTransitCount} resi pengiriman kargo aktif
-          </div>
+        <button type="button" onClick={() => setActiveTab('tracking')} className={`${CARD} p-3 text-left hover:border-slate-400 cursor-pointer`}>
+          <div className="text-xs font-semibold text-slate-600">Dalam perjalanan</div>
+          <div className="text-xl font-bold text-slate-900 font-mono mt-1">{kpiStats.inTransitQty.toLocaleString('id-ID')} pcs</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">{kpiStats.inTransitCount} kiriman</div>
+        </button>
+        <div className={`${CARD} p-3`}>
+          <div className="text-xs font-semibold text-slate-600">Belanja PO {monthName}</div>
+          <div className="text-xl font-bold text-slate-900 font-mono mt-1">Rp {kpiStats.currentMonthSpend.toLocaleString('id-ID')}</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Menurut tanggal PO</div>
         </div>
-
-        {/* Belanja Bulan Ini */}
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-all relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-500 text-xs mb-1.5 font-medium">
-            <span>Belanja Bahan Bulan Ini</span>
-            <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-              <DollarSign className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-600">
-            Rp {kpiStats.currentMonthSpend.toLocaleString('id-ID')}
-          </div>
-          <div className="text-xs text-slate-400 mt-1">Total pengadaan bahan & CMT</div>
-        </div>
-
-        {/* Sisa Hutang Vendor */}
-        <div className="bg-white p-4.5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-all relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-500 text-xs mb-1.5 font-medium">
-            <span>Hutang Vendor (Berjalan)</span>
-            <span className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
-              <CreditCard className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="text-xl sm:text-2xl font-bold font-mono text-rose-600">
+        <div className={`${CARD} p-3`}>
+          <div className="text-xs font-semibold text-slate-600">Utang ke vendor</div>
+          <div className={`text-xl font-bold font-mono mt-1 ${kpiStats.totalUnpaidDebt > 0 ? 'text-rose-700' : 'text-slate-900'}`}>
             Rp {kpiStats.totalUnpaidDebt.toLocaleString('id-ID')}
           </div>
-          <div className="text-xs text-slate-400 mt-1">Kewajiban pelunasan PO berjalan</div>
+          <div className="text-[11px] text-slate-500 mt-0.5">Sisa tagihan PO yang belum lunas</div>
         </div>
       </div>
 
-      {/* Main Tab Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
-        <div className="segmented-pill-bar flex flex-wrap items-center gap-1 bg-white">
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'orders'
-                ? 'segmented-pill-active'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Daftar Purchase Order ({purchaseOrders.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('tracking')}
-            className={`px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'tracking'
-                ? 'segmented-pill-active'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Truck className="w-3.5 h-3.5" />
-            <span>Pelacakan In-Transit ({purchaseOrders.filter((p) => p.statusPO === 'dikirim').length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('inbound')}
-            className={`px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'inbound'
-                ? 'segmented-pill-active'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <ClipboardCheck className="w-3.5 h-3.5" />
-            <span>Penerimaan Barang Gudang</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('vendors')}
-            className={`px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'vendors'
-                ? 'segmented-pill-active'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Direktori Vendor ({vendors.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('performance')}
-            className={`px-4 py-2 rounded-full font-bold text-xs transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'performance'
-                ? 'segmented-pill-active'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Performa Vendor & Keterlambatan</span>
-          </button>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-1.5" role="tablist">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer ${
+                activeTab === tab.id ? 'segmented-pill-active' : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-
-        {/* Global Search Bar */}
-        <div className="relative w-full sm:w-64">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        <div className="relative w-full lg:w-64">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
           <input
-            type="text"
-            placeholder="Cari PO, vendor, resi, SKU..."
+            type="search"
+            aria-label="Cari PO"
+            placeholder="Cari PO, vendor, resi, SKU…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-full text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 transition-colors shadow-2xs"
+            className="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-slate-500"
           />
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* TAB 1: DAFTAR PURCHASE ORDER */}
-      {/* ========================================================================= */}
       {activeTab === 'orders' && (
-        <div className="space-y-4">
-          {/* Vendor Performance Quick Insight Banner */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
-            <div className="flex items-center gap-3">
-              <span className="p-2 rounded-xl bg-blue-100/80 text-blue-700 border border-blue-200 shrink-0">
-                <BarChart3 className="w-4 h-4" />
-              </span>
-              <div>
-                <span className="text-slate-900 font-bold block">
-                  Ringkasan Kinerja & Tingkat Keterlambatan Pengiriman Vendor
-                </span>
-                <span className="text-slate-600 text-xs">
-                  Tingkat Ketepatan Waktu: <strong className="text-emerald-700 font-mono">92% On-Time</strong> · Rata-rata Terlambat: <strong className="text-amber-700 font-mono">0.6 Hari</strong> · Lead Time: <strong className="text-blue-700 font-mono">4.8 Hari</strong>
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setActiveTab('performance')}
-              className="px-3.5 py-1.5 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200/80 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs hover:shadow-xs cursor-pointer shrink-0 self-start sm:self-auto"
-            >
-              <span>Buka Grafik & Analisis Lengkap</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+        <div className="space-y-3">
+          <div className={`${CARD} p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs`}>
+            <span className="text-slate-600">
+              {delivery
+                ? `Ketepatan kirim ${delivery.onTimeRate}% · rata-rata terlambat ${delivery.avgDelayDays} hari · lead time ${delivery.avgLeadTime} hari (dari ${delivery.evaluated} PO diterima)`
+                : 'Kinerja kirim vendor muncul setelah ada PO yang diterima di gudang.'}
+            </span>
+            <button type="button" onClick={() => setActiveTab('performance')} className={`${OUTLINE_BUTTON} py-1.5 shrink-0`}>
+              Lihat kinerja vendor <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Filters Bar */}
-          <div className="flex flex-wrap items-center gap-2.5 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs text-xs">
-            <span className="text-slate-500 flex items-center gap-1 font-semibold pl-1">
-              <Filter className="w-3.5 h-3.5 text-slate-400" /> Filter:
-            </span>
+          <div className={`${CARD} overflow-hidden`}>
+            <div className="p-3 border-b border-slate-100 grid grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 text-xs">
+              <select aria-label="Status PO" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={SMALL_INPUT}>
+                <option value="ALL">Semua status PO</option>
+                <option value="dipesan">Dipesan</option>
+                <option value="dikirim">Dikirim</option>
+                <option value="diterima_sebagian">Tiba sebagian</option>
+                <option value="diterima">Diterima</option>
+                <option value="draft">Draf</option>
+                <option value="batal">Batal</option>
+              </select>
+              <select aria-label="Status pengiriman" value={shippingFilter} onChange={(e) => setShippingFilter(e.target.value)} className={SMALL_INPUT}>
+                <option value="ALL">Semua pengiriman</option>
+                <option value="diproses">Diproses vendor</option>
+                <option value="dalam_perjalanan">Dalam perjalanan</option>
+                <option value="diterima">Diterima</option>
+              </select>
+              <select aria-label="Vendor" value={vendorFilter} onChange={(e) => setVendorFilter(e.target.value)} className={SMALL_INPUT}>
+                <option value="ALL">Semua vendor</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.nama}
+                  </option>
+                ))}
+              </select>
+              <select aria-label="Status bayar" value={paymentFilter} onChange={(e) => setPaymentFilter(e.target.value)} className={SMALL_INPUT}>
+                <option value="ALL">Semua status bayar</option>
+                <option value="lunas">Lunas</option>
+                <option value="dp">DP</option>
+                <option value="belum_bayar">Belum bayar</option>
+              </select>
+              {hasFilter && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter('ALL');
+                    setShippingFilter('ALL');
+                    setVendorFilter('ALL');
+                    setPaymentFilter('ALL');
+                    setSearchQuery('');
+                  }}
+                  className="text-slate-600 font-semibold hover:underline cursor-pointer lg:ml-auto"
+                >
+                  Hapus filter
+                </button>
+              )}
+            </div>
 
-            {/* Status PO Filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-1.5 focus:outline-none focus:border-slate-900 focus:bg-white cursor-pointer font-medium"
-            >
-              <option value="ALL">Semua Status PO</option>
-              <option value="dipesan">Dipesan (Proses Vendor)</option>
-              <option value="dikirim">Sedang Dikirim (Kargo)</option>
-              <option value="diterima_sebagian">Tiba Sebagian</option>
-              <option value="diterima">Diterima Lengkap</option>
-              <option value="draft">Draf PO</option>
-              <option value="batal">Dibatalkan</option>
-            </select>
-
-            {/* Status Pengiriman Filter */}
-            <select
-              value={shippingFilter}
-              onChange={(e) => setShippingFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-1.5 focus:outline-none focus:border-slate-900 focus:bg-white cursor-pointer font-medium"
-            >
-              <option value="ALL">Semua Status Pengiriman</option>
-              <option value="diproses">⏳ Diproses (Pabrik)</option>
-              <option value="dalam_perjalanan">Dalam Perjalanan (Kargo)</option>
-              <option value="diterima">Diterima (Gudang)</option>
-            </select>
-
-            {/* Vendor Filter */}
-            <select
-              value={vendorFilter}
-              onChange={(e) => setVendorFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-1.5 focus:outline-none focus:border-slate-900 focus:bg-white cursor-pointer max-w-[200px] font-medium"
-            >
-              <option value="ALL">Semua Vendor</option>
-              {vendors.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.nama}
-                </option>
-              ))}
-            </select>
-
-            {/* Payment Filter */}
-            <select
-              value={paymentFilter}
-              onChange={(e) => setPaymentFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-3 py-1.5 focus:outline-none focus:border-slate-900 focus:bg-white cursor-pointer font-medium"
-            >
-              <option value="ALL">Semua Status Bayar</option>
-              <option value="lunas">Lunas</option>
-              <option value="dp">DP (Masih Ada Sisa)</option>
-              <option value="belum_bayar">Belum Bayar</option>
-            </select>
-
-            {(statusFilter !== 'ALL' || shippingFilter !== 'ALL' || vendorFilter !== 'ALL' || paymentFilter !== 'ALL' || searchQuery) && (
-              <button
-                onClick={() => {
-                  setStatusFilter('ALL');
-                  setShippingFilter('ALL');
-                  setVendorFilter('ALL');
-                  setPaymentFilter('ALL');
-                  setSearchQuery('');
-                }}
-                className="text-slate-500 hover:text-slate-900 text-xs font-medium underline ml-auto cursor-pointer"
-              >
-                Reset Filter
-              </button>
-            )}
-          </div>
-
-          {/* Orders Table */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50/90 text-xs uppercase tracking-wider text-slate-500 font-semibold border-b border-slate-200">
-                <tr>
-                  <th className="px-4 py-3.5">No. PO & Tanggal</th>
-                  <th className="px-4 py-3.5">Vendor / Pabrik</th>
-                  <th className="px-4 py-3.5">Rincian Kaos (Items)</th>
-                  <th className="px-4 py-3.5 text-center">Progres Penerimaan</th>
-                  <th className="px-4 py-3.5 text-right">Total Tagihan</th>
-                  <th className="px-4 py-3.5 text-center min-w-[210px]">Status Pengiriman</th>
-                  <th className="px-4 py-3.5 text-center">Status Bayar</th>
-                  <th className="px-4 py-3.5 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-sans">
-                {filteredPOs.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400">
-                      <Truck className="w-8 h-8 mx-auto text-slate-300 mb-2 opacity-60" />
-                      Tidak ada data Purchase Order yang sesuai dengan pencarian / filter.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredPOs.map((po) => {
-                    const receivedPct =
-                      po.totalQtyPesan > 0
-                        ? Math.min(100, Math.round(((po.totalQtyDiterima || 0) / po.totalQtyPesan) * 100))
-                        : 0;
-                    const shipStatus = getShippingStatusKey(po);
-
-                    return (
-                      <tr key={po.id} className="hover:bg-slate-50/70 transition-colors">
-                        {/* No PO & Date */}
-                        <td className="px-4 py-3.5">
-                          <div className="font-mono font-bold text-slate-900 text-xs flex items-center gap-1.5">
-                            <span>{po.noPO}</span>
-                          </div>
-                          <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                            <Calendar className="w-3 h-3 text-slate-400" />
-                            <span>{po.tanggalPO}</span>
-                          </div>
-                        </td>
-
-                        {/* Vendor */}
-                        <td className="px-4 py-3.5">
-                          <div className="font-semibold text-slate-900">{po.vendorNama}</div>
-                          <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                            <MapPin className="w-3 h-3 text-slate-400" />
-                            <span>{po.vendorKota}</span>
-                          </div>
-                        </td>
-
-                        {/* Items Summary */}
-                        <td className="px-4 py-3.5">
-                          <div className="font-medium text-slate-800">
-                            {po.totalQtyPesan} pcs ({po.items.length} artikel SKU)
-                          </div>
-                          <div className="text-xs text-slate-400 line-clamp-1 max-w-[220px]">
-                            {po.items.map((it) => `${it.qtyPesan}x ${it.size} ${it.colorName}`).join(', ')}
-                          </div>
-                        </td>
-
-                        {/* Progress Bar Penerimaan */}
-                        <td className="px-4 py-3.5 text-center">
-                          <div className="flex items-center justify-center gap-1.5 font-mono text-xs">
-                            <span className={po.totalQtyDiterima > 0 ? 'text-emerald-700 font-bold' : 'text-slate-400'}>
-                              {po.totalQtyDiterima || 0}
-                            </span>
-                            <span className="text-slate-300">/</span>
-                            <span className="text-slate-700">{po.totalQtyPesan} pcs</span>
-                          </div>
-                          <div className="w-24 bg-slate-100 h-1.5 rounded-full mx-auto mt-1.5 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-300 ${
-                                receivedPct === 100
-                                  ? 'bg-emerald-500'
-                                  : receivedPct > 0
-                                  ? 'bg-purple-500'
-                                  : 'bg-slate-300'
-                              }`}
-                              style={{ width: `${receivedPct}%` }}
-                            />
-                          </div>
-                          <div className="text-[11px] text-slate-400 mt-0.5 font-mono">{receivedPct}% diterima</div>
-                        </td>
-
-                        {/* Total Tagihan */}
-                        <td className="px-4 py-3.5 text-right font-mono">
-                          <div className="font-bold text-slate-900 text-xs">
-                            Rp {po.totalTagihan.toLocaleString('id-ID')}
-                          </div>
-                          {po.biayaEkspedisi > 0 && (
-                            <div className="text-[11px] text-slate-400">
-                              +Ongkir Rp {po.biayaEkspedisi.toLocaleString('id-ID')}
-                            </div>
-                          )}
-                        </td>
-
-                        {/* Kolom: Status Pengiriman */}
-                        <td className="px-4 py-3.5 text-center">
-                          <div className="flex flex-col items-center gap-1.5 min-w-[200px]">
-                            {/* Visual Status Badge */}
-                            {getShippingStatusBadge(po)}
-
-                            {/* Dropdown Selector Pilihan Status: Diproses, Dalam Perjalanan, Diterima & Tombol Tracking */}
-                            <div className="w-full flex items-center justify-center gap-1.5 mt-1">
-                              <select
-                                value={shipStatus}
-                                onChange={(e) =>
-                                  handleQuickChangeShippingStatus(
-                                    po,
-                                    e.target.value as 'diproses' | 'dalam_perjalanan' | 'diterima'
-                                  )
-                                }
-                                title="Ubah Status Pengiriman Langsung"
-                                className={`text-xs font-semibold px-2 py-1 rounded-lg border focus:outline-none cursor-pointer transition-colors ${
-                                  shipStatus === 'diterima'
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:border-emerald-300'
-                                    : shipStatus === 'dalam_perjalanan'
-                                    ? 'bg-blue-50 text-blue-700 border-blue-200 hover:border-blue-300'
-                                    : 'bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-300'
-                                }`}
-                              >
-                                <option value="diproses" className="bg-white text-amber-700">
-                                  ⏳ Diproses
-                                </option>
-                                <option value="dalam_perjalanan" className="bg-white text-blue-700">
-                                  Dalam Perjalanan
-                                </option>
-                                <option value="diterima" className="bg-white text-emerald-700">
-                                  Diterima
-                                </option>
-                              </select>
-
-                              <button
-                                onClick={() => {
-                                  setSelectedPOForTracking(po);
-                                  setIsTrackingModalOpen(true);
-                                }}
-                                title="Buka Modal Detail Tracking Pesanan Vendor" aria-label="Buka Modal Detail Tracking Pesanan Vendor"
-                                className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-lg text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
-                              >
-                                <Eye className="w-3 h-3 text-slate-500" />
-                                <span>Lacak</span>
-                              </button>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Status Bayar */}
-                        <td className="px-4 py-3.5 text-center">
-                          <div className="flex flex-col items-center gap-1.5">
-                            {getPaymentBadge(po.statusBayar, po.sisaHutang)}
-                            {po.sisaHutang > 0 && (
-                              <button
-                                onClick={() => {
-                                  setSelectedPOForPayment(po);
-                                  setIsPaymentModalOpen(true);
-                                }}
-                                className="px-2.5 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
-                                title="Buka form pelunasan utang vendor" aria-label="Buka form pelunasan utang vendor"
-                              >
-                                <DollarSign className="w-3 h-3 text-amber-600" />
-                                <span>Bayar Hutang</span>
-                              </button>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-4 py-3.5 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            {/* Tracking Detail Modal Button */}
-                            <button
-                              onClick={() => {
-                                setSelectedPOForTracking(po);
-                                setIsTrackingModalOpen(true);
-                              }}
-                              title="Buka Modal Detail Tracking & Perjalanan Barang" aria-label="Buka Modal Detail Tracking & Perjalanan Barang"
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200/80 transition-colors cursor-pointer"
-                            >
-                              <Truck className="w-3.5 h-3.5 text-blue-600" />
-                            </button>
-
-                            {/* Cetak PO Document */}
-                            <button
-                              onClick={() => {
-                                setSelectedPOForDocument(po);
-                                setIsDocumentModalOpen(true);
-                              }}
-                              title="Lihat & Cetak Dokumen PO Resmi" aria-label="Lihat & Cetak Dokumen PO Resmi"
-                              className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200/80 transition-colors cursor-pointer"
-                            >
-                              <FileText className="w-3.5 h-3.5 text-amber-600" />
-                            </button>
-
-                            {/* Update Shipping (Resi) */}
-                            {po.statusPO !== 'diterima' && po.statusPO !== 'batal' && (
-                              <button
-                                onClick={() => {
-                                  setSelectedPOForShipping(po);
-                                  setIsShipModalOpen(true);
-                                }}
-                                title="Update Ekspedisi & Nomor Resi Kargo" aria-label="Update Ekspedisi & Nomor Resi Kargo"
-                                className="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg border border-blue-200/80 transition-colors cursor-pointer"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-
-                            {/* Goods Receipt (Terima Barang ke Gudang) */}
-                            {po.statusPO !== 'diterima' && po.statusPO !== 'batal' && (
-                              <button
-                                onClick={() => {
-                                  setSelectedPOForReceiving(po);
-                                  setIsReceiveModalOpen(true);
-                                }}
-                                title="Terima Barang & Masukkan ke Stok Gudang" aria-label="Terima Barang & Masukkan ke Stok Gudang"
-                                className="p-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg border border-emerald-200/80 transition-colors cursor-pointer"
-                              >
-                                <ArrowDownLeft className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-
-                            {/* Delete PO (Owner only) */}
-                            {isOwner && (
-                              <button
-                                onClick={async () => {
-                                  if (await askConfirm(`Hapus ${po.noPO} dari sistem?`, { danger: true })) {
-                                    deletePurchaseOrder(po.id);
-                                    showToast(`Purchase Order #${po.noPO} berhasil dihapus.`);
-                                  }
-                                }}
-                                title="Hapus PO" aria-label="Hapus PO"
-                                className="p-1.5 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
+            {filteredPOs.length === 0 ? (
+              <p className="p-12 text-center text-xs text-slate-500">Tidak ada PO yang cocok.</p>
+            ) : (
+              <>
+                <div className="hidden lg:block">
+                  <table className="w-full text-left text-xs text-slate-700">
+                    <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] tracking-wider border-b border-slate-200">
+                      <tr>
+                        <th className="px-4 py-3">PO</th>
+                        <th className="px-3 py-3">Vendor</th>
+                        <th className="px-3 py-3">Barang</th>
+                        <th className="px-3 py-3 text-right">Total</th>
+                        <th className="px-3 py-3">Pengiriman</th>
+                        <th className="px-3 py-3">Bayar</th>
+                        <th className="px-4 py-3 text-right">Aksi</th>
                       </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredPOs.map((po) => (
+                        <tr key={po.id} className="hover:bg-slate-50 align-top">
+                          <td className="px-4 py-3">
+                            <div className="font-mono font-semibold text-slate-900 whitespace-nowrap">{po.noPO}</div>
+                            <div className="text-[11px] text-slate-500 font-mono">{po.tanggalPO}</div>
+                            <div className="mt-1">{getStatusBadge(po.statusPO)}</div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="font-semibold text-slate-900">{po.vendorNama}</div>
+                            <div className="text-[11px] text-slate-500">{po.vendorKota}</div>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="text-slate-900 whitespace-nowrap">
+                              {po.totalQtyDiterima || 0} / {po.totalQtyPesan} pcs diterima
+                            </div>
+                            <div className="text-[11px] text-slate-500 line-clamp-1 max-w-[200px]">{po.items.length} SKU</div>
+                          </td>
+                          <td className="px-3 py-3 text-right font-mono whitespace-nowrap">
+                            <div className="font-semibold text-slate-900">Rp {po.totalTagihan.toLocaleString('id-ID')}</div>
+                            {po.biayaEkspedisi > 0 && <div className="text-[11px] text-slate-500">ongkir Rp {po.biayaEkspedisi.toLocaleString('id-ID')}</div>}
+                          </td>
+                          <td className="px-3 py-3">
+                            {shippingSelect(po)}
+                            <div className="mt-1.5">{receiveButton(po)}</div>
+                            {(po.ekspedisi || po.noResi) && (
+                              <div className="text-[11px] text-slate-500 mt-1 max-w-[160px] truncate">
+                                {po.ekspedisi} {po.noResi ? `· ${po.noResi}` : ''}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-3 py-3">
+                            {getPaymentBadge(po.statusBayar, po.sisaHutang)}
+                            <div className="mt-1.5">{payButton(po)}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-nowrap">{rowActions(po, false)}</div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="lg:hidden divide-y divide-slate-100">
+                  {filteredPOs.map((po) => (
+                    <div key={po.id} className="p-4 space-y-2 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-mono font-semibold text-slate-900">{po.noPO}</div>
+                          <div className="text-slate-600">
+                            {po.vendorNama} · {po.tanggalPO}
+                          </div>
+                        </div>
+                        <div className="font-mono font-bold text-slate-900 whitespace-nowrap">Rp {po.totalTagihan.toLocaleString('id-ID')}</div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {getStatusBadge(po.statusPO)}
+                        {getPaymentBadge(po.statusBayar, po.sisaHutang)}
+                        <span className="text-slate-500">
+                          {po.totalQtyDiterima || 0}/{po.totalQtyPesan} pcs diterima
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {shippingSelect(po)}
+                        {receiveButton(po)}
+                        {payButton(po)}
+                      </div>
+                      {rowActions(po, false)}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -924,7 +645,7 @@ export const PurchasesView: React.FC = () => {
                           setSelectedPOForReceiving(po);
                           setIsReceiveModalOpen(true);
                         }}
-                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+                        className="px-3.5 py-1.5 segmented-pill-active text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-2xs hover:shadow-xs transition-all cursor-pointer"
                       >
                         <Check className="w-3.5 h-3.5" />
                         <span>Barang Tiba (Terima)</span>
@@ -1045,7 +766,7 @@ export const PurchasesView: React.FC = () => {
                       setSelectedPOForReceiving(po);
                       setIsReceiveModalOpen(true);
                     }}
-                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs hover:shadow-sm"
+                    className="w-full py-2.5 segmented-pill-active font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs hover:shadow-sm"
                   >
                     <ArrowDownLeft className="w-4 h-4 text-emerald-400" />
                     <span>Buka Checklist Penerimaan Gudang</span>
@@ -1076,7 +797,7 @@ export const PurchasesView: React.FC = () => {
                 setEditingVendor(null);
                 setIsVendorModalOpen(true);
               }}
-              className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="px-3.5 py-2 segmented-pill-active font-semibold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-amber-400" />
               <span>Tambah Vendor Baru</span>
@@ -1639,7 +1360,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                       <td className="px-3.5 py-2">
                         <input
                           type="text"
-                          placeholder="e.g. Rib leher 3cm / Celup reaktif"
+                          placeholder="Contoh: Rib leher 3cm / Celup reaktif"
                           value={item.catatan}
                           onChange={(e) => handleItemChange(idx, 'catatan', e.target.value)}
                           className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white"
@@ -1675,7 +1396,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                   <label className="block text-slate-500 text-xs mb-1 font-medium">Jasa Kargo / Ekspedisi</label>
                   <input
                     type="text"
-                    placeholder="e.g. Dakota, Indah Kargo, Baraka"
+                    placeholder="Contoh: Dakota, Indah Kargo, Baraka"
                     value={ekspedisi}
                     onChange={(e) => setEkspedisi(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:border-slate-900"
@@ -1685,7 +1406,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
                   <label className="block text-slate-500 text-xs mb-1 font-medium">Nomor Resi / AWB</label>
                   <input
                     type="text"
-                    placeholder="e.g. DKT-109283"
+                    placeholder="Contoh: DKT-109283"
                     value={noResi}
                     onChange={(e) => setNoResi(e.target.value)}
                     className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-900 font-mono focus:outline-none focus:border-slate-900"
@@ -1846,7 +1567,7 @@ const CreatePOModal: React.FC<CreatePOModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-5 py-2 segmented-pill-active font-semibold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Send className="w-3.5 h-3.5 text-amber-400" />
               <span>Terbitkan Purchase Order</span>
@@ -1928,7 +1649,7 @@ const ShipPOModal: React.FC<ShipPOModalProps> = ({ isOpen, onClose, po, onSave }
             <label className="block text-slate-600 font-semibold mb-1">Jasa Ekspedisi / Kargo *</label>
             <input
               type="text"
-              placeholder="e.g. Dakota Cargo, Indah Kargo, JNE Trucking, Baraka"
+              placeholder="Contoh: Dakota Cargo, Indah Kargo, JNE Trucking, Baraka"
               value={ekspedisi}
               onChange={(e) => setEkspedisi(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-medium focus:outline-none focus:border-slate-900 focus:bg-white"
@@ -1940,7 +1661,7 @@ const ShipPOModal: React.FC<ShipPOModalProps> = ({ isOpen, onClose, po, onSave }
             <label className="block text-slate-600 font-semibold mb-1">Nomor Resi / AWB Kargo *</label>
             <input
               type="text"
-              placeholder="e.g. DKT-BDG-9988123"
+              placeholder="Contoh: DKT-BDG-9988123"
               value={noResi}
               onChange={(e) => setNoResi(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono font-bold focus:outline-none focus:border-slate-900 focus:bg-white"
@@ -1974,7 +1695,7 @@ const ShipPOModal: React.FC<ShipPOModalProps> = ({ isOpen, onClose, po, onSave }
             <label className="block text-slate-600 font-semibold mb-1">Catatan Pengiriman / Koli</label>
             <textarea
               rows={2}
-              placeholder="e.g. 4 karung koli besar tersegel lakban Kalima..."
+              placeholder="Contoh: 4 karung koli besar tersegel lakban Kalima..."
               value={catatanPengiriman}
               onChange={(e) => setCatatanPengiriman(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white"
@@ -1991,7 +1712,7 @@ const ShipPOModal: React.FC<ShipPOModalProps> = ({ isOpen, onClose, po, onSave }
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-4 py-2 segmented-pill-active font-semibold rounded-xl flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Truck className="w-3.5 h-3.5 text-blue-400" />
               <span>Simpan & Set Status IN-TRANSIT</span>
@@ -2229,7 +1950,7 @@ const ReceivePOModal: React.FC<ReceivePOModalProps> = ({
             <label className="block text-slate-600 font-semibold mb-1">Catatan Penerimaan / No. Surat Jalan Vendor</label>
             <textarea
               rows={2}
-              placeholder="e.g. Surat Jalan Pabrik #SJ-99881, segel utuh, lolos QC tanpa reject..."
+              placeholder="Contoh: Surat Jalan Pabrik #SJ-99881, segel utuh, lolos QC tanpa reject..."
               value={catatanPenerimaan}
               onChange={(e) => setCatatanPenerimaan(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white"
@@ -2247,7 +1968,7 @@ const ReceivePOModal: React.FC<ReceivePOModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-5 py-2.5 segmented-pill-active font-bold rounded-xl flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>Konfirmasi & Masukkan ke Stok Gudang ({totalIncomingPcs} pcs)</span>
@@ -2524,7 +2245,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
             </label>
             <input
               type="text"
-              placeholder="e.g. Transfer M-Banking BCA No. Ref 9028123 / Bukti transfer terlampir"
+              placeholder="Contoh: Transfer M-Banking BCA No. Ref 9028123 / Bukti transfer terlampir"
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200 focus:border-slate-900 focus:bg-white rounded-xl px-3 py-2 text-slate-900 text-xs placeholder-slate-400"
@@ -2610,7 +2331,7 @@ const PaymentPOModal: React.FC<PaymentPOModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer hover:shadow-sm"
+              className="px-5 py-2.5 segmented-pill-active font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer hover:shadow-sm"
             >
               <Check className="w-4 h-4" />
               <span>Konfirmasi & Simpan Pembayaran</span>
@@ -2884,7 +2605,7 @@ const VendorFormModal: React.FC<VendorFormModalProps> = ({
             <label className="block text-slate-700 font-semibold mb-1">Nama Vendor / Perusahaan *</label>
             <input
               type="text"
-              placeholder="e.g. PT Sinar Tekstil Prima"
+              placeholder="Contoh: PT Sinar Tekstil Prima"
               value={nama}
               onChange={(e) => setNama(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-slate-900 font-medium placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
@@ -2912,7 +2633,7 @@ const VendorFormModal: React.FC<VendorFormModalProps> = ({
               <label className="block text-slate-700 font-semibold mb-1">Nama Kontak PIC</label>
               <input
                 type="text"
-                placeholder="e.g. Hendra Gunawan"
+                placeholder="Contoh: Hendra Gunawan"
                 value={kontakPerson}
                 onChange={(e) => setKontakPerson(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
@@ -2925,7 +2646,7 @@ const VendorFormModal: React.FC<VendorFormModalProps> = ({
               <label className="block text-slate-700 font-semibold mb-1">No. WhatsApp / HP *</label>
               <input
                 type="text"
-                placeholder="e.g. 081234567890"
+                placeholder="Contoh: 081234567890"
                 value={noHp}
                 onChange={(e) => setNoHp(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-slate-900 font-mono placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
@@ -2937,7 +2658,7 @@ const VendorFormModal: React.FC<VendorFormModalProps> = ({
               <label className="block text-slate-700 font-semibold mb-1">Kota Pabrik / Domisili *</label>
               <input
                 type="text"
-                placeholder="e.g. Bandung, Solo, Jakarta"
+                placeholder="Contoh: Bandung, Solo, Jakarta"
                 value={kota}
                 onChange={(e) => setKota(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
@@ -2950,7 +2671,7 @@ const VendorFormModal: React.FC<VendorFormModalProps> = ({
             <label className="block text-slate-700 font-semibold mb-1">Alamat Lengkap Pabrik / Gudang Vendor</label>
             <input
               type="text"
-              placeholder="e.g. Kawasan Industri Cimahi Selatan No. 88"
+              placeholder="Contoh: Kawasan Industri Cimahi Selatan No. 88"
               value={alamat}
               onChange={(e) => setAlamat(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
@@ -2961,7 +2682,7 @@ const VendorFormModal: React.FC<VendorFormModalProps> = ({
             <label className="block text-slate-700 font-semibold mb-1">Nomor Rekening Bank Pembayaran</label>
             <input
               type="text"
-              placeholder="e.g. BCA 7770123456 a.n PT Sinar Tekstil Prima"
+              placeholder="Contoh: BCA 7770123456 a.n PT Sinar Tekstil Prima"
               value={rekeningBank}
               onChange={(e) => setRekeningBank(e.target.value)}
               className="w-full bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-slate-900 font-mono placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
@@ -3434,7 +3155,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
                       <button
                         type="button"
                         onClick={onOpenReceiveModal}
-                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                        className="px-3.5 py-1.5 segmented-pill-active rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
                       >
                         <ArrowDownLeft className="w-3.5 h-3.5" />
                         <span>Buka Checklist Penerimaan Gudang ({Math.max(0, po.totalQtyPesan - (po.totalQtyDiterima || 0))} pcs lagi)</span>
@@ -3528,7 +3249,7 @@ const TrackingDetailModal: React.FC<TrackingDetailModalProps> = ({
             <button
               type="button"
               onClick={onOpenReceiveModal}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs hover:shadow transition-all cursor-pointer"
+              className="px-4 py-2 segmented-pill-active font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs hover:shadow transition-all cursor-pointer"
             >
               <ArrowDownLeft className="w-3.5 h-3.5" />
               <span>Terima Barang di Gudang</span>

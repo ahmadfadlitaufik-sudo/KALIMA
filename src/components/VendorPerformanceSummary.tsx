@@ -36,6 +36,7 @@ import {
   Cell,
 } from 'recharts';
 import { PurchaseOrder, Vendor, VendorCategory } from '../types';
+import { deliveryOverview, vendorDeliveryStats } from '../services/vendorPerformance';
 
 interface VendorPerformanceSummaryProps {
   purchaseOrders: PurchaseOrder[];
@@ -90,97 +91,8 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
         const completedPOs = vendorPOs.filter((po) => po.statusPO === 'diterima');
         const inTransitPOs = vendorPOs.filter((po) => po.statusPO === 'dikirim');
 
-        let onTimeCount = 0;
-        let lateCount = 0;
-        let totalDelayDays = 0;
-        let totalLeadTimeDays = 0;
-        let evaluatedCount = 0;
-
-        let totalVendorProductionDays = 0;
-        let totalTransitDays = 0;
-
-        vendorPOs.forEach((po) => {
-          if (po.statusPO === 'diterima' && po.tanggalDiterima) {
-            evaluatedCount++;
-            const poDate = new Date(po.tanggalPO).getTime();
-            const receiveDate = new Date(po.tanggalDiterima).getTime();
-            const shipDate = po.tanggalKirim ? new Date(po.tanggalKirim).getTime() : poDate;
-
-            // Total Lead Time (Days)
-            const leadTime = Math.max(1, Math.round((receiveDate - poDate) / (1000 * 60 * 60 * 24)));
-            totalLeadTimeDays += leadTime;
-
-            // Vendor Production vs Transit Breakdown
-            const prodDays = Math.max(1, Math.round((shipDate - poDate) / (1000 * 60 * 60 * 24)));
-            const transDays = Math.max(1, Math.round((receiveDate - shipDate) / (1000 * 60 * 60 * 24)));
-            totalVendorProductionDays += prodDays;
-            totalTransitDays += transDays;
-
-            // Check if late compared to estimasiTiba
-            if (po.estimasiTiba) {
-              const estDate = new Date(po.estimasiTiba).getTime();
-              const delayDiff = Math.round((receiveDate - estDate) / (1000 * 60 * 60 * 24));
-              if (delayDiff > 0) {
-                lateCount++;
-                totalDelayDays += delayDiff;
-              } else {
-                onTimeCount++;
-              }
-            } else {
-              // Standard expectation: lead time <= 5 days is on-time
-              if (leadTime > 5) {
-                lateCount++;
-                totalDelayDays += leadTime - 5;
-              } else {
-                onTimeCount++;
-              }
-            }
-          }
-        });
-
-        // If no POs completed yet, use vendor initial benchmark
-        let onTimeRate = 100;
-        let avgDelayDays = 0;
-        let avgLeadTime = 4;
-        let avgProdDays = 2.5;
-        let avgTransDays = 1.5;
-
-        if (evaluatedCount > 0) {
-          onTimeRate = Math.round((onTimeCount / evaluatedCount) * 100);
-          avgDelayDays = parseFloat((totalDelayDays / evaluatedCount).toFixed(1));
-          avgLeadTime = parseFloat((totalLeadTimeDays / evaluatedCount).toFixed(1));
-          avgProdDays = parseFloat((totalVendorProductionDays / evaluatedCount).toFixed(1));
-          avgTransDays = parseFloat((totalTransitDays / evaluatedCount).toFixed(1));
-        } else {
-          // Provide realistic baseline based on vendor rating & category
-          if (vendor.nama.includes('Sinar Tekstil')) {
-            onTimeRate = 92;
-            avgDelayDays = 0.4;
-            avgLeadTime = 4.2;
-            avgProdDays = 2.8;
-            avgTransDays = 1.4;
-          } else if (vendor.nama.includes('Karya Garmen')) {
-            onTimeRate = 85;
-            avgDelayDays = 1.2;
-            avgLeadTime = 6.5;
-            avgProdDays = 4.8;
-            avgTransDays = 1.7;
-          } else if (vendor.nama.includes('Berkah Packaging')) {
-            onTimeRate = 95;
-            avgDelayDays = 0.2;
-            avgLeadTime = 3.0;
-            avgProdDays = 1.8;
-            avgTransDays = 1.2;
-          } else {
-            onTimeRate = 88;
-            avgDelayDays = 0.8;
-            avgLeadTime = 5.0;
-            avgProdDays = 3.5;
-            avgTransDays = 1.5;
-          }
-        }
-
-        const lateRate = Math.max(0, 100 - onTimeRate);
+        const delivery = vendorDeliveryStats(vendorPOs);
+        const { onTimeRate, lateRate, avgDelayDays, avgLeadTime, avgProdDays, avgTransDays } = delivery;
         const totalSpend = vendorPOs.reduce((sum, po) => sum + po.totalTagihan, 0);
         const totalQtyPesan = vendorPOs.reduce((sum, po) => sum + po.totalQtyPesan, 0);
         const totalQtyDiterima = vendorPOs.reduce((sum, po) => sum + (po.totalQtyDiterima || 0), 0);
@@ -205,6 +117,8 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
           avgLeadTime,
           avgProdDays,
           avgTransDays,
+          evaluated: delivery.evaluated,
+          delivery,
         };
       });
   }, [vendors, filteredPOs, categoryFilter]);
@@ -220,28 +134,24 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
         totalQty: 0,
         bestVendor: '-',
         needsAttentionVendor: '-',
+        hasDeliveryData: false,
       };
     }
 
     const totalSpend = vendorAnalytics.reduce((sum, v) => sum + v.totalSpend, 0);
     const totalQty = vendorAnalytics.reduce((sum, v) => sum + v.totalQtyPesan, 0);
-    const avgOnTimeRate = Math.round(
-      vendorAnalytics.reduce((sum, v) => sum + v.onTimeRate, 0) / vendorAnalytics.length
-    );
-    const avgDelayDays = parseFloat(
-      (vendorAnalytics.reduce((sum, v) => sum + v.avgDelayDays, 0) / vendorAnalytics.length).toFixed(1)
-    );
-    const avgLeadTime = parseFloat(
-      (vendorAnalytics.reduce((sum, v) => sum + v.avgLeadTime, 0) / vendorAnalytics.length).toFixed(1)
-    );
+    const overview = deliveryOverview(vendorAnalytics.map((v) => v.delivery));
+    const avgOnTimeRate = overview?.onTimeRate ?? 0;
+    const avgDelayDays = overview?.avgDelayDays ?? 0;
+    const avgLeadTime = overview?.avgLeadTime ?? 0;
+    const measured = vendorAnalytics.filter((v) => v.evaluated > 0);
 
-    // Sorted by on-time performance
-    const sortedByOnTime = [...vendorAnalytics].sort((a, b) => b.onTimeRate - a.onTimeRate);
+    // Vendor terbaik / perlu perhatian hanya dari vendor yang sudah punya PO diterima
+    const sortedByOnTime = [...measured].sort((a, b) => b.onTimeRate - a.onTimeRate);
     const bestVendor = sortedByOnTime[0]?.nama || '-';
-
-    // Sorted by highest delay
-    const sortedByDelay = [...vendorAnalytics].sort((a, b) => b.avgDelayDays - a.avgDelayDays);
-    const needsAttentionVendor = sortedByDelay[0]?.avgDelayDays > 0 ? sortedByDelay[0]?.nama : 'Semua Tepat Waktu';
+    const sortedByDelay = [...measured].sort((a, b) => b.avgDelayDays - a.avgDelayDays);
+    const needsAttentionVendor = !overview ? '-' : sortedByDelay[0]?.avgDelayDays > 0 ? sortedByDelay[0]?.nama : 'Semua Tepat Waktu';
+    const hasDeliveryData = overview !== null;
 
     return {
       avgOnTimeRate,
@@ -251,6 +161,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
       totalQty,
       bestVendor,
       needsAttentionVendor,
+      hasDeliveryData,
     };
   }, [vendorAnalytics]);
 
@@ -385,9 +296,9 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             </span>
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-700">
-            {globalKPIs.avgOnTimeRate}%
+            {globalKPIs.hasDeliveryData ? `${globalKPIs.avgOnTimeRate}%` : '–'}
           </div>
-          <div className="text-xs text-slate-400 mt-1">Pesanan tiba tepat estimasi</div>
+          <div className="text-xs text-slate-400 mt-1">{globalKPIs.hasDeliveryData ? 'Pesanan tiba tepat estimasi' : 'Belum ada PO yang diterima'}</div>
         </div>
 
         {/* 2. Avg Delay Days */}
@@ -399,7 +310,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             </span>
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-amber-700">
-            {globalKPIs.avgDelayDays}{' '}
+            {globalKPIs.hasDeliveryData ? globalKPIs.avgDelayDays : '–'}{' '}
             <span className="text-xs text-slate-500 font-sans font-normal">Hari / PO</span>
           </div>
           <div className="text-xs text-slate-400 mt-1">Rata-rata deviasi tiba di gudang</div>
@@ -414,7 +325,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             </span>
           </div>
           <div className="text-xl sm:text-2xl font-bold font-mono text-blue-700">
-            {globalKPIs.avgLeadTime}{' '}
+            {globalKPIs.hasDeliveryData ? globalKPIs.avgLeadTime : '–'}{' '}
             <span className="text-xs text-slate-500 font-sans font-normal">Hari Total</span>
           </div>
           <div className="text-xs text-slate-400 mt-1">Waktu order s/d masuk stok</div>
@@ -531,7 +442,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             <div className="h-72 w-full pt-2">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart
-                  data={vendorAnalytics}
+                  data={vendorAnalytics.filter((v) => v.evaluated > 0)}
                   margin={{ top: 10, right: 30, left: 0, bottom: 25 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -643,7 +554,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
             <div className="h-72 w-full pt-2">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={vendorAnalytics}
+                  data={vendorAnalytics.filter((v) => v.evaluated > 0)}
                   margin={{ top: 10, right: 30, left: 0, bottom: 25 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -870,7 +781,10 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
                 let badgeStyle = 'bg-emerald-50 text-emerald-800 border-emerald-200';
                 let statusText = 'Sangat Baik (Tepat Waktu)';
 
-                if (v.onTimeRate < 80 || v.avgDelayDays > 2) {
+                if (v.evaluated === 0) {
+                  badgeStyle = 'bg-slate-50 text-slate-600 border-slate-200';
+                  statusText = 'Belum ada PO diterima';
+                } else if (v.onTimeRate < 80 || v.avgDelayDays > 2) {
                   badgeStyle = 'bg-rose-50 text-rose-800 border-rose-200';
                   statusText = 'Sering Terlambat';
                 } else if (v.onTimeRate < 90 || v.avgDelayDays > 0.8) {
@@ -897,7 +811,7 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
 
                     <td className="px-4 py-3.5 text-center">
                       <div className="inline-flex items-center gap-1 font-mono font-bold text-emerald-700">
-                        {v.onTimeRate}%
+                        {v.evaluated ? `${v.onTimeRate}%` : '–'}
                       </div>
                       <div className="w-16 bg-slate-100 h-1.5 rounded-full mx-auto mt-1 overflow-hidden border border-slate-200/50">
                         <div
@@ -909,12 +823,12 @@ export const VendorPerformanceSummary: React.FC<VendorPerformanceSummaryProps> =
 
                     <td className="px-4 py-3.5 text-center font-mono font-bold">
                       <span className={v.avgDelayDays > 1 ? 'text-rose-600' : v.avgDelayDays > 0 ? 'text-amber-600' : 'text-emerald-600'}>
-                        {v.avgDelayDays} Hari
+                        {v.evaluated ? `${v.avgDelayDays} Hari` : '–'}
                       </span>
                     </td>
 
                     <td className="px-4 py-3.5 text-center font-mono text-slate-700">
-                      {v.avgLeadTime} Hari
+                      {v.evaluated ? `${v.avgLeadTime} Hari` : '–'}
                     </td>
 
                     <td className="px-4 py-3.5 text-center font-mono text-slate-800 font-semibold">

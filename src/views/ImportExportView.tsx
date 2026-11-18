@@ -2,21 +2,17 @@ import React, { useState, useRef } from 'react';
 import { askConfirm, showNotice } from '../services/dialogStore';
 import * as XLSX from 'xlsx';
 import {
-  FileSpreadsheet,
   Download,
-  Upload,
   CheckCircle2,
   AlertCircle,
-  Database,
   ArrowDownToLine,
-  FileCode,
   FileUp,
   ClipboardCheck,
-  HelpCircle,
   Trash2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PaymentStatus } from '../types';
+import { backupSummary, parseAmount, skuRowProblem } from '../services/importChecks';
 
 // Helper to normalize any date input (DD/MM/YYYY, DD-MM-YYYY, Excel serial, etc.) to YYYY-MM-DD
 function normalizeDateToISO(raw: any): string {
@@ -67,6 +63,16 @@ function normalizeDateToISO(raw: any): string {
   return new Date().toISOString().split('T')[0];
 }
 
+const CARD = 'bg-white rounded-2xl border border-slate-200';
+const INPUT = 'w-full bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-slate-500';
+const OUTLINE_BUTTON =
+  'inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
+const PRIMARY_BUTTON =
+  'segmented-pill-active inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
+const DANGER_BUTTON =
+  'inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-rose-700 hover:bg-rose-800 text-white cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed';
+const todayStamp = () => new Date().toISOString().split('T')[0];
+
 export const ImportExportView: React.FC = () => {
   const {
     orders,
@@ -78,6 +84,11 @@ export const ImportExportView: React.FC = () => {
     suratTitip,
     cashAccounts,
     cashMutations,
+    series,
+    vendors,
+    purchaseOrders,
+    stockOpnameSessions,
+    bankReconciliations,
     importInitialData,
     clearBiayaOperasional,
     setCurrentView,
@@ -140,31 +151,25 @@ export const ImportExportView: React.FC = () => {
   const downloadTemplate = (type: 'sku' | 'orders' | 'stock' | 'reseller' | 'expenses') => {
     let filename = '';
     let header = '';
-    let sampleRow = '';
 
     if (type === 'sku') {
       filename = 'template-master-sku-kalima.csv';
       header = 'sku,name,seriesCode,colorCode,colorName,size,price,hpp,minStock';
-      sampleRow = 'KL-210OV-HT-M,Kalima 210 GSM Oversize - Hitam (M),210OV,HT,Hitam,M,129000,50000,10\nKL-210OV-HT-L,Kalima 210 GSM Oversize - Hitam (L),210OV,HT,Hitam,L,129000,50000,15\nKL-235CL-PT-XL,Kalima 235 GSM Classic - Putih (XL),235CL,PT,Putih,XL,139000,53000,10\nGB-CANVAS-01,Goodie Bag Kalima Canvas Hitam,ACC,HT,Hitam,ALL,25000,12000,20';
     } else if (type === 'stock') {
       filename = 'template-saldo-awal-stok-kalima.csv';
       header = 'sku,qty,lokasi,catatan';
-      sampleRow = 'KL-210OV-HT-M,40,Gudang Utama,Saldo Awal Migrasi Excel\nKL-210OV-HT-L,35,Gudang Utama,Saldo Awal Migrasi Excel\nKL-235CL-PT-XL,25,Gudang Utama,Saldo Awal Migrasi Excel';
     } else if (type === 'orders') {
       filename = 'template-riwayat-order-kalima.csv';
       header = 'noOrder,tanggal,channel,customerNama,customerHp,customerKota,sku,qty,hargaSatuan,diskon,statusBayar,noResi';
-      sampleRow = 'ORD-20260901-001,2026-09-01,Shopee,Budi Santoso,08123456789,Bandung,KL-210OV-HT-L,2,129000,0,lunas,SPXID029481920\nORD-20260902-002,2026-09-02,TAPADA,Aditya Pratama,08198765432,Jakarta,KL-235CL-PT-XL,1,139000,5000,lunas,';
     } else if (type === 'reseller') {
       filename = 'template-mitra-reseller-kalima.csv';
       header = 'nama,kontakPerson,noHp,kota,alamat,diskonPersen';
-      sampleRow = 'Distro Brotherhood,Rian,081234567890,Bandung,Jl. Trunojoyo No. 12,20\nUrban Streetwear,Dimas,082133445566,Surabaya,Jl. Tunjungan No. 45,20';
     } else if (type === 'expenses') {
       filename = 'template-biaya-pengeluaran-kalima.csv';
       header = 'tanggal,kategori,deskripsi,jumlah';
-      sampleRow = '2026-09-05,Marketing & Ads,Iklan Meta Ads & TikTok Campaign,1500000\n2026-09-10,Packaging,Plastik Polymailer & Hangtag 1000 pcs,450000\n2026-09-25,Gaji Tim,Gaji Staff Packing & Admin CS,3200000';
     }
 
-    const content = `${header}\n${sampleRow}`;
+    const content = `${header}\n`;
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -336,7 +341,7 @@ export const ImportExportView: React.FC = () => {
     return '';
   };
 
-  const handleProcessImport = (e: React.FormEvent) => {
+  const handleProcessImport = async (e: React.FormEvent) => {
     e.preventDefault();
     setImportStatus(null);
     if (!importText.trim()) return;
@@ -344,10 +349,23 @@ export const ImportExportView: React.FC = () => {
     try {
       if (importMode === 'full_json') {
         const parsed = JSON.parse(importText);
+        const summary = backupSummary(parsed);
+        if (summary.length === 0) {
+          setImportStatus({ success: false, message: 'Teks ini bukan file backup Kalima (tidak ada data SKU, order, stok, dan sejenisnya).' });
+          return;
+        }
+        const contents = summary.map((item) => `${item.label} ${item.count.toLocaleString('id-ID')}`).join(', ');
+        const confirmed = await askConfirm(
+          `Data berikut akan MENGGANTI data yang sekarang ada di aplikasi: ${contents}. Data yang tidak ada di backup tidak berubah. Langkah ini tidak bisa dibatalkan; unduh backup data saat ini lebih dulu bila ragu.`,
+          { title: 'Pulihkan dari backup?', confirmLabel: 'Ya, ganti data', danger: true },
+        );
+        if (!confirmed) {
+          return;
+        }
         importInitialData(parsed);
         setImportStatus({
           success: true,
-          message: 'Berhasil mengimpor seluruh snapshot database Kalima!',
+          message: `Data dipulihkan dari backup: ${contents}.`,
         });
         setImportText('');
         return;
@@ -363,33 +381,39 @@ export const ImportExportView: React.FC = () => {
       }
 
       if (importMode === 'csv_sku') {
-        const newSkus = rows.map((r, i) => {
-          const skuCode = getCol(r, ['sku', 'kode_sku', 'kodesku', 'kode', 'item_code', 'itemcode', 'barcode']) || `KL-SKU-${i + 1}`;
-          const customName = getCol(r, ['name', 'nama', 'namaproduk', 'nama_produk', 'produk', 'artikel', 'article', 'deskripsi', 'description', 'title', 'nama_barang']);
-          const seriesCode = getCol(r, ['seriesCode', 'seri', 'series', 'kategori', 'category']) || (skuCode.includes('210') ? '210OV' : skuCode.includes('290') ? '290OV' : skuCode.includes('185') ? '185RG' : 'ACC');
-          const colorCode = getCol(r, ['colorCode', 'kode_warna', 'warnaCode']) || 'STD';
-          const colorName = getCol(r, ['colorName', 'warna', 'color']) || (customName ? '' : 'Hitam');
-          const size = (getCol(r, ['size', 'ukuran']) || 'L') as any;
-          const price = Number(String(getCol(r, ['price', 'harga', 'hargajual', 'harga_jual', 'hargasatuan'])).replace(/[^0-9.-]+/g, '')) || 129000;
-          const hpp = Number(String(getCol(r, ['hpp', 'harga_pokok', 'hargapokok', 'biaya', 'modal'])).replace(/[^0-9.-]+/g, '')) || 50000;
-          const minStock = Number(String(getCol(r, ['minStock', 'min_stock', 'stokmin', 'minimum_stok'])).replace(/[^0-9.-]+/g, '')) || 10;
-
-          const resolvedName = customName || `Kalima ${seriesCode} ${colorName ? `- ${colorName}` : ''} (${size})`;
-
-          return {
-            sku: skuCode,
-            seriesId: `ser-${seriesCode}`,
-            seriesCode,
-            colorCode,
-            colorName: colorName || 'Standard',
-            size,
-            name: resolvedName,
-            price,
-            hpp,
-            minStock,
-            active: true,
-          };
+        const skipped: string[] = [];
+        const newSkus = rows.flatMap((r, i) => {
+          const skuCode = String(getCol(r, ['sku', 'kode_sku', 'kodesku', 'kode', 'item_code', 'itemcode', 'barcode']) || '').trim();
+          const name = String(getCol(r, ['name', 'nama', 'namaproduk', 'nama_produk', 'produk', 'artikel', 'article', 'deskripsi', 'description', 'title', 'nama_barang']) || '').trim();
+          const price = parseAmount(getCol(r, ['price', 'harga', 'hargajual', 'harga_jual', 'hargasatuan']));
+          const hpp = parseAmount(getCol(r, ['hpp', 'harga_pokok', 'hargapokok', 'biaya', 'modal']));
+          const problem = skuRowProblem({ sku: skuCode, name, price, hpp });
+          if (problem) {
+            skipped.push(`baris ${i + 2}: ${problem}`);
+            return [];
+          }
+          const seriesCode = String(getCol(r, ['seriesCode', 'seri', 'series', 'kategori', 'category']) || '').trim() || 'ACC';
+          const colorName = String(getCol(r, ['colorName', 'warna', 'color']) || '').trim();
+          return [
+            {
+              sku: skuCode,
+              seriesId: `ser-${seriesCode}`,
+              seriesCode,
+              colorCode: String(getCol(r, ['colorCode', 'kode_warna', 'warnaCode']) || '').trim(),
+              colorName,
+              size: (String(getCol(r, ['size', 'ukuran']) || '').trim() || 'ALL') as any,
+              name,
+              price: price as number,
+              hpp: hpp as number,
+              minStock: parseAmount(getCol(r, ['minStock', 'min_stock', 'stokmin', 'minimum_stok'])) ?? 0,
+              active: true,
+            },
+          ];
         });
+        if (newSkus.length === 0) {
+          setImportStatus({ success: false, message: `Tidak ada baris SKU yang lengkap. ${skipped.slice(0, 5).join('; ')}` });
+          return;
+        }
 
         // Gabungkan SKU baru dengan SKU lama tanpa duplikat
         const existingMap = new Map(skus.map((s) => [s.sku, s]));
@@ -401,7 +425,9 @@ export const ImportExportView: React.FC = () => {
         importInitialData({ skus: mergedSkus });
         setImportStatus({
           success: true,
-          message: `Berhasil mengimpor & memperbarui ${newSkus.length} master SKU ke sistem! (Total terdaftar: ${mergedSkus.length} SKU)`,
+          message: `${newSkus.length} SKU disimpan (total ${mergedSkus.length} SKU).${
+            skipped.length ? ` ${skipped.length} baris dilewati karena tidak lengkap: ${skipped.slice(0, 5).join('; ')}${skipped.length > 5 ? '; …' : ''}.` : ''
+          }`,
         });
         setImportText('');
       } else if (importMode === 'csv_stock') {
@@ -728,346 +754,238 @@ export const ImportExportView: React.FC = () => {
     }
   };
 
-  return (
-    <div className="space-y-6 pb-12 max-w-5xl mx-auto">
-      <div className="bg-[#121620] p-6 rounded-2xl border border-slate-800/80 space-y-2">
-        <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-          <FileSpreadsheet className="w-5 h-5 text-amber-400" />
-          Pusat Integrasi & Migrasi Data Excel (Kalima Apparel)
-        </h2>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Gunakan halaman ini untuk mencocokkan format kolom Excel lama Anda, mengunduh template CSV siap isi, mengimpor master SKU / saldo stok awal, atau mengekspor laporan transaksi.
-        </p>
+  const TEMPLATES: { type: 'sku' | 'stock' | 'orders' | 'reseller' | 'expenses'; title: string; purpose: string; columns: string }[] = [
+    { type: 'sku', title: 'Master SKU & harga', purpose: 'Varian kaos, harga jual, dan HPP. Wajib: sku, name, price, hpp.', columns: 'sku, name, seriesCode, colorCode, colorName, size, price, hpp, minStock' },
+    { type: 'stock', title: 'Saldo awal stok', purpose: 'Stok fisik saat pindah dari Excel.', columns: 'sku, qty, lokasi, catatan' },
+    { type: 'orders', title: 'Riwayat order', purpose: 'Arsip penjualan lama.', columns: 'noOrder, tanggal, channel, customerNama, customerHp, customerKota, sku, qty, hargaSatuan, diskon, statusBayar, noResi' },
+    { type: 'reseller', title: 'Mitra reseller', purpose: 'Toko titip jual.', columns: 'nama, kontakPerson, noHp, kota, alamat, diskonPersen' },
+    { type: 'expenses', title: 'Biaya operasional', purpose: 'Kas keluar untuk laba rugi.', columns: 'tanggal, kategori, deskripsi, jumlah' },
+  ];
+  const EXPORTS: { title: string; count: string; run: () => void }[] = [
+    {
+      title: 'Penjualan',
+      count: `${orders.length.toLocaleString('id-ID')} order`,
+      run: () =>
+        exportToCSV(
+          `kalima-penjualan-${todayStamp()}.csv`,
+          orders.map((o) => ({
+            noOrder: o.noOrder,
+            tanggal: o.tanggal,
+            channel: o.channel,
+            customerNama: o.customerNama,
+            customerHp: o.customerHp,
+            customerKota: o.customerKota,
+            totalTagihan: o.totalTagihan,
+            totalHpp: o.totalHpp,
+            labaKotor: o.labaKotor,
+            statusBayar: o.statusBayar,
+            sisaPiutang: o.sisaPiutang,
+            noResi: o.noResi || '',
+          })),
+        ),
+    },
+    {
+      title: 'Kartu stok',
+      count: `${stockMovements.length.toLocaleString('id-ID')} mutasi`,
+      run: () =>
+        exportToCSV(
+          `kalima-mutasi-stok-${todayStamp()}.csv`,
+          stockMovements.map((m) => ({
+            id: m.id,
+            tanggal: m.tanggal,
+            sku: m.sku,
+            tipe: m.tipe,
+            qty: m.qty,
+            lokasi: m.lokasi,
+            referensi: m.referensi,
+            catatan: m.catatan,
+            operator: m.recordedBy,
+          })),
+        ),
+    },
+    {
+      title: 'Master SKU',
+      count: `${skus.length.toLocaleString('id-ID')} SKU`,
+      run: () =>
+        exportToCSV(
+          `kalima-master-sku-${todayStamp()}.csv`,
+          skus.map((s) => ({ sku: s.sku, seri: s.seriesCode, nama: s.name, warna: s.colorName, ukuran: s.size, hargaJual: s.price, hpp: s.hpp, minStock: s.minStock })),
+        ),
+    },
+    {
+      title: 'Buku kas',
+      count: `${cashMutations.length.toLocaleString('id-ID')} mutasi`,
+      run: () =>
+        exportToCSV(
+          `kalima-buku-kas-${todayStamp()}.csv`,
+          cashMutations.map((m) => ({
+            id: m.id,
+            tanggal: m.tanggal,
+            waktu: m.waktu || '',
+            akun: m.accountNama,
+            tipe: m.tipe.toUpperCase(),
+            kategori: m.kategori,
+            deskripsi: m.deskripsi,
+            referensi: m.referensi || '',
+            jumlah: m.jumlah,
+            saldoSetelah: m.saldoSetelah,
+            operator: m.dicatatOleh,
+          })),
+        ),
+    },
+  ];
 
-        {/* Sub Navigation */}
-        <div className="flex items-center gap-2 pt-3 border-t border-slate-800/80">
+  const handleFullBackup = () => {
+    const backupData = {
+      version: '1.1.0',
+      exportedAt: new Date().toISOString(),
+      series,
+      skus,
+      orders,
+      stockMovements,
+      stockOpnameSessions,
+      customers,
+      resellers,
+      suratTitip,
+      vendors,
+      purchaseOrders,
+      biayaOperasional,
+      cashAccounts,
+      cashMutations,
+      bankReconciliations,
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `kalima-backup-${todayStamp()}.json`;
+    link.click();
+  };
+
+  const SUB_TABS: { id: typeof activeSubTab; label: string }[] = [
+    { id: 'templates', label: 'Template' },
+    { id: 'import_tool', label: 'Impor' },
+    { id: 'csv_export', label: 'Ekspor & backup' },
+  ];
+
+  return (
+    <div className="space-y-5 pb-12 max-w-5xl">
+      <p className="text-xs text-slate-600">Pindahkan data dari Excel, unduh laporan ke CSV, atau simpan backup seluruh data.</p>
+
+      <div className="flex flex-wrap gap-1.5" role="tablist">
+        {SUB_TABS.map((tab) => (
           <button
-            onClick={() => setActiveSubTab('templates')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeSubTab === 'templates'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeSubTab === tab.id}
+            onClick={() => setActiveSubTab(tab.id)}
+            className={`px-3.5 py-2 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer ${
+              activeSubTab === tab.id ? 'segmented-pill-active' : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
             }`}
           >
-            1. Format & Template Excel (CSV)
+            {tab.label}
           </button>
-          <button
-            onClick={() => setActiveSubTab('import_tool')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeSubTab === 'import_tool'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
-            }`}
-          >
-            2. Impor Data ke Sistem
-          </button>
-          <button
-            onClick={() => setActiveSubTab('csv_export')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              activeSubTab === 'csv_export'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/20'
-                : 'text-slate-400 hover:text-white bg-slate-900 border border-slate-800'
-            }`}
-          >
-            3. Ekspor Data (.CSV / JSON)
-          </button>
-        </div>
+        ))}
       </div>
 
-      {/* SUBTAB 1: FORMAT & TEMPLATE EXCEL */}
       {activeSubTab === 'templates' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Template Master SKU */}
-            <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white">1. Master SKU & Harga</h4>
-                  <p className="text-xs text-slate-400">Untuk katalog varian kaos, harga jual & HPP</p>
+        <div className="space-y-4">
+          <div className={`${CARD} divide-y divide-slate-100`}>
+            {TEMPLATES.map((t) => (
+              <div key={t.type} className="p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 text-xs">
+                <div className="min-w-0 space-y-1">
+                  <div className="text-sm font-bold text-slate-900">{t.title}</div>
+                  <p className="text-slate-600">{t.purpose}</p>
+                  <code className="block font-mono text-[11px] text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 break-words">{t.columns}</code>
                 </div>
-                <button
-                  onClick={() => downloadTemplate('sku')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Unduh .CSV</span>
+                <button type="button" onClick={() => downloadTemplate(t.type)} className={`${OUTLINE_BUTTON} shrink-0`}>
+                  <Download className="w-3.5 h-3.5" /> Unduh template
                 </button>
               </div>
-
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
-                <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
-                <div className="text-slate-200">sku, name, seriesCode, colorCode, colorName, size, price, hpp, minStock</div>
-                <div className="text-slate-500 mt-1">Contoh data:</div>
-                <div className="text-slate-400">KL-210OV-HT-M, Kalima 210 GSM - Hitam (M), 210OV, HT, Hitam, M, 129000, 50000, 10</div>
-                <div className="text-slate-400">GB-CANVAS-01, Goodie Bag Kalima Canvas Hitam, ACC, HT, Hitam, ALL, 25000, 12000, 20</div>
-              </div>
-            </div>
-
-            {/* Template Saldo Awal Stok */}
-            <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white">2. Saldo Awal Stok Gudang</h4>
-                  <p className="text-xs text-slate-400">Untuk memasukkan stok fisik saat cut-off Excel</p>
-                </div>
-                <button
-                  onClick={() => downloadTemplate('stock')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Unduh .CSV</span>
-                </button>
-              </div>
-
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
-                <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
-                <div className="text-slate-200">sku, qty, lokasi, catatan</div>
-                <div className="text-slate-500 mt-1">Contoh data:</div>
-                <div className="text-slate-400">KL-210OV-HT-M, 40, Gudang Utama, Saldo Awal Migrasi</div>
-                <div className="text-slate-400">KL-235CL-PT-XL, 25, Gudang Utama, Saldo Awal Migrasi</div>
-              </div>
-            </div>
-
-            {/* Template Order Riwayat */}
-            <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white">3. Riwayat Transaksi Order</h4>
-                  <p className="text-xs text-slate-400">Untuk rekap penjualan harian / bulanan</p>
-                </div>
-                <button
-                  onClick={() => downloadTemplate('orders')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Unduh .CSV</span>
-                </button>
-              </div>
-
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
-                <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
-                <div className="text-slate-200">noOrder, tanggal, channel, customerNama, customerHp, customerKota, sku, qty, hargaSatuan, diskon, statusBayar, noResi</div>
-                <div className="text-slate-500 mt-1">Contoh data:</div>
-                <div className="text-slate-400">ORD-001, 2026-09-01, Shopee, Budi, 08123456, Bandung, KL-210OV-HT-L, 2, 129000, 0, lunas, SPX99201</div>
-              </div>
-            </div>
-
-            {/* Template Mitra Reseller */}
-            <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white">4. Daftar Toko Mitra / Reseller</h4>
-                  <p className="text-xs text-slate-400">Untuk data toko konsinyasi titip jual</p>
-                </div>
-                <button
-                  onClick={() => downloadTemplate('reseller')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Unduh .CSV</span>
-                </button>
-              </div>
-
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
-                <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
-                <div className="text-slate-200">nama, kontakPerson, noHp, kota, alamat, diskonPersen</div>
-                <div className="text-slate-500 mt-1">Contoh data:</div>
-                <div className="text-slate-400">Distro Brotherhood, Rian, 081234567890, Bandung, Jl. Trunojoyo No. 12, 20</div>
-              </div>
-            </div>
-
-            {/* Template Biaya Operasional / Pengeluaran */}
-            <div className="bg-[#121620] p-5 rounded-2xl border border-slate-800/80 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-white">5. Biaya Pengeluaran (Beban Operasional & Iklan)</h4>
-                  <p className="text-xs text-slate-400">Untuk pencatatan kas keluar & laporan laba-rugi bersih</p>
-                </div>
-                <button
-                  onClick={() => downloadTemplate('expenses')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl transition-colors cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Unduh .CSV</span>
-                </button>
-              </div>
-
-              <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 text-xs font-mono text-slate-300 overflow-x-auto">
-                <div className="text-amber-400 font-bold mb-1">Header Kolom Excel:</div>
-                <div className="text-slate-200">tanggal, kategori, deskripsi, jumlah</div>
-                <div className="text-slate-500 mt-1">Contoh data:</div>
-                <div className="text-slate-400">2026-09-05, Marketing & Ads, Iklan Meta Ads & TikTok Campaign, 1500000</div>
-                <div className="text-slate-400">2026-09-10, Packaging, Plastik Polymailer & Hangtag 1000 pcs, 450000</div>
-                <div className="text-slate-400">2026-09-25, Gaji Tim, Gaji Staff Packing & Admin CS, 3200000</div>
-              </div>
-            </div>
+            ))}
           </div>
-
-          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-200 space-y-1">
-            <div className="font-bold flex items-center gap-2">
-              Cara Penggunaan di Microsoft Excel atau Google Sheets:
-            </div>
-            <ol className="list-decimal list-inside space-y-0.5 text-slate-300 text-xs pl-1">
-              <li>Klik tombol <strong>"Unduh .CSV"</strong> di atas.</li>
-              <li>Buka file tersebut di Excel, lalu copy-paste atau isi data riil Kalima Apparel milik Anda.</li>
-              <li>Simpan (Save As) dengan format <strong>CSV (Comma Delimited) (*.csv)</strong>.</li>
-              <li>Buka tab <strong>"2. Impor Data ke Sistem"</strong> di sebelah, lalu paste isi CSV ke kolom teks untuk dimuat langsung!</li>
+          <div className={`${CARD} p-4 text-xs text-slate-600 space-y-1`}>
+            <div className="font-semibold text-slate-900">Cara pakai</div>
+            <ol className="list-decimal list-inside space-y-0.5">
+              <li>Unduh template, buka di Excel atau Google Sheets, lalu isi mulai baris kedua.</li>
+              <li>Simpan sebagai CSV, atau langsung salin selnya.</li>
+              <li>Buka tab Impor, pilih jenis data, lalu unggah file atau tempel isinya.</li>
             </ol>
           </div>
         </div>
       )}
 
-      {/* SUBTAB 2: IMPOR TOOL */}
       {activeSubTab === 'import_tool' && (
-        <div className="bg-[#121620] p-6 rounded-2xl border border-slate-800/80 space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-            <div>
-              <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                <Upload className="w-4 h-4 text-amber-400" />
-                Impor Data Excel (.CSV atau Paste Sel Spreadsheet)
-              </h3>
-              <p className="text-xs text-slate-400">
-                Pilih jenis data, lalu Anda bisa <strong>Upload File .CSV</strong> atau <strong>langsung Copy-Paste baris tabel Excel / Google Sheets</strong>.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">Pilih Data:</span>
-              <select
-                value={importMode}
-                onChange={(e) => {
-                  setImportMode(e.target.value as any);
-                  setUploadedFileName(null);
-                  setImportText('');
-                }}
-                className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white"
-              >
-                <option value="csv_sku">Master SKU (Katalog Kaos)</option>
-                <option value="csv_stock">Saldo Awal Stok Fisik</option>
-                <option value="csv_orders">Riwayat Order (Arsip)</option>
-                <option value="csv_expenses">Biaya Pengeluaran (Beban Operasional)</option>
-                <option value="full_json">Backup Sistem Lengkap (JSON)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* OPSI 1: FILE PICKER / UPLOAD FILE CSV */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="p-5 border-2 border-dashed border-slate-700 hover:border-amber-400/80 bg-slate-950/60 hover:bg-slate-900/80 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all group"
+        <div className={`${CARD} p-5 space-y-4 text-xs`}>
+          <label className="block max-w-sm">
+            <span className="block text-slate-600 font-semibold mb-1">Jenis data</span>
+            <select
+              value={importMode}
+              onChange={(e) => {
+                setImportMode(e.target.value as any);
+                setUploadedFileName(null);
+                setImportText('');
+                setImportStatus(null);
+              }}
+              className={INPUT}
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv,.txt"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform mb-2">
-                <FileUp className="w-5 h-5" />
-              </div>
-              <div className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">
-                {uploadedFileName ? `File Terpilih: ${uploadedFileName}` : 'Klik untuk Pilih File Excel (.xlsx, .xls) atau .CSV'}
-              </div>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                Mendukung file Excel langsung (.xlsx, .xls) maupun file .csv dari Excel/Google Sheets/Marketplace
-              </p>
-              {uploadedFileName && (
-                <span className="mt-2 text-[11px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-md border border-emerald-500/30">
-                  Siap diproses
-                </span>
-              )}
-            </div>
+              <option value="csv_sku">Master SKU</option>
+              <option value="csv_stock">Saldo awal stok</option>
+              <option value="csv_orders">Riwayat order</option>
+              <option value="csv_expenses">Biaya operasional</option>
+              <option value="full_json">Pulihkan dari backup (JSON)</option>
+            </select>
+          </label>
 
-            {/* PANDUAN CARA COPY SEL LANGSUNG */}
-            <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs text-slate-300 space-y-2">
-              <div className="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
-                <ClipboardCheck className="w-4 h-4" />
-                Cara Copy Teks Langsung dari Excel / Google Sheets:
+          {importMode === 'full_json' && (
+            <div role="note" className="bg-rose-50 border border-rose-200 text-rose-800 p-3 rounded-xl flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>Memulihkan backup mengganti data yang sekarang. Sebelum disimpan, isi backup ditampilkan untuk dikonfirmasi.</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="p-5 border-2 border-dashed border-slate-300 hover:border-slate-500 bg-slate-50 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer"
+            >
+              <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv,.txt,.json" onChange={handleFileUpload} className="hidden" />
+              <FileUp className="w-5 h-5 text-slate-600 mb-2" aria-hidden="true" />
+              <span className="font-semibold text-slate-900">{uploadedFileName ? uploadedFileName : 'Pilih file Excel atau CSV'}</span>
+              <span className="text-slate-500 mt-1">{uploadedFileName ? 'Isi file tampil di kotak di bawah' : '.xlsx, .xls, .csv'}</span>
+            </button>
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-slate-600 space-y-1.5">
+              <div className="font-semibold text-slate-900 flex items-center gap-1.5">
+                <ClipboardCheck className="w-4 h-4" aria-hidden="true" /> Atau salin dari spreadsheet
               </div>
-              <ol className="list-decimal list-inside space-y-1 text-xs text-slate-400">
-                <li>Buka file Excel atau Google Sheets Anda.</li>
-                <li>
-                  Blok / seleksi baris judul dan isi data (misal: sel <code className="text-amber-300 bg-slate-900 px-1 rounded">A1</code> sampai <code className="text-amber-300 bg-slate-900 px-1 rounded">H10</code>).
-                </li>
-                <li>Tekan tombol <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-200">Ctrl + C</kbd> (atau <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-200">Cmd + C</kbd> di Mac).</li>
-                <li>Klik di kotak teks di bawah lalu tekan <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-200">Ctrl + V</kbd>. Aplikasi otomatis mendeteksi kolom!</li>
+              <ol className="list-decimal list-inside space-y-0.5">
+                <li>Blok baris judul beserta datanya.</li>
+                <li>Salin (Ctrl/Cmd + C).</li>
+                <li>Tempel di kotak di bawah (Ctrl/Cmd + V).</li>
               </ol>
             </div>
           </div>
 
-          {/* OPSI KHUSUS OPEX: TIMPA / BERSIHKAN DATA SEBELUMNYA */}
-          {importMode === 'csv_expenses' && (
-            <div className="p-4 bg-slate-950 rounded-2xl border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="space-y-1">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-white">
-                  <input
-                    type="checkbox"
-                    checked={replaceExistingExpenses}
-                    onChange={(e) => setReplaceExistingExpenses(e.target.checked)}
-                    className="w-4 h-4 rounded text-amber-500 bg-slate-900 border-slate-700 focus:ring-amber-400"
-                  />
-                  <span>Timpa / Kosongkan data OPEX lama sebelum mengimpor data ini</span>
-                </label>
-                <p className="text-xs text-slate-400 pl-6">
-                  Centang opsi ini agar data pengeluaran lama tidak terduplikasi (misal jika terbaca 83 juta padahal seharusnya 30 jutaan).
-                </p>
-              </div>
-
-              {biayaOperasional.length > 0 && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (await askConfirm(`Yakin ingin mengosongkan ${biayaOperasional.length} catatan pengeluaran lama?`, { danger: true })) {
-                      clearBiayaOperasional();
-                      setImportStatus({
-                        success: true,
-                        message: 'Semua data pengeluaran lama berhasil dikosongkan. Sekarang Anda siap mengimpor data baru yang bersih.',
-                      });
-                    }
-                  }}
-                  className="px-3 py-1.5 text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-600 border border-rose-500/30 rounded-xl text-xs font-semibold transition-colors shrink-0 cursor-pointer flex items-center gap-1.5"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Kosongkan OPEX Lama ({biayaOperasional.length} Data)</span>
-                </button>
-              )}
-            </div>
-          )}
-
           {importStatus && (
             <div
-              className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
-                importStatus.success
-                  ? 'bg-emerald-950 border-emerald-800 text-emerald-300'
-                  : 'bg-rose-950 border-rose-800 text-rose-300'
+              role={importStatus.success ? 'status' : 'alert'}
+              className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                importStatus.success ? 'bg-white border-slate-200 text-slate-900' : 'bg-rose-50 border-rose-200 text-rose-800'
               }`}
             >
-              <div className="flex items-center gap-2">
-                {importStatus.success ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                )}
+              <div className="flex items-start gap-2">
+                {importStatus.success ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />}
                 <span>{importStatus.message}</span>
               </div>
               {importStatus.success && importMode === 'csv_orders' && (
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('sales')}
-                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs shrink-0 transition-colors cursor-pointer flex items-center gap-1 self-start sm:self-auto"
-                >
-                  <span>Buka Menu Order & Penjualan →</span>
+                <button type="button" onClick={() => setCurrentView('sales')} className={`${OUTLINE_BUTTON} shrink-0`}>
+                  Buka Penjualan
                 </button>
               )}
               {importStatus.success && importMode === 'csv_expenses' && (
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('finance')}
-                  className="px-3 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-lg text-xs shrink-0 transition-colors cursor-pointer flex items-center gap-1 self-start sm:self-auto"
-                >
-                  <span>Buka Buku Kas & Laba Rugi →</span>
+                <button type="button" onClick={() => setCurrentView('finance')} className={`${OUTLINE_BUTTON} shrink-0`}>
+                  Buka Keuangan
                 </button>
               )}
             </div>
@@ -1075,8 +993,8 @@ export const ImportExportView: React.FC = () => {
 
           <form onSubmit={handleProcessImport} className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300">
-                Pratinjau Isi Data (CSV atau Tab-Separated):
+              <label htmlFor="import-text" className="font-semibold text-slate-600">
+                Isi data
               </label>
               {importText && (
                 <button
@@ -1085,206 +1003,90 @@ export const ImportExportView: React.FC = () => {
                     setImportText('');
                     setUploadedFileName(null);
                   }}
-                  className="text-xs text-rose-400 hover:underline cursor-pointer"
+                  className="text-slate-600 font-semibold hover:underline cursor-pointer"
                 >
-                  Bersihkan Teks
+                  Kosongkan
                 </button>
               )}
             </div>
-
             <textarea
+              id="import-text"
               rows={7}
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
-              placeholder={
-                importMode === 'csv_sku'
-                  ? 'Paste isi CSV atau paste langsung sel SKU dari Excel/Google Sheets di sini...\nContoh:\nsku\tseriesCode\tcolorCode\tcolorName\tsize\tprice\thpp\tminStock\nKL-210OV-HT-M\t210OV\tHT\tHitam\tM\t129000\t50000\t10'
-                  : importMode === 'csv_stock'
-                  ? 'Paste isi CSV atau paste langsung sel stok dari Excel di sini...\nContoh:\nsku\tqty\tlokasi\tcatatan\nKL-210OV-HT-M\t40\tGudang Utama\tSaldo Awal Migrasi Excel'
-                  : importMode === 'csv_orders'
-                  ? 'Paste isi CSV atau paste langsung baris order dari Excel di sini...\nContoh kolom:\nnoOrder\ttanggal\tchannel\tcustomerNama\tcustomerHp\tcustomerKota\tsku\tqty\thargaSatuan\tdiskon\tstatusBayar\tnoResi\nORD-20260901-001\t2026-09-01\tShopee\tBudi Santoso\t08123456789\tBandung\tKL-210OV-HT-L\t2\t129000\t0\tlunas\tSPXID029481920'
-                  : 'Paste teks CSV atau JSON cadangan di sini...'
-              }
-              className="w-full bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl p-3 text-xs text-slate-200 font-mono transition-colors"
+              placeholder={importMode === 'full_json' ? 'Tempel isi file backup JSON di sini…' : 'Tempel baris judul dan data dari spreadsheet di sini…'}
+              className={`${INPUT} font-mono text-xs`}
             />
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <span className="text-xs text-slate-400">
-                Data akan langsung disimpan ke browser Anda (`localStorage`) secara otomatis.
-              </span>
-              <button
-                type="submit"
-                disabled={!importText.trim()}
-                className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-lg shadow-amber-500/10 flex items-center gap-1.5"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Proses & Simpan Data</span>
+            {importMode === 'csv_expenses' && (
+              <label className="flex items-start gap-2 cursor-pointer text-slate-700">
+                <input type="checkbox" checked={replaceExistingExpenses} onChange={(e) => setReplaceExistingExpenses(e.target.checked)} className="w-4 h-4 mt-0.5 rounded" />
+                <span>
+                  <span className="font-semibold">Ganti biaya operasional yang sudah ada</span>
+                  <span className="block text-slate-500">
+                    {biayaOperasional.length.toLocaleString('id-ID')} catatan lama dihapus lalu diganti isi impor ini. Biarkan kosong untuk menambahkan saja.
+                  </span>
+                </span>
+              </label>
+            )}
+
+            <div className="flex justify-end">
+              <button type="submit" disabled={!importText.trim()} className={importMode === 'full_json' ? DANGER_BUTTON : PRIMARY_BUTTON}>
+                {importMode === 'full_json' ? 'Periksa & pulihkan' : 'Impor data'}
               </button>
             </div>
           </form>
+
+          {importMode === 'csv_expenses' && biayaOperasional.length > 0 && (
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span className="text-slate-600">Hapus semua {biayaOperasional.length.toLocaleString('id-ID')} catatan biaya operasional tanpa mengimpor apa pun.</span>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (
+                    await askConfirm(`${biayaOperasional.length} catatan biaya operasional dihapus permanen dan laba rugi ikut berubah.`, {
+                      title: 'Hapus semua biaya operasional?',
+                      confirmLabel: 'Ya, hapus',
+                      danger: true,
+                    })
+                  ) {
+                    clearBiayaOperasional();
+                    setImportStatus({ success: true, message: 'Semua biaya operasional dihapus.' });
+                  }
+                }}
+                className={`${OUTLINE_BUTTON} text-rose-700 shrink-0`}
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Hapus semua biaya
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* SUBTAB 3: EKSPOR KE CSV / BACKUP */}
       {activeSubTab === 'csv_export' && (
-        <div className="bg-[#121620] p-6 rounded-2xl border border-slate-800/80 space-y-4">
-          <h3 className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-            <Download className="w-4 h-4 text-emerald-400" />
-            Ekspor Data Aktif ke Format Excel (.CSV)
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            <button
-              onClick={() =>
-                exportToCSV(
-                  `kalima-penjualan-${Date.now()}.csv`,
-                  orders.map((o) => ({
-                    noOrder: o.noOrder,
-                    tanggal: o.tanggal,
-                    channel: o.channel,
-                    customerNama: o.customerNama,
-                    customerHp: o.customerHp,
-                    customerKota: o.customerKota,
-                    totalTagihan: o.totalTagihan,
-                    totalHpp: o.totalHpp,
-                    labaKotor: o.labaKotor,
-                    statusBayar: o.statusBayar,
-                    sisaPiutang: o.sisaPiutang,
-                    noResi: o.noResi || '',
-                  }))
-                )
-              }
-              className="p-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-left transition-colors flex items-center justify-between cursor-pointer"
-            >
-              <div>
-                <div className="font-bold text-white text-xs">Laporan Penjualan</div>
-                <div className="text-xs text-slate-400">{orders.length} order tercatat</div>
-              </div>
-              <ArrowDownToLine className="w-4 h-4 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() =>
-                exportToCSV(
-                  `kalima-stok-mutasi-${Date.now()}.csv`,
-                  stockMovements.map((m) => ({
-                    id: m.id,
-                    tanggal: m.tanggal,
-                    sku: m.sku,
-                    tipe: m.tipe,
-                    qty: m.qty,
-                    lokasi: m.lokasi,
-                    referensi: m.referensi,
-                    catatan: m.catatan,
-                    operator: m.recordedBy,
-                  }))
-                )
-              }
-              className="p-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-left transition-colors flex items-center justify-between cursor-pointer"
-            >
-              <div>
-                <div className="font-bold text-white text-xs">Kartu Stok & Mutasi</div>
-                <div className="text-xs text-slate-400">
-                  {stockMovements.length} transaksi stok
-                </div>
-              </div>
-              <ArrowDownToLine className="w-4 h-4 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() =>
-                exportToCSV(
-                  `kalima-master-sku-${Date.now()}.csv`,
-                  skus.map((s) => ({
-                    sku: s.sku,
-                    seri: s.seriesCode,
-                    nama: s.name,
-                    warna: s.colorName,
-                    ukuran: s.size,
-                    hargaJual: s.price,
-                    hpp: s.hpp,
-                    minStock: s.minStock,
-                  }))
-                )
-              }
-              className="p-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-left transition-colors flex items-center justify-between cursor-pointer"
-            >
-              <div>
-                <div className="font-bold text-white text-xs">Katalog Master SKU</div>
-                <div className="text-xs text-slate-400">{skus.length} SKU terdaftar</div>
-              </div>
-              <ArrowDownToLine className="w-4 h-4 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() =>
-                exportToCSV(
-                  `kalima-kas-bank-mutasi-${Date.now()}.csv`,
-                  cashMutations.map((m) => ({
-                    id: m.id,
-                    tanggal: m.tanggal,
-                    waktu: m.waktu || '',
-                    akun: m.accountNama,
-                    tipe: m.tipe.toUpperCase(),
-                    kategori: m.kategori,
-                    deskripsi: m.deskripsi,
-                    referensi: m.referensi || '',
-                    jumlah: m.jumlah,
-                    saldoSetelah: m.saldoSetelah,
-                    operator: m.dicatatOleh,
-                  }))
-                )
-              }
-              className="p-3 bg-slate-950 hover:bg-slate-900 border border-slate-800 rounded-xl text-left transition-colors flex items-center justify-between cursor-pointer"
-            >
-              <div>
-                <div className="font-bold text-white text-xs">Buku Kas & Mutasi Bank</div>
-                <div className="text-xs text-slate-400">
-                  {cashMutations.length} catatan mutasi kas
-                </div>
-              </div>
-              <ArrowDownToLine className="w-4 h-4 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() => {
-                const backupData = {
-                  version: '1.0.0',
-                  exportedAt: new Date().toISOString(),
-                  skus,
-                  orders,
-                  stockMovements,
-                  customers,
-                  resellers,
-                  biayaOperasional,
-                  suratTitip,
-                  cashAccounts,
-                  cashMutations,
-                };
-                const blob = new Blob([JSON.stringify(backupData, null, 2)], {
-                  type: 'application/json',
-                });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = `kalima-full-backup-${Date.now()}.json`;
-                link.click();
-              }}
-              className="p-3 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl text-left transition-colors flex items-center justify-between col-span-full sm:col-span-2 md:col-span-3 cursor-pointer"
-            >
-              <div>
-                <div className="font-bold text-amber-400 text-xs">
-                  Backup Seluruh Database Sistem (JSON)
-                </div>
-                <div className="text-xs text-slate-300">
-                  Menyimpan seluruh master SKU, order, kartu stok, kas & bank, reseller, dan OPEX dalam 1 file cadangan
-                </div>
-              </div>
-              <Download className="w-4 h-4 text-amber-400" />
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+            {EXPORTS.map((item) => (
+              <button key={item.title} type="button" onClick={item.run} className={`${CARD} p-4 text-left flex items-center justify-between gap-2 hover:border-slate-400 cursor-pointer`}>
+                <span>
+                  <span className="block text-xs font-bold text-slate-900">{item.title}</span>
+                  <span className="block text-xs text-slate-500">{item.count}</span>
+                </span>
+                <ArrowDownToLine className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+          <div className={`${CARD} p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs`}>
+            <div>
+              <div className="text-sm font-bold text-slate-900">Backup seluruh data</div>
+              <p className="text-slate-600 mt-0.5">Satu file JSON berisi SKU, order, stok, opname, pelanggan, reseller, vendor, PO, kas, dan biaya. Simpan di tempat aman.</p>
+            </div>
+            <button type="button" onClick={handleFullBackup} className={`${PRIMARY_BUTTON} shrink-0`}>
+              <Download className="w-3.5 h-3.5" /> Unduh backup
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 };
