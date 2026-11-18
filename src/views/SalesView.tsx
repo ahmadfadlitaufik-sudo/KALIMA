@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { latestOrderMonth } from '../services/salesPeriod';
 import { useSearchHandoff } from '../hooks/useSearchHandoff';
 import {
   Plus,
@@ -63,7 +64,18 @@ export const SalesView: React.FC = () => {
 
   // Period / Date Filters
   const [periodType, setPeriodType] = useState<'all' | 'month' | 'custom' | 'today' | '7days' | '30days'>('month');
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthStr);
+  const [selectedMonth, setSelectedMonthState] = useState<string>(() => latestOrderMonth(orders, currentMonthStr));
+  /** Setelah pengguna memilih bulan sendiri, bulan tidak lagi berpindah otomatis saat data order dimuat ulang. */
+  const monthChosenRef = React.useRef(false);
+  const setSelectedMonth = (month: string) => {
+    monthChosenRef.current = true;
+    setSelectedMonthState(month);
+  };
+  React.useEffect(() => {
+    if (!monthChosenRef.current) {
+      setSelectedMonthState(latestOrderMonth(orders, currentMonthStr));
+    }
+  }, [orders, currentMonthStr]);
   const [customStartDate, setCustomStartDate] = useState<string>(`${currentMonthStr}-01`);
   const [customEndDate, setCustomEndDate] = useState<string>(todayStr);
 
