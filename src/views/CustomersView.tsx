@@ -9,43 +9,158 @@ import {
   ShoppingBag,
   Store,
   Crown,
-  ShieldAlert,
   ArrowUpRight,
-  Filter,
   CheckCircle2,
-  Clock,
-  ChevronRight,
   Receipt,
   Edit2,
   Trash2,
-  ExternalLink,
-  DollarSign,
-  Package,
   Sparkles,
-  UserCheck,
-  TrendingUp,
-  Tag,
   Zap,
-  Layers,
   ChevronDown,
   Upload,
   Download,
-  FileSpreadsheet,
-  Trash,
   CheckSquare,
   Square,
   AlertTriangle,
   RefreshCw,
   X,
-  ArrowUpDown,
   Building2,
+  MoreHorizontal,
+  ArrowRight,
 } from 'lucide-react';
 import { useApp, normalizePhone } from '../context/AppContext';
-import { Customer, Order, SalesChannelName, Reseller, CustomerCategory } from '../types';
+import { Customer, Order, SalesChannelName } from '../types';
+import { askConfirm } from '../services/dialogStore';
+import { CustomerSegment, FrequencyTier, displayCity, formatCompactRupiah, frequencyTier, resolveSegment } from '../services/customerSegments';
 
-export type MainCategoryTab = 'ALL' | 'Umum' | 'Reseller' | 'Marketplace' | 'VIP';
-export type FrequencyFilter = 'ALL' | 'baru' | 'reguler' | 'loyal' | 'no_order';
+export type MainCategoryTab = 'ALL' | CustomerSegment;
+export type FrequencyFilter = 'ALL' | FrequencyTier;
 export type SortOption = 'ltv_desc' | 'orders_desc' | 'recent' | 'name_asc';
+
+const PAGE_SIZE = 20;
+const SEGMENTS: CustomerSegment[] = ['Umum', 'Reseller', 'Marketplace', 'VIP', 'Internal'];
+
+const SEGMENT_INFO: Record<CustomerSegment, { label: string; hint: string; icon: React.ElementType }> = {
+  Umum: { label: 'Umum', hint: 'Retail / langsung', icon: ShoppingBag },
+  Reseller: { label: 'Reseller', hint: 'Mitra konsinyasi & grosir', icon: Store },
+  Marketplace: { label: 'Marketplace', hint: 'Shopee / TikTok Shop', icon: Zap },
+  VIP: { label: 'VIP', hint: 'Pelanggan prioritas', icon: Crown },
+  Internal: { label: 'Internal', hint: 'Akun penampung / milik sendiri, tidak dihitung sebagai pelanggan', icon: Building2 },
+};
+
+const FREQUENCY_LABELS: Record<FrequencyFilter, string> = {
+  ALL: 'Semua frekuensi',
+  baru: 'Baru (1x order)',
+  reguler: 'Reguler (2–4x)',
+  loyal: 'Loyal (≥5x)',
+  no_order: 'Belum pernah order',
+};
+
+const SORT_LABELS: Record<SortOption, string> = {
+  ltv_desc: 'Urut: Belanja terbesar',
+  orders_desc: 'Urut: Order terbanyak',
+  recent: 'Urut: Order terbaru',
+  name_asc: 'Urut: Nama A–Z',
+};
+
+const CARD = 'bg-white rounded-2xl border border-slate-200';
+const INPUT = 'w-full bg-white border border-slate-300 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-slate-500';
+const OUTLINE_BUTTON =
+  'inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer';
+const PRIMARY_BUTTON = 'segmented-pill-active inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold cursor-pointer';
+const ICON_BUTTON = 'w-8 h-8 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 cursor-pointer';
+const DANGER_BUTTON = 'inline-flex items-center gap-1.5 px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white font-bold rounded-xl text-xs cursor-pointer';
+
+const formatRupiah = (val: number) => `Rp ${Math.round(val).toLocaleString('id-ID')}`;
+
+const getInitials = (name: string) => {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2 && parts[0] && parts[1]) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return (name.trim().slice(0, 2) || 'CU').toUpperCase();
+};
+
+const whatsappNumber = (phone: string): string => {
+  const clean = (phone || '').replace(/[^0-9]/g, '');
+  return clean.startsWith('0') ? `62${clean.substring(1)}` : clean;
+};
+
+const Field: React.FC<{ label: string; hint?: string; children: React.ReactNode }> = ({ label, hint, children }) => (
+  <label className="block">
+    <span className="block text-slate-600 font-semibold mb-1">{label}</span>
+    {children}
+    {hint && <span className="text-[11px] text-slate-500 mt-1 block">{hint}</span>}
+  </label>
+);
+
+const Modal: React.FC<{
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  icon?: React.ReactNode;
+  onClose: () => void;
+  size?: 'md' | 'lg' | 'xl';
+  children: React.ReactNode;
+}> = ({ title, subtitle, icon, onClose, size = 'md', children }) => (
+  <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div
+      className={`bg-white border border-slate-200 rounded-2xl w-full ${
+        size === 'xl' ? 'max-w-3xl' : size === 'lg' ? 'max-w-lg' : 'max-w-md'
+      } max-h-[90vh] flex flex-col shadow-2xl`}
+    >
+      <div className="p-5 border-b border-slate-100 flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5 min-w-0">
+          {icon}
+          <div className="min-w-0">
+            <h3 className="font-bold text-slate-900 text-base">{title}</h3>
+            {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+          </div>
+        </div>
+        <button type="button" aria-label="Tutup" data-modal-close onClick={onClose} className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer">
+          <X className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+      <div className="p-5 overflow-y-auto">{children}</div>
+    </div>
+  </div>
+);
+
+const SegmentBadge: React.FC<{ segment: CustomerSegment; onClick?: () => void }> = ({ segment, onClick }) => {
+  const info = SEGMENT_INFO[segment];
+  const Icon = info.icon;
+  const className = `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+    segment === 'Internal' ? 'border border-dashed border-slate-400 text-slate-600' : 'bg-slate-100 text-slate-800'
+  }`;
+  if (!onClick) {
+    return (
+      <span className={className}>
+        <Icon className="w-3 h-3" aria-hidden="true" />
+        {info.label}
+      </span>
+    );
+  }
+  return (
+    <button type="button" onClick={onClick} className={`${className} cursor-pointer hover:brightness-95`} title="Ubah segmen" aria-label={`Segmen ${info.label}, klik untuk mengubah`}>
+      <Icon className="w-3 h-3" aria-hidden="true" />
+      {info.label}
+      <ChevronDown className="w-3 h-3 opacity-60" aria-hidden="true" />
+    </button>
+  );
+};
+
+type CustomerStats = {
+  totalOrders: number;
+  totalPcs: number;
+  totalSpent: number;
+  lastOrderDate?: string;
+  lastChannel?: SalesChannelName;
+  channelsUsed: Set<SalesChannelName>;
+  topItem?: string;
+  ordersList: Order[];
+  resolvedCategory: CustomerSegment;
+  isManualTagged: boolean;
+  frequencyTier: FrequencyTier;
+};
 
 export const CustomersView: React.FC = () => {
   const {
@@ -64,25 +179,19 @@ export const CustomersView: React.FC = () => {
     setCurrentView,
   } = useApp();
 
-  // Top View Toggle: Database Customer vs CRM Mitra Hub
-
-  // Category Filter Bar State
   const [selectedCategoryTab, setSelectedCategoryTab] = useState<MainCategoryTab>('ALL');
   const [selectedFreqFilter, setSelectedFreqFilter] = useState<FrequencyFilter>('ALL');
   const [sortBy, setSortBy] = useState<SortOption>('ltv_desc');
   const [searchQuery, setSearchQuery] = useState('');
+  const [customerPage, setCustomerPage] = useState<number>(1);
   useSearchHandoff('customers', setSearchQuery);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
 
-  // Selection & Bulk Action State
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [deleteConfirmCustomer, setDeleteConfirmCustomer] = useState<Customer | null>(null);
-
-  // Quick tag dropdown state for a specific customer row
   const [activeTagDropdownId, setActiveTagDropdownId] = useState<string | null>(null);
 
-  // Modals
   const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importCsvText, setImportCsvText] = useState('');
@@ -91,43 +200,27 @@ export const CustomersView: React.FC = () => {
   const [historyCustomerModal, setHistoryCustomerModal] = useState<Customer | null>(null);
   const [promoteCustomerModal, setPromoteCustomerModal] = useState<Customer | null>(null);
 
-  // New Customer Form State
   const [newCustNama, setNewCustNama] = useState('');
   const [newCustHp, setNewCustHp] = useState('');
-  const [newCustKota, setNewCustKota] = useState('Jakarta');
-  const [newCustCategory, setNewCustCategory] = useState<'Umum' | 'Reseller' | 'Marketplace' | 'VIP'>('Umum');
+  const [newCustKota, setNewCustKota] = useState('');
+  const [newCustCategory, setNewCustCategory] = useState<CustomerSegment>('Umum');
   const [newCustAlamat, setNewCustAlamat] = useState('');
   const [newCustCatatan, setNewCustCatatan] = useState('');
 
-  // Promote to Reseller / Mitra Form State
   const [mitraLevel, setMitraLevel] = useState<'Platinum' | 'Gold' | 'Silver'>('Gold');
   const [mitraDiskon, setMitraDiskon] = useState<number>(20);
   const [mitraPlafon, setMitraPlafon] = useState<number>(10000000);
   const [mitraJadwal, setMitraJadwal] = useState('Setiap Hari Senin');
   const [mitraAlamat, setMitraAlamat] = useState('');
 
-  // 1. Calculate stats & resolved category for every customer
-  const customerStatsMap = useMemo(() => {
-    const stats: Record<
-      string,
-      {
-        totalOrders: number;
-        totalPcs: number;
-        totalSpent: number;
-        lastOrderDate?: string;
-        lastChannel?: SalesChannelName;
-        channelsUsed: Set<SalesChannelName>;
-        marketplaceOrdersCount: number;
-        directOrdersCount: number;
-        resellerOrdersCount: number;
-        topItem?: string;
-        ordersList: Order[];
-        resolvedCategory: 'Umum' | 'Reseller' | 'Marketplace' | 'VIP';
-        isManualTagged: boolean;
-        frequencyTier: 'baru' | 'reguler' | 'loyal' | 'no_order';
-      }
-    > = {};
+  const flash = (message: string, ms = 4000) => {
+    setSyncStatus(message);
+    setTimeout(() => setSyncStatus(null), ms);
+  };
 
+  // 1. Statistik & segmen setiap customer
+  const customerStatsMap = useMemo(() => {
+    const stats: Record<string, CustomerStats & { marketplace: number; direct: number; reseller: number }> = {};
     const phoneMap = new Map<string, string>();
     const nameMap = new Map<string, string>();
 
@@ -139,264 +232,190 @@ export const CustomersView: React.FC = () => {
       if (c.nama) {
         nameMap.set(c.nama.trim().toLowerCase(), c.id);
       }
-
       stats[c.id] = {
         totalOrders: 0,
         totalPcs: 0,
         totalSpent: 0,
         channelsUsed: new Set<SalesChannelName>(),
-        marketplaceOrdersCount: 0,
-        directOrdersCount: 0,
-        resellerOrdersCount: 0,
         ordersList: [],
         resolvedCategory: 'Umum',
         isManualTagged: false,
         frequencyTier: 'no_order',
+        marketplace: 0,
+        direct: 0,
+        reseller: 0,
       };
     });
 
-    // Populate from orders
     orders.forEach((ord) => {
       let targetCustId = ord.customerId;
-      const ordNormPhone = normalizePhone(ord.customerHp);
-
       if (!stats[targetCustId]) {
+        const ordNormPhone = normalizePhone(ord.customerHp);
         if (ordNormPhone && phoneMap.has(ordNormPhone)) {
           targetCustId = phoneMap.get(ordNormPhone)!;
         } else if (ord.customerNama && nameMap.has(ord.customerNama.trim().toLowerCase())) {
           targetCustId = nameMap.get(ord.customerNama.trim().toLowerCase())!;
         }
       }
-
-      if (stats[targetCustId]) {
-        const s = stats[targetCustId];
-        if (ord.statusOrder !== 'batal') {
-          s.totalOrders += 1;
-          const orderPcs = ord.items.reduce((acc, it) => acc + it.qty, 0);
-          s.totalPcs += orderPcs;
-          s.totalSpent += ord.totalTagihan;
-          s.channelsUsed.add(ord.channel);
-          s.ordersList.push(ord);
-
-          if (ord.channel === 'Shopee' || ord.channel === 'TikTok') {
-            s.marketplaceOrdersCount += 1;
-          } else if (ord.channel === 'Reseller') {
-            s.resellerOrdersCount += 1;
-          } else {
-            s.directOrdersCount += 1;
-          }
-
-          if (!s.lastOrderDate || ord.tanggal > s.lastOrderDate) {
-            s.lastOrderDate = ord.tanggal;
-            s.lastChannel = ord.channel;
-          }
-        }
+      const s = stats[targetCustId];
+      if (!s || ord.statusOrder === 'batal') {
+        return;
+      }
+      s.totalOrders += 1;
+      s.totalPcs += ord.items.reduce((acc, it) => acc + it.qty, 0);
+      s.totalSpent += ord.totalTagihan;
+      s.channelsUsed.add(ord.channel);
+      s.ordersList.push(ord);
+      if (ord.channel === 'Shopee' || ord.channel === 'TikTok') {
+        s.marketplace += 1;
+      } else if (ord.channel === 'Reseller') {
+        s.reseller += 1;
+      } else {
+        s.direct += 1;
+      }
+      if (!s.lastOrderDate || ord.tanggal > s.lastOrderDate) {
+        s.lastOrderDate = ord.tanggal;
+        s.lastChannel = ord.channel;
       }
     });
 
-    // Resolve Category and Frequency Tier for each customer
     customers.forEach((cust) => {
       const s = stats[cust.id];
-      if (!s) return;
-
-      // Frequency Tier
-      if (s.totalOrders === 0) {
-        s.frequencyTier = 'no_order';
-      } else if (s.totalOrders === 1) {
-        s.frequencyTier = 'baru';
-      } else if (s.totalOrders >= 2 && s.totalOrders <= 4) {
-        s.frequencyTier = 'reguler';
-      } else {
-        s.frequencyTier = 'loyal';
+      s.frequencyTier = frequencyTier(s.totalOrders);
+      s.ordersList.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+      const itemFrequency: Record<string, number> = {};
+      s.ordersList.forEach((ord) => ord.items.forEach((it) => (itemFrequency[it.namaProduk] = (itemFrequency[it.namaProduk] || 0) + it.qty)));
+      const [top] = Object.entries(itemFrequency).sort((a, b) => b[1] - a[1]);
+      if (top) {
+        s.topItem = `${top[0]} (${top[1]} pcs)`;
       }
-
-      // Favorite product calculation
-      if (s.ordersList.length > 0) {
-        const itemFrequency: Record<string, number> = {};
-        s.ordersList.forEach((ord) => {
-          ord.items.forEach((it) => {
-            itemFrequency[it.namaProduk] = (itemFrequency[it.namaProduk] || 0) + it.qty;
-          });
-        });
-        const sortedItems = Object.entries(itemFrequency).sort((a, b) => b[1] - a[1]);
-        if (sortedItems[0]) {
-          s.topItem = `${sortedItems[0][0]} (${sortedItems[0][1]} pcs)`;
-        }
-      }
-
-      // TAGGING CATEGORIZATION LOGIC:
-      if (cust.kategoriManual) {
-        s.resolvedCategory = cust.kategoriManual;
-        s.isManualTagged = true;
-      } else if (cust.tipe === 'VIP') {
-        s.resolvedCategory = 'VIP';
-        s.isManualTagged = true;
-      } else if (cust.tipe === 'Reseller' || cust.resellerIdRef || s.resellerOrdersCount > 0) {
-        s.resolvedCategory = 'Reseller';
-        s.isManualTagged = cust.tipe === 'Reseller';
-      } else if (cust.tipe === 'Marketplace') {
-        s.resolvedCategory = 'Marketplace';
-        s.isManualTagged = true;
-      } else {
-        if (s.marketplaceOrdersCount > 0 && s.marketplaceOrdersCount >= s.directOrdersCount) {
-          s.resolvedCategory = 'Marketplace';
-        } else if (s.totalOrders >= 5 || s.totalSpent >= 2500000) {
-          s.resolvedCategory = 'VIP';
-        } else if (s.resellerOrdersCount > 0) {
-          s.resolvedCategory = 'Reseller';
-        } else {
-          s.resolvedCategory = 'Umum';
-        }
-      }
+      const resolved = resolveSegment(cust, {
+        totalOrders: s.totalOrders,
+        totalSpent: s.totalSpent,
+        marketplaceOrders: s.marketplace,
+        directOrders: s.direct,
+        resellerOrders: s.reseller,
+      });
+      s.resolvedCategory = resolved.segment;
+      s.isManualTagged = resolved.isManual;
     });
 
-    return stats;
+    return stats as Record<string, CustomerStats>;
   }, [customers, orders]);
 
-  // 2. Count metrics for the Category Filter Bar
+  // 2. Jumlah & total belanja per segmen
   const categoryCounts = useMemo(() => {
-    const counts = {
-      ALL: { count: customers.length, totalSpent: 0 },
-      Umum: { count: 0, totalSpent: 0 },
-      Reseller: { count: 0, totalSpent: 0 },
-      Marketplace: { count: 0, totalSpent: 0 },
-      VIP: { count: 0, totalSpent: 0 },
-    };
-
+    const counts = Object.fromEntries(['ALL', ...SEGMENTS].map((key) => [key, { count: 0, totalSpent: 0 }])) as Record<
+      MainCategoryTab,
+      { count: number; totalSpent: number }
+    >;
     customers.forEach((c) => {
       const s = customerStatsMap[c.id];
       const cat = s?.resolvedCategory || 'Umum';
       const spent = s?.totalSpent || 0;
-
+      counts.ALL.count += 1;
       counts.ALL.totalSpent += spent;
-      if (counts[cat]) {
-        counts[cat].count += 1;
-        counts[cat].totalSpent += spent;
-      }
+      counts[cat].count += 1;
+      counts[cat].totalSpent += spent;
     });
-
     return counts;
   }, [customers, customerStatsMap]);
 
-  // 3. Filtered Customers List
-  const filteredCustomers = useMemo(() => {
+  // 3. Filter & urutan
+  const sortedCustomers = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-
-    return customers.filter((cust) => {
+    const filtered = customers.filter((cust) => {
       const stats = customerStatsMap[cust.id];
-      if (!stats) return false;
-
-      // Category Tab Match
+      if (!stats) {
+        return false;
+      }
       if (selectedCategoryTab !== 'ALL' && stats.resolvedCategory !== selectedCategoryTab) {
         return false;
       }
-
-      // Frequency Filter Match
       if (selectedFreqFilter !== 'ALL' && stats.frequencyTier !== selectedFreqFilter) {
         return false;
       }
-
-      // Search Query Match
       if (q) {
-        const matchName = cust.nama.toLowerCase().includes(q);
-        const matchPhone = cust.noHp.includes(q);
-        const matchCity = cust.kota.toLowerCase().includes(q);
-        const matchAddr = cust.alamat ? cust.alamat.toLowerCase().includes(q) : false;
-        const matchNote = cust.catatan ? cust.catatan.toLowerCase().includes(q) : false;
-        const matchCat = stats.resolvedCategory.toLowerCase().includes(q);
-        if (!matchName && !matchPhone && !matchCity && !matchAddr && !matchNote && !matchCat) {
-          return false;
-        }
+        const haystack = [cust.nama, cust.noHp, cust.kota, cust.alamat, cust.catatan, stats.resolvedCategory].map((v) => (v || '').toLowerCase());
+        return haystack.some((value) => value.includes(q));
       }
-
       return true;
     });
-  }, [customers, selectedCategoryTab, selectedFreqFilter, searchQuery, customerStatsMap]);
-
-  // 4. Sorted Customers
-  const sortedCustomers = useMemo(() => {
-    return [...filteredCustomers].sort((a, b) => {
+    return filtered.sort((a, b) => {
       const statsA = customerStatsMap[a.id];
       const statsB = customerStatsMap[b.id];
-
       if (sortBy === 'ltv_desc') {
-        return (statsB?.totalSpent || 0) - (statsA?.totalSpent || 0);
+        return statsB.totalSpent - statsA.totalSpent;
       }
       if (sortBy === 'orders_desc') {
-        return (statsB?.totalOrders || 0) - (statsA?.totalOrders || 0);
+        return statsB.totalOrders - statsA.totalOrders;
       }
       if (sortBy === 'recent') {
-        const dateA = statsA?.lastOrderDate || '';
-        const dateB = statsB?.lastOrderDate || '';
-        return dateB.localeCompare(dateA);
+        return (statsB.lastOrderDate || '').localeCompare(statsA.lastOrderDate || '');
       }
-      if (sortBy === 'name_asc') {
-        return a.nama.localeCompare(b.nama);
-      }
-      return 0;
+      return a.nama.localeCompare(b.nama);
     });
-  }, [filteredCustomers, customerStatsMap, sortBy]);
+  }, [customers, selectedCategoryTab, selectedFreqFilter, searchQuery, customerStatsMap, sortBy]);
 
-  const [customerPage, setCustomerPage] = useState<number>(1);
-  const customerPageSize = 20;
+  const totalCustomerPages = Math.max(1, Math.ceil(sortedCustomers.length / PAGE_SIZE));
+  const currentPage = Math.min(customerPage, totalCustomerPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paginatedCustomers = sortedCustomers.slice(pageStart, pageStart + PAGE_SIZE);
+  const allOnPageSelected = paginatedCustomers.length > 0 && paginatedCustomers.every((c) => selectedCustomerIds.has(c.id));
 
-  const totalCustomerPages = Math.max(1, Math.ceil(sortedCustomers.length / customerPageSize));
-  const paginatedCustomers = useMemo(() => {
-    const start = (Math.min(customerPage, totalCustomerPages) - 1) * customerPageSize;
-    return sortedCustomers.slice(start, start + customerPageSize);
-  }, [sortedCustomers, customerPage, totalCustomerPages, customerPageSize]);
+  /** Ganti filter: kembali ke halaman 1 dan kosongkan pilihan agar aksi massal tidak mengenai baris yang tak terlihat. */
+  const withReset = <T,>(setter: (value: T) => void) => (value: T) => {
+    setter(value);
+    setCustomerPage(1);
+    setSelectedCustomerIds(new Set());
+  };
 
   // Handlers
-  const handleSetQuickTag = (customerId: string, newCategory: 'Umum' | 'Reseller' | 'Marketplace' | 'VIP') => {
+  const handleSetQuickTag = (customerId: string, newCategory: CustomerSegment) => {
     const cust = customers.find((c) => c.id === customerId);
-    if (!cust) return;
-
-    updateCustomer(customerId, {
-      tipe: newCategory === 'Umum' ? 'Retail' : newCategory,
-      kategoriManual: newCategory,
-    });
-
+    if (!cust) {
+      return;
+    }
+    updateCustomer(customerId, { tipe: newCategory === 'Umum' ? 'Retail' : newCategory, kategoriManual: newCategory });
     setActiveTagDropdownId(null);
-    setSyncStatus(`Kategori "${cust.nama}" berhasil diubah menjadi "${newCategory}".`);
-    setTimeout(() => setSyncStatus(null), 3500);
+    flash(`Segmen "${cust.nama}" diubah menjadi ${SEGMENT_INFO[newCategory].label}.`);
   };
 
   const handleResetToAutoTag = (customerId: string) => {
-    updateCustomer(customerId, {
-      kategoriManual: undefined,
-    });
+    updateCustomer(customerId, { kategoriManual: undefined });
     setActiveTagDropdownId(null);
-    setSyncStatus(`Tagging dikembalikan ke deteksi otomatis sistem.`);
-    setTimeout(() => setSyncStatus(null), 3500);
+    flash('Segmen dikembalikan ke deteksi otomatis.');
   };
 
   const handleSaveNewCustomer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCustNama.trim()) return;
-
+    if (!newCustNama.trim()) {
+      return;
+    }
     addCustomer({
       nama: newCustNama.trim(),
       noHp: newCustHp.trim(),
-      kota: newCustKota.trim() || 'Jakarta',
+      kota: newCustKota.trim(),
       tipe: newCustCategory === 'Umum' ? 'Retail' : newCustCategory,
       kategoriManual: newCustCategory,
       alamat: newCustAlamat.trim(),
       catatan: newCustCatatan.trim(),
     });
-
     setIsAddCustomerOpen(false);
     setNewCustNama('');
     setNewCustHp('');
-    setNewCustKota('Jakarta');
+    setNewCustKota('');
     setNewCustCategory('Umum');
     setNewCustAlamat('');
     setNewCustCatatan('');
+    flash('Customer baru disimpan.');
   };
 
   const handleSaveEditCustomer = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editCustomerModal) return;
-
+    if (!editCustomerModal) {
+      return;
+    }
     updateCustomer(editCustomerModal.id, {
       nama: editCustomerModal.nama,
       noHp: editCustomerModal.noHp,
@@ -406,8 +425,8 @@ export const CustomersView: React.FC = () => {
       alamat: editCustomerModal.alamat,
       catatan: editCustomerModal.catatan,
     });
-
     setEditCustomerModal(null);
+    flash('Data customer diperbarui.');
   };
 
   const handleOpenPromote = (cust: Customer) => {
@@ -416,13 +435,14 @@ export const CustomersView: React.FC = () => {
     setMitraDiskon(20);
     setMitraPlafon(10000000);
     setMitraJadwal('Setiap Hari Senin');
-    setMitraAlamat(cust.alamat || cust.kota || '');
+    setMitraAlamat(cust.alamat || displayCity(cust.kota));
   };
 
   const handleConfirmPromote = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!promoteCustomerModal) return;
-
+    if (!promoteCustomerModal) {
+      return;
+    }
     promoteCustomerToReseller(promoteCustomerModal.id, {
       level: mitraLevel,
       diskonPersen: mitraDiskon,
@@ -430,51 +450,45 @@ export const CustomersView: React.FC = () => {
       jadwalSetoran: mitraJadwal,
       alamat: mitraAlamat,
     });
-
     setPromoteCustomerModal(null);
-    setSyncStatus(`Status kemitraan untuk "${promoteCustomerModal.nama}" berhasil disimpan.`);
-    setTimeout(() => setSyncStatus(null), 4000);
+    flash(`"${promoteCustomerModal.nama}" sekarang tercatat sebagai mitra reseller.`);
   };
 
-  const handleSyncOrders = () => {
+  const handleSyncOrders = async () => {
+    const confirmed = await askConfirm(
+      `Customer baru akan dibuat dari nama & nomor HP di ${orders.length} order, lalu kontak dengan nomor HP sama digabung menjadi satu profil. Penggabungan tidak bisa dibatalkan.`,
+      { title: 'Tarik customer dari order?', confirmLabel: 'Tarik & gabungkan' },
+    );
+    if (!confirmed) {
+      return;
+    }
     const res = syncCustomersFromOrders();
-    if (res.count > 0 || res.mergedCount > 0) {
-      setSyncStatus(
-        `Sinkronisasi berhasil! ${res.count} customer baru diekstrak & ${res.mergedCount} kontak nomor HP duplikat otomatis digabungkan.`
-      );
-    } else {
-      setSyncStatus(
-        `Database customer sudah sinkron dengan seluruh (${orders.length}) riwayat order & tidak ditemukan nomor HP ganda.`
-      );
-    }
-    setTimeout(() => {
-      setSyncStatus(null);
-    }, 6000);
+    flash(
+      res.count > 0 || res.mergedCount > 0
+        ? `${res.count} customer baru ditambahkan, ${res.mergedCount} kontak dengan nomor HP sama digabung.`
+        : 'Semua customer dari order sudah tercatat; tidak ada nomor HP ganda.',
+      6000,
+    );
   };
 
-  const handleMergeDuplicates = () => {
+  const handleMergeDuplicates = async () => {
+    const confirmed = await askConfirm(
+      'Customer dengan nomor HP yang sama akan digabung menjadi satu profil (riwayat order ikut dipindah). Penggabungan tidak bisa dibatalkan.',
+      { title: 'Gabungkan kontak duplikat?', confirmLabel: 'Gabungkan', danger: true },
+    );
+    if (!confirmed) {
+      return;
+    }
     const res = mergeDuplicateCustomers();
-    if (res.mergedCount > 0) {
-      setSyncStatus(
-        `Berhasil menggabungkan ${res.mergedCount} kontak dengan nomor HP yang sama menjadi profil customer tunggal!`
-      );
-    } else {
-      setSyncStatus(
-        `Semua data nomor HP sudah unik dan rapi. Tidak ditemukan kontak duplikat di database.`
-      );
-    }
-    setTimeout(() => {
-      setSyncStatus(null);
-    }, 6000);
+    flash(res.mergedCount > 0 ? `${res.mergedCount} kontak duplikat digabung.` : 'Tidak ada nomor HP ganda.', 6000);
   };
 
-  // Selection Handlers
-  const handleToggleSelectAll = () => {
-    if (selectedCustomerIds.size === sortedCustomers.length && sortedCustomers.length > 0) {
-      setSelectedCustomerIds(new Set());
-    } else {
-      setSelectedCustomerIds(new Set(sortedCustomers.map((c) => c.id)));
-    }
+  const handleToggleSelectPage = () => {
+    setSelectedCustomerIds((prev) => {
+      const next = new Set(prev);
+      paginatedCustomers.forEach((c) => (allOnPageSelected ? next.delete(c.id) : next.add(c.id)));
+      return next;
+    });
   };
 
   const handleToggleSelectRow = (id: string) => {
@@ -490,1819 +504,902 @@ export const CustomersView: React.FC = () => {
   };
 
   const handleConfirmSingleDelete = () => {
-    if (!deleteConfirmCustomer) return;
+    if (!deleteConfirmCustomer) {
+      return;
+    }
     deleteCustomer(deleteConfirmCustomer.id);
     setSelectedCustomerIds((prev) => {
       const next = new Set(prev);
       next.delete(deleteConfirmCustomer.id);
       return next;
     });
-    setSyncStatus(`Customer "${deleteConfirmCustomer.nama}" berhasil dihapus dari database.`);
+    flash(`Customer "${deleteConfirmCustomer.nama}" dihapus.`);
     setDeleteConfirmCustomer(null);
-    setTimeout(() => setSyncStatus(null), 5000);
   };
 
   const handleConfirmBulkDelete = () => {
-    if (selectedCustomerIds.size === 0) return;
+    if (selectedCustomerIds.size === 0) {
+      return;
+    }
     const count = selectedCustomerIds.size;
     bulkDeleteCustomers(Array.from(selectedCustomerIds));
     setSelectedCustomerIds(new Set());
     setIsBulkDeleteModalOpen(false);
-    setSyncStatus(`Berhasil menghapus ${count} data customer terpilih.`);
-    setTimeout(() => setSyncStatus(null), 5000);
+    flash(`${count} customer dihapus.`);
   };
 
-  const handleBulkSetCategory = (newCat: 'Umum' | 'Reseller' | 'Marketplace' | 'VIP') => {
-    if (selectedCustomerIds.size === 0) return;
-    selectedCustomerIds.forEach((id) => {
-      updateCustomer(id, {
-        tipe: newCat === 'Umum' ? 'Retail' : newCat,
-        kategoriManual: newCat,
-      });
+  const handleBulkSetCategory = async (newCat: CustomerSegment) => {
+    if (selectedCustomerIds.size === 0) {
+      return;
+    }
+    const count = selectedCustomerIds.size;
+    const confirmed = await askConfirm(`Segmen ${count} customer terpilih akan diubah menjadi ${SEGMENT_INFO[newCat].label} (manual).`, {
+      title: 'Ubah segmen?',
+      confirmLabel: 'Ubah segmen',
     });
-    setSyncStatus(`Berhasil mengubah kategori ${selectedCustomerIds.size} customer terpilih menjadi "${newCat}".`);
+    if (!confirmed) {
+      return;
+    }
+    selectedCustomerIds.forEach((id) => updateCustomer(id, { tipe: newCat === 'Umum' ? 'Retail' : newCat, kategoriManual: newCat }));
     setSelectedCustomerIds(new Set());
-    setTimeout(() => setSyncStatus(null), 4000);
+    flash(`Segmen ${count} customer diubah menjadi ${SEGMENT_INFO[newCat].label}.`);
   };
 
-  // Export Customer List to CSV
   const handleExportCsv = () => {
-    const headers = [
-      'ID',
-      'Nama Customer',
-      'Nomor WhatsApp/HP',
-      'Kota',
-      'Kategori Tag',
-      'Tipe Customer',
-      'Total Order',
-      'Total Qty (Pcs)',
-      'Total Belanja (LTV)',
-      'Order Terakhir',
-      'Channel Terakhir',
-      'Alamat',
-      'Catatan',
-    ];
-
+    const headers = ['ID', 'Nama Customer', 'Nomor WhatsApp/HP', 'Kota', 'Segmen', 'Tipe Customer', 'Total Order', 'Total Qty (Pcs)', 'Total Belanja', 'Order Terakhir', 'Channel Terakhir', 'Alamat', 'Catatan'];
+    const quote = (value: string) => `"${value.replace(/"/g, '""')}"`;
     const rows = customers.map((c) => {
       const s = customerStatsMap[c.id];
       return [
-        `"${c.id}"`,
-        `"${c.nama.replace(/"/g, '""')}"`,
-        `"${(c.noHp || '').replace(/"/g, '""')}"`,
-        `"${(c.kota || '').replace(/"/g, '""')}"`,
-        `"${s?.resolvedCategory || 'Umum'}"`,
-        `"${c.tipe}"`,
+        quote(c.id),
+        quote(c.nama),
+        quote(c.noHp || ''),
+        quote(displayCity(c.kota)),
+        quote(s?.resolvedCategory || 'Umum'),
+        quote(c.tipe),
         s?.totalOrders || 0,
         s?.totalPcs || 0,
         s?.totalSpent || 0,
-        `"${s?.lastOrderDate || '-'}"`,
-        `"${s?.lastChannel || '-'}"`,
-        `"${(c.alamat || '').replace(/"/g, '""')}"`,
-        `"${(c.catatan || '').replace(/"/g, '""')}"`,
+        quote(s?.lastOrderDate || '-'),
+        quote(s?.lastChannel || '-'),
+        quote(c.alamat || ''),
+        quote(c.catatan || ''),
       ].join(',');
     });
-
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = 'data:text/csv;charset=utf-8,﻿' + [headers.join(','), ...rows].join('\n');
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', encodeURI(csvContent));
     link.setAttribute('download', `Kalima_Customers_Database_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-
-    setSyncStatus('File CSV Database Customer berhasil diunduh!');
-    setTimeout(() => setSyncStatus(null), 4000);
+    flash('File CSV customer diunduh.');
   };
 
-  // Process Bulk CSV / Excel text import
   const handleProcessImportCsv = () => {
     setImportError(null);
     if (!importCsvText.trim()) {
-      setImportError('Silakan tempel (paste) data teks CSV atau Excel terlebih dahulu.');
+      setImportError('Tempel data dari Excel atau CSV terlebih dahulu.');
       return;
     }
-
     try {
       const lines = importCsvText.trim().split(/\r?\n/);
       let successCount = 0;
-
       lines.forEach((line, idx) => {
-        if (!line.trim()) return;
-        if (
-          idx === 0 &&
-          (line.toLowerCase().includes('nama') || line.toLowerCase().includes('customer') || line.toLowerCase().includes('telepon'))
-        ) {
+        if (!line.trim()) {
           return;
         }
-
+        const lower = line.toLowerCase();
+        if (idx === 0 && (lower.includes('nama') || lower.includes('customer') || lower.includes('telepon'))) {
+          return;
+        }
         const delimiter = line.includes('\t') ? '\t' : line.includes(';') ? ';' : ',';
         const parts = line.split(delimiter).map((p) => p.trim().replace(/^["']|["']$/g, ''));
-
-        const nama = parts[0] || '';
-        const noHp = parts[1] || '';
-        const kota = parts[2] || 'Jakarta';
-        const rawCat = parts[3] || 'Umum';
-        const alamat = parts[4] || '';
-        const catatan = parts[5] || '';
-
-        if (nama.trim()) {
-          const categoryValid: 'Umum' | 'Reseller' | 'Marketplace' | 'VIP' =
-            rawCat.toLowerCase().includes('reseller') || rawCat.toLowerCase().includes('mitra')
-              ? 'Reseller'
-              : rawCat.toLowerCase().includes('shopee') || rawCat.toLowerCase().includes('tiktok') || rawCat.toLowerCase().includes('market')
-              ? 'Marketplace'
-              : rawCat.toLowerCase().includes('vip')
-              ? 'VIP'
-              : 'Umum';
-
-          addCustomer({
-            nama: nama.trim(),
-            noHp: noHp.trim(),
-            kota: kota.trim(),
-            tipe: categoryValid === 'Umum' ? 'Retail' : categoryValid,
-            kategoriManual: categoryValid,
-            alamat: alamat.trim(),
-            catatan: catatan.trim(),
-          });
-          successCount++;
+        const [nama = '', noHp = '', kota = '', rawCat = 'Umum', alamat = '', catatan = ''] = parts;
+        if (!nama.trim()) {
+          return;
         }
+        const cat = rawCat.toLowerCase();
+        const categoryValid: CustomerSegment =
+          cat.includes('reseller') || cat.includes('mitra')
+            ? 'Reseller'
+            : cat.includes('shopee') || cat.includes('tiktok') || cat.includes('market')
+              ? 'Marketplace'
+              : cat.includes('vip')
+                ? 'VIP'
+                : 'Umum';
+        addCustomer({
+          nama: nama.trim(),
+          noHp: noHp.trim(),
+          kota: kota.trim(),
+          tipe: categoryValid === 'Umum' ? 'Retail' : categoryValid,
+          kategoriManual: categoryValid,
+          alamat: alamat.trim(),
+          catatan: catatan.trim(),
+        });
+        successCount++;
       });
-
       setIsImportModalOpen(false);
       setImportCsvText('');
-      setSyncStatus(`Berhasil mengimpor ${successCount} kontak customer baru ke database!`);
-      setTimeout(() => setSyncStatus(null), 5000);
-    } catch (err: any) {
-      setImportError('Gagal memproses data. Pastikan format kolom sesuai contoh.');
+      flash(`${successCount} customer diimpor.`, 5000);
+    } catch {
+      setImportError('Gagal memproses data. Pastikan urutan kolom sesuai contoh.');
     }
   };
 
-  const formatRupiah = (val: number) => {
-    return `Rp ${val.toLocaleString('id-ID')}`;
+  const segmentMenu = (cust: Customer) => (
+    <>
+      <button type="button" aria-label="Tutup menu segmen" className="fixed inset-0 z-30 cursor-default" onClick={() => setActiveTagDropdownId(null)} />
+      <div className="absolute left-0 top-full mt-1.5 w-56 bg-white border border-slate-200 rounded-2xl p-1.5 z-40 shadow-2xl space-y-0.5" role="menu">
+        <div className="text-[11px] font-bold text-slate-500 px-2 py-1 uppercase tracking-wider">Ubah segmen</div>
+        {SEGMENTS.map((segment) => {
+          const Icon = SEGMENT_INFO[segment].icon;
+          return (
+            <button
+              key={segment}
+              type="button"
+              role="menuitem"
+              onClick={() => handleSetQuickTag(cust.id, segment)}
+              className="w-full flex items-start gap-2 px-2 py-1.5 rounded-xl text-xs text-slate-800 hover:bg-slate-100 text-left cursor-pointer"
+            >
+              <Icon className="w-3.5 h-3.5 mt-0.5 text-slate-500 shrink-0" />
+              <span>
+                <span className="font-semibold block">{SEGMENT_INFO[segment].label}</span>
+                <span className="text-[11px] text-slate-500">{SEGMENT_INFO[segment].hint}</span>
+              </span>
+            </button>
+          );
+        })}
+        {cust.kategoriManual && (
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => handleResetToAutoTag(cust.id)}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs text-slate-600 hover:bg-slate-100 text-left border-t border-slate-100 mt-1 cursor-pointer"
+          >
+            <Sparkles className="w-3 h-3" />
+            <span>Kembalikan ke deteksi otomatis</span>
+          </button>
+        )}
+      </div>
+    </>
+  );
+
+  const contactLine = (cust: Customer) => {
+    const city = displayCity(cust.kota);
+    return (
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 mt-0.5">
+        {cust.noHp && cust.noHp.trim() !== '-' ? (
+          <a
+            href={`https://wa.me/${whatsappNumber(cust.noHp)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 hover:text-slate-900 font-mono"
+            title="Buka WhatsApp"
+          >
+            <Phone className="w-3 h-3" aria-hidden="true" />
+            {cust.noHp}
+            <ArrowUpRight className="w-2.5 h-2.5 opacity-60" aria-hidden="true" />
+          </a>
+        ) : (
+          <span>Tanpa no. HP</span>
+        )}
+        {city && (
+          <span className="inline-flex items-center gap-1">
+            <MapPin className="w-3 h-3" aria-hidden="true" />
+            {city}
+          </span>
+        )}
+      </div>
+    );
   };
 
-  const formatCompact = (val: number) => {
-    if (Math.abs(val) >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)}M`;
-    if (Math.abs(val) >= 1_000_000) return `${(val / 1_000_000).toFixed(1)} jt`;
-    if (Math.abs(val) >= 1_000) return `${(val / 1_000).toFixed(0)} rb`;
-    return val.toString();
-  };
+  const frequencyText = (stats: CustomerStats) =>
+    stats.frequencyTier === 'no_order' ? 'Belum ada order' : stats.frequencyTier === 'baru' ? 'Pelanggan baru' : `${stats.frequencyTier === 'loyal' ? 'Loyal' : 'Reguler'} · ${stats.totalOrders}x order`;
 
-  const getInitials = (name: string) => {
-    const parts = name.trim().split(/\s+/);
-    if (parts.length >= 2 && parts[0] && parts[1]) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
-    return (name.trim().slice(0, 2) || 'CU').toUpperCase();
-  };
+  const rowActions = (cust: Customer, stats: CustomerStats) => (
+    <div className="flex items-center justify-end gap-1.5">
+      {stats.resolvedCategory !== 'Internal' &&
+        (stats.resolvedCategory === 'Reseller' ? (
+          <button type="button" onClick={() => setCurrentView('reseller')} className={ICON_BUTTON} title="Kelola mitra" aria-label={`Kelola mitra ${cust.nama}`}>
+            <Store className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <button type="button" onClick={() => handleOpenPromote(cust)} className={ICON_BUTTON} title="Jadikan mitra reseller" aria-label={`Jadikan ${cust.nama} mitra reseller`}>
+            <Crown className="w-3.5 h-3.5" />
+          </button>
+        ))}
+      <button type="button" onClick={() => setHistoryCustomerModal(cust)} className={ICON_BUTTON} title="Riwayat order" aria-label={`Riwayat order ${cust.nama}`}>
+        <Receipt className="w-3.5 h-3.5" />
+      </button>
+      <button type="button" onClick={() => setEditCustomerModal(cust)} className={ICON_BUTTON} title="Edit data" aria-label={`Edit ${cust.nama}`}>
+        <Edit2 className="w-3.5 h-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setDeleteConfirmCustomer(cust)}
+        className={`${ICON_BUTTON} text-rose-700 hover:bg-rose-50`}
+        title="Hapus customer"
+        aria-label={`Hapus ${cust.nama}`}
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
 
-  const getCategoryTheme = (cat: string) => {
-    switch (cat) {
-      case 'Reseller':
-        return {
-          badge: 'text-amber-300 bg-amber-500/10 border border-amber-500/30',
-          avatar: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-          dot: 'bg-amber-400',
-          label: 'Reseller',
-          icon: Store,
-        };
-      case 'VIP':
-        return {
-          badge: 'text-purple-300 bg-purple-500/10 border border-purple-500/30',
-          avatar: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
-          dot: 'bg-purple-400',
-          label: 'VIP & Loyal',
-          icon: Crown,
-        };
-      case 'Marketplace':
-        return {
-          badge: 'text-orange-300 bg-orange-500/10 border border-orange-500/30',
-          avatar: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
-          dot: 'bg-orange-400',
-          label: 'Marketplace',
-          icon: Zap,
-        };
-      case 'Umum':
-      default:
-        return {
-          badge: 'text-blue-300 bg-blue-500/10 border border-blue-500/30',
-          avatar: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-          dot: 'bg-blue-400',
-          label: 'Umum (Retail)',
-          icon: ShoppingBag,
-        };
-    }
-  };
+  const historyStats = historyCustomerModal ? customerStatsMap[historyCustomerModal.id] : null;
+  const deleteStats = deleteConfirmCustomer ? customerStatsMap[deleteConfirmCustomer.id] : null;
 
   return (
-    <div className="space-y-6 pb-16">
-      {/* Toast Notification */}
+    <div className="space-y-5 pb-16">
       {syncStatus && (
-        <div className="bg-emerald-950/90 border border-emerald-500/60 text-emerald-200 px-4 py-3 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-xl backdrop-blur-md animate-in fade-in">
+        <div role="status" className="bg-white border border-slate-200 text-slate-900 px-4 py-3 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-xl">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span className="font-semibold">{syncStatus}</span>
           </div>
-          <button
-            onClick={() => setSyncStatus(null)}
-            className="text-slate-400 hover:text-white text-xs underline cursor-pointer"
-          >
-            Tutup
+          <button type="button" aria-label="Tutup pesan" onClick={() => setSyncStatus(null)} className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer">
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* 1. TOP VIEW MODE SWITCHER (Segmented control: Database Customer vs CRM Mitra) */}
-      {/* ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#121620] p-2 rounded-2xl border border-slate-800/80 shadow-xs">
-        <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800/80 w-full sm:w-auto">
-          <button
-            type="button"
-            aria-current="page"
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer bg-amber-500 text-slate-950 shadow-xs`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Database Customer ({customers.length})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCurrentView('reseller')}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-400 hover:text-white hover:bg-slate-900`}
-          >
-            <Store className="w-4 h-4" />
-            <span>Mitra Reseller ({resellers.length}) →</span>
-          </button>
+      {/* Header */}
+      <div className={`${CARD} p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3`}>
+        <div>
+          <h1 className="text-lg font-bold text-slate-900 tracking-tight">Database Customer</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {customers.length} kontak · {categoryCounts.VIP.count} VIP · {categoryCounts.Internal.count} akun internal
+          </p>
         </div>
-
-        <div className="text-xs text-slate-400 px-2 flex items-center gap-2">
-          <span>Total LTV Bisnis:</span>
-          <span className="font-mono font-bold text-emerald-400">
-            {formatRupiah(categoryCounts.ALL.totalSpent)}
-          </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setCurrentView('reseller')} className={OUTLINE_BUTTON}>
+            <Store className="w-3.5 h-3.5" />
+            Mitra Reseller ({resellers.length})
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+          <details className="relative">
+            <summary className={`${OUTLINE_BUTTON} list-none`} aria-label="Alat lainnya">
+              <MoreHorizontal className="w-4 h-4" />
+              Alat
+            </summary>
+            <div className="absolute right-0 mt-1.5 w-56 bg-white border border-slate-200 rounded-2xl p-1.5 z-40 shadow-2xl">
+              {[
+                { label: 'Tarik customer dari order', icon: Sparkles, onClick: handleSyncOrders },
+                { label: 'Gabungkan nomor HP ganda', icon: RefreshCw, onClick: handleMergeDuplicates },
+                { label: 'Impor dari Excel / CSV', icon: Upload, onClick: () => setIsImportModalOpen(true) },
+                { label: 'Ekspor ke CSV', icon: Download, onClick: handleExportCsv },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={(e) => {
+                    (e.currentTarget.closest('details') as HTMLDetailsElement).open = false;
+                    item.onClick();
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs text-slate-800 hover:bg-slate-100 text-left cursor-pointer"
+                >
+                  <item.icon className="w-3.5 h-3.5 text-slate-500" />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </details>
+          <button type="button" onClick={() => setIsAddCustomerOpen(true)} className={PRIMARY_BUTTON}>
+            <Plus className="w-4 h-4" />
+            Tambah Customer
+          </button>
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* VIEW MODE: CRM MITRA RESELLER HUB */}
-      {/* ========================================================================= */}
-      {/* Database pelanggan */}
-        <div className="space-y-5 animate-in fade-in duration-200">
-          {/* Executive Header Banner */}
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-[#121620] p-5 sm:p-6 rounded-3xl border border-slate-800/80 shadow-md">
-            <div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-xs">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div>
-                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    Database Customer & Profil Pelanggan
-                  </h1>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {customers.length} Kontak Terdaftar · {categoryCounts.Reseller.count} Mitra Reseller · {categoryCounts.VIP.count} Pelanggan VIP · Total Belanja {formatCompact(categoryCounts.ALL.totalSpent)}
-                  </p>
-                </div>
-              </div>
-            </div>
+      {/* Segmen */}
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
+        {(['ALL', ...SEGMENTS] as MainCategoryTab[]).map((tab) => {
+          const active = selectedCategoryTab === tab;
+          const Icon = tab === 'ALL' ? Users : SEGMENT_INFO[tab].icon;
+          return (
+            <button
+              key={tab}
+              type="button"
+              aria-pressed={active}
+              title={tab === 'ALL' ? 'Semua kontak' : SEGMENT_INFO[tab].hint}
+              onClick={() => withReset(setSelectedCategoryTab)(tab)}
+              className={`p-3 rounded-2xl border text-left transition-colors cursor-pointer ${
+                active ? 'bg-white border-slate-900 ring-1 ring-slate-900' : 'bg-white border-slate-200 hover:border-slate-400'
+              }`}
+            >
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                <Icon className="w-3.5 h-3.5" aria-hidden="true" />
+                {tab === 'ALL' ? 'Semua' : SEGMENT_INFO[tab].label}
+              </span>
+              <span className="block text-xl font-bold text-slate-900 font-mono mt-1">{categoryCounts[tab].count}</span>
+              <span className="block text-[11px] text-slate-500 truncate">Belanja {formatCompactRupiah(categoryCounts[tab].totalSpent)}</span>
+            </button>
+          );
+        })}
+      </div>
 
-            {/* Header Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={handleSyncOrders}
-                title="Tarik kontak dari transaksi order & deduplikasi nomor HP otomatis" aria-label="Tarik kontak dari transaksi order & deduplikasi nomor HP otomatis"
-                className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold px-3 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>Tarik dari Order</span>
+      {selectedCategoryTab === 'Internal' && (
+        <p className="text-xs text-slate-600 px-1">
+          Akun internal = penampung order tanpa data pembeli (mis. "Pelanggan Umum") atau akun milik sendiri. Tidak ikut deteksi VIP. Tandai akun lain lewat
+          tombol segmen di tiap baris.
+        </p>
+      )}
+
+      {/* Tabel customer */}
+      <div className={`${CARD} overflow-hidden`}>
+        <div className="p-4 border-b border-slate-100 flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" aria-hidden="true" />
+            <input
+              type="search"
+              aria-label="Cari customer"
+              placeholder="Cari nama, no. WhatsApp, kota, atau catatan…"
+              value={searchQuery}
+              onChange={(e) => withReset(setSearchQuery)(e.target.value)}
+              className="w-full bg-white border border-slate-300 pl-9 pr-3 py-2 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-slate-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              aria-label="Frekuensi order"
+              value={selectedFreqFilter}
+              onChange={(e) => withReset(setSelectedFreqFilter)(e.target.value as FrequencyFilter)}
+              className="bg-white border border-slate-300 px-3 py-2 rounded-xl text-xs text-slate-800 focus:outline-none cursor-pointer"
+            >
+              {(Object.keys(FREQUENCY_LABELS) as FrequencyFilter[]).map((key) => (
+                <option key={key} value={key}>
+                  {FREQUENCY_LABELS[key]}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Urutan"
+              value={sortBy}
+              onChange={(e) => withReset(setSortBy)(e.target.value as SortOption)}
+              className="bg-white border border-slate-300 px-3 py-2 rounded-xl text-xs text-slate-800 focus:outline-none cursor-pointer"
+            >
+              {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
+                <option key={key} value={key}>
+                  {SORT_LABELS[key]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {selectedCustomerIds.size > 0 && (
+          <div className="bg-slate-50 border-b border-slate-200 p-3 px-4 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="font-semibold text-slate-900">{selectedCustomerIds.size} customer dipilih</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-slate-500">Ubah segmen:</span>
+              {SEGMENTS.map((segment) => (
+                <button key={segment} type="button" onClick={() => handleBulkSetCategory(segment)} className={`${OUTLINE_BUTTON} py-1`}>
+                  {SEGMENT_INFO[segment].label}
+                </button>
+              ))}
+              <button type="button" onClick={() => setIsBulkDeleteModalOpen(true)} className={`${OUTLINE_BUTTON} py-1 text-rose-700`}>
+                <Trash2 className="w-3.5 h-3.5" />
+                Hapus
               </button>
-
-              <button
-                onClick={handleMergeDuplicates}
-                title="Satukan profil customer yang memiliki nomor WhatsApp/HP yang sama" aria-label="Satukan profil customer yang memiliki nomor WhatsApp/HP yang sama"
-                className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-purple-300 border border-purple-500/30 font-semibold px-3 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-purple-400" />
-                <span>Rapikan Duplikat</span>
-              </button>
-
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                title="Impor kontak dari Excel atau CSV" aria-label="Impor kontak dari Excel atau CSV"
-                className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 font-medium px-3 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
-              >
-                <Upload className="w-3.5 h-3.5 text-blue-400" />
-                <span>Impor</span>
-              </button>
-
-              <button
-                onClick={handleExportCsv}
-                title="Download kontak ke format Excel / CSV" aria-label="Download kontak ke format Excel / CSV"
-                className="flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 font-medium px-3 py-2 rounded-xl text-xs transition-all cursor-pointer shadow-xs"
-              >
-                <Download className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Ekspor</span>
-              </button>
-
-              <button
-                onClick={() => setIsAddCustomerOpen(true)}
-                className="flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs shadow-xs transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span>+ Tambah Customer</span>
+              <button type="button" onClick={() => setSelectedCustomerIds(new Set())} className={`${OUTLINE_BUTTON} py-1`}>
+                Batal pilih
               </button>
             </div>
           </div>
+        )}
 
-          {/* ========================================================================= */}
-          {/* SEGMENTATION METRIC CARDS (Zero-Pill Discipline) */}
-          {/* ========================================================================= */}
-          <div className="bg-[#121620] p-4 sm:p-5 rounded-3xl border border-slate-800/80 space-y-3.5 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
-              <div className="flex items-center gap-2">
-                <Tag className="w-4 h-4 text-amber-400" />
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Segmentasi Pasar & Kategori CRM
-                </h3>
-              </div>
-              <div className="text-xs text-slate-400">
-                Pilih segmen untuk memfilter kontak dan memantau performa LTV
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-              {/* TAB: SEMUA CUSTOMER */}
-              <button
-                type="button"
-                onClick={() => setSelectedCategoryTab('ALL')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
-                  selectedCategoryTab === 'ALL'
-                    ? 'bg-slate-900 border-amber-500/80 text-white shadow-md'
-                    : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-300">Semua Kontak</span>
-                  <Users className="w-3.5 h-3.5 text-slate-400" />
-                </div>
-                <div className="text-2xl font-black text-white font-mono mt-1.5">
-                  {categoryCounts.ALL.count}
-                </div>
-                <div className="text-xs text-slate-400 mt-1 truncate font-mono">
-                  LTV: {formatCompact(categoryCounts.ALL.totalSpent)}
-                </div>
-                {selectedCategoryTab === 'ALL' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400" />
-                )}
-              </button>
-
-              {/* TAB: UMUM (RETAIL) */}
-              <button
-                type="button"
-                onClick={() => setSelectedCategoryTab('Umum')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
-                  selectedCategoryTab === 'Umum'
-                    ? 'bg-blue-950/60 border-blue-500/80 text-white shadow-md'
-                    : 'bg-slate-950/60 border-slate-800/80 hover:border-blue-900/60 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
-                    <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Umum (Retail)</span>
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-blue-400" />
-                </div>
-                <div className="text-2xl font-black text-white font-mono mt-1.5">
-                  {categoryCounts.Umum.count}
-                </div>
-                <div className="text-xs text-blue-300/80 mt-1 truncate font-mono">
-                  LTV: {formatCompact(categoryCounts.Umum.totalSpent)}
-                </div>
-                {selectedCategoryTab === 'Umum' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />
-                )}
-              </button>
-
-              {/* TAB: RESELLER (MITRA) */}
-              <button
-                type="button"
-                onClick={() => setSelectedCategoryTab('Reseller')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
-                  selectedCategoryTab === 'Reseller'
-                    ? 'bg-amber-950/60 border-amber-500/80 text-white shadow-md'
-                    : 'bg-slate-950/60 border-slate-800/80 hover:border-amber-900/60 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                    <Store className="w-3.5 h-3.5" />
-                    <span>Reseller (Mitra)</span>
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                </div>
-                <div className="text-2xl font-black text-white font-mono mt-1.5">
-                  {categoryCounts.Reseller.count}
-                </div>
-                <div className="text-xs text-amber-300/80 mt-1 truncate font-mono">
-                  LTV: {formatCompact(categoryCounts.Reseller.totalSpent)}
-                </div>
-                {selectedCategoryTab === 'Reseller' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-400" />
-                )}
-              </button>
-
-              {/* TAB: MARKETPLACE */}
-              <button
-                type="button"
-                onClick={() => setSelectedCategoryTab('Marketplace')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
-                  selectedCategoryTab === 'Marketplace'
-                    ? 'bg-orange-950/60 border-orange-500/80 text-white shadow-md'
-                    : 'bg-slate-950/60 border-slate-800/80 hover:border-orange-900/60 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-orange-300 flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>Marketplace</span>
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-orange-400" />
-                </div>
-                <div className="text-2xl font-black text-white font-mono mt-1.5">
-                  {categoryCounts.Marketplace.count}
-                </div>
-                <div className="text-xs text-orange-300/80 mt-1 truncate font-mono">
-                  LTV: {formatCompact(categoryCounts.Marketplace.totalSpent)}
-                </div>
-                {selectedCategoryTab === 'Marketplace' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-400" />
-                )}
-              </button>
-
-              {/* TAB: VIP & LOYAL */}
-              <button
-                type="button"
-                onClick={() => setSelectedCategoryTab('VIP')}
-                className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group ${
-                  selectedCategoryTab === 'VIP'
-                    ? 'bg-purple-950/60 border-purple-500/80 text-white shadow-md'
-                    : 'bg-slate-950/60 border-slate-800/80 hover:border-purple-900/60 text-slate-400'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
-                    <Crown className="w-3.5 h-3.5" />
-                    <span>VIP & Loyal</span>
-                  </span>
-                  <span className="w-2 h-2 rounded-full bg-purple-400" />
-                </div>
-                <div className="text-2xl font-black text-white font-mono mt-1.5">
-                  {categoryCounts.VIP.count}
-                </div>
-                <div className="text-xs text-purple-300/80 mt-1 truncate font-mono">
-                  LTV: {formatCompact(categoryCounts.VIP.totalSpent)}
-                </div>
-                {selectedCategoryTab === 'VIP' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-400" />
-                )}
-              </button>
-            </div>
-
-            {/* Quick Reseller Switch Notice when Reseller tab is active */}
-            {selectedCategoryTab === 'Reseller' && (
-              <div className="p-3 bg-amber-950/40 border border-amber-500/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <Store className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-amber-200">
-                    Menampilkan <strong>{categoryCounts.Reseller.count}</strong> customer yang bertindak sebagai mitra reseller.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('reseller')}
-                  className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto shrink-0"
-                >
-                  <Store className="w-3.5 h-3.5" />
-                  <span>Buka Hub CRM Mitra Lengkap &rarr;</span>
-                </button>
-              </div>
-            )}
-
-            {/* Secondary Filter Row: Search, Frequency, and Sort */}
-            <div className="pt-2 flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
-              {/* Search Input with Clear Button */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Cari nama customer, no. WhatsApp, kota domisili, atau catatan..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800/80 pl-9 pr-8 py-2 rounded-xl text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
-                />
-                {searchQuery && (
-                  <button aria-label="Hapus pencarian"
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2.5 top-2.5 text-slate-500 hover:text-white p-0.5 rounded cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Frequency Filter Segmented Controls */}
-              <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800/80 text-xs overflow-x-auto scrollbar-none">
-                <span className="text-xs text-slate-400 font-medium px-2 shrink-0">
-                  Frekuensi:
-                </span>
-                <button
-                  onClick={() => setSelectedFreqFilter('ALL')}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-                    selectedFreqFilter === 'ALL'
-                      ? 'bg-amber-500 text-slate-950 font-bold'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Semua
-                </button>
-                <button
-                  onClick={() => setSelectedFreqFilter('baru')}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-                    selectedFreqFilter === 'baru'
-                      ? 'bg-amber-500 text-slate-950 font-bold'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Baru (1x)
-                </button>
-                <button
-                  onClick={() => setSelectedFreqFilter('reguler')}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-                    selectedFreqFilter === 'reguler'
-                      ? 'bg-amber-500 text-slate-950 font-bold'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Reguler (2-4x)
-                </button>
-                <button
-                  onClick={() => setSelectedFreqFilter('loyal')}
-                  className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer shrink-0 ${
-                    selectedFreqFilter === 'loyal'
-                      ? 'bg-amber-500 text-slate-950 font-bold'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Loyal (≥5x)
-                </button>
-              </div>
-
-              {/* Sort Selector */}
-              <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800/80 text-xs shrink-0">
-                <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-slate-400 text-xs">Sortir:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="bg-transparent text-white font-medium focus:outline-none cursor-pointer text-xs"
-                >
-                  <option value="ltv_desc">Total Belanja (LTV) Tertinggi</option>
-                  <option value="orders_desc">Order Terbanyak</option>
-                  <option value="recent">Order Terkini</option>
-                  <option value="name_asc">Nama (A-Z)</option>
-                </select>
-              </div>
-            </div>
+        {sortedCustomers.length === 0 ? (
+          <div className="px-4 py-14 text-center text-slate-500 text-xs">
+            <Users className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+            <p className="text-sm font-semibold text-slate-700">Tidak ada customer yang cocok.</p>
+            <p className="mt-1">Ubah kata kunci atau pilih segmen lain.</p>
           </div>
-
-          {/* ========================================================================= */}
-          {/* MAIN CUSTOMERS TABLE */}
-          {/* ========================================================================= */}
-          <div className="bg-[#121620] rounded-3xl border border-slate-800/80 overflow-hidden shadow-md">
-            <div className="p-4 sm:p-5 border-b border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#141924]/60">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">
-                  Daftar Customer ({sortedCustomers.length} dari {customers.length})
-                </span>
-                {selectedCategoryTab !== 'ALL' && (
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    Segmen: {selectedCategoryTab}
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-slate-400">
-                Klik kategori untuk mengubah segmen • Centang kotak untuk aksi massal
-              </div>
-            </div>
-
-            {/* Floating Bulk Action Bar */}
-            {selectedCustomerIds.size > 0 && (
-              <div className="bg-amber-950/40 border-b border-amber-500/30 p-3 px-5 flex flex-wrap items-center justify-between gap-3 animate-in fade-in">
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="w-4 h-4 text-amber-400" />
-                  <span className="text-xs font-bold text-white">
-                    <span className="text-amber-400">{selectedCustomerIds.size}</span> customer dipilih
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Batch Category Quick Tagging */}
-                  <div className="flex items-center gap-1 text-xs bg-slate-900/90 p-1 rounded-xl border border-slate-700">
-                    <span className="text-slate-400 text-[11px] font-semibold px-1.5">Tandai Segmen:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSetCategory('Umum')}
-                      className="px-2 py-0.5 bg-blue-950 text-blue-300 border border-blue-700 rounded-lg hover:bg-blue-900 transition-colors text-[11px] font-bold cursor-pointer"
-                    >
-                      Umum
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSetCategory('Reseller')}
-                      className="px-2 py-0.5 bg-amber-950 text-amber-300 border border-amber-700 rounded-lg hover:bg-amber-900 transition-colors text-[11px] font-bold cursor-pointer"
-                    >
-                      Reseller
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSetCategory('Marketplace')}
-                      className="px-2 py-0.5 bg-orange-950 text-orange-300 border border-orange-700 rounded-lg hover:bg-orange-900 transition-colors text-[11px] font-bold cursor-pointer"
-                    >
-                      Marketplace
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBulkSetCategory('VIP')}
-                      className="px-2 py-0.5 bg-purple-950 text-purple-300 border border-purple-700 rounded-lg hover:bg-purple-900 transition-colors text-[11px] font-bold cursor-pointer"
-                    >
-                      VIP
-                    </button>
-                  </div>
-
-                  {/* Bulk Delete Button */}
-                  <button
-                    type="button"
-                    onClick={() => setIsBulkDeleteModalOpen(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer shadow-sm"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Hapus {selectedCustomerIds.size} Kontak</span>
-                  </button>
-
-                  {/* Cancel selection */}
-                  <button
-                    type="button"
-                    onClick={() => setSelectedCustomerIds(new Set())}
-                    className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition-colors cursor-pointer"
-                  >
-                    Batal
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-[#0e1219] text-slate-400 uppercase text-[11px] tracking-wider border-b border-slate-800/80">
+        ) : (
+          <>
+            {/* Desktop: tabel */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs text-slate-700">
+                <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] tracking-wider border-b border-slate-200">
                   <tr>
-                    <th className="w-10 px-3.5 py-3.5 text-center">
+                    <th className="w-10 px-3 py-3 text-center">
                       <button
                         type="button"
-                        onClick={handleToggleSelectAll}
-                        title={
-                          selectedCustomerIds.size === sortedCustomers.length && sortedCustomers.length > 0
-                            ? 'Batalkan semua pilihan'
-                            : 'Pilih semua customer yang tampil'
-                        } aria-label={
-                          selectedCustomerIds.size === sortedCustomers.length && sortedCustomers.length > 0
-                            ? 'Batalkan semua pilihan'
-                            : 'Pilih semua customer yang tampil'
-                        }
-                        className="text-slate-400 hover:text-white cursor-pointer"
+                        onClick={handleToggleSelectPage}
+                        aria-label={allOnPageSelected ? 'Batalkan pilihan di halaman ini' : `Pilih ${paginatedCustomers.length} customer di halaman ini`}
+                        title={allOnPageSelected ? 'Batalkan pilihan di halaman ini' : `Pilih ${paginatedCustomers.length} customer di halaman ini`}
+                        className="text-slate-500 hover:text-slate-900 cursor-pointer"
                       >
-                        {selectedCustomerIds.size > 0 && selectedCustomerIds.size === sortedCustomers.length ? (
-                          <CheckSquare className="w-4 h-4 text-amber-400" />
-                        ) : (
-                          <Square className="w-4 h-4" />
-                        )}
+                        {allOnPageSelected ? <CheckSquare className="w-4 h-4 text-slate-900" /> : <Square className="w-4 h-4" />}
                       </button>
                     </th>
-                    <th className="px-4 py-3.5 font-bold">Customer & Kontak</th>
-                    <th className="px-4 py-3.5 font-bold">Segmen CRM</th>
-                    <th className="px-4 py-3.5 font-bold">Channel & Produk Favorit</th>
-                    <th className="px-4 py-3.5 font-bold text-center">Repeat Buy</th>
-                    <th className="px-4 py-3.5 font-bold text-right">Total Belanja (LTV)</th>
-                    <th className="px-4 py-3.5 font-bold">Order Terakhir</th>
-                    <th className="px-4 py-3.5 font-bold text-center">Aksi & Kemitraan</th>
+                    <th className="px-3 py-3">Customer</th>
+                    <th className="px-3 py-3">Segmen</th>
+                    <th className="px-3 py-3 text-right">Order</th>
+                    <th className="px-3 py-3 text-right">Total Belanja</th>
+                    <th className="px-3 py-3">Order Terakhir</th>
+                    <th className="px-3 py-3 text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 font-sans">
-                  {sortedCustomers.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="px-4 py-16 text-center text-slate-500">
-                        <Users className="w-9 h-9 mx-auto text-slate-600 mb-2 opacity-40" />
-                        <p className="text-sm font-semibold text-slate-400">Tidak ada customer yang sesuai kriteria.</p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Coba sesuaikan kata kunci pencarian atau ganti filter kategori di atas.
-                        </p>
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedCustomers.map((cust) => {
-                      const stats = customerStatsMap[cust.id] || {
-                        totalOrders: 0,
-                        totalPcs: 0,
-                        totalSpent: 0,
-                        channelsUsed: new Set(),
-                        marketplaceOrdersCount: 0,
-                        directOrdersCount: 0,
-                        resellerOrdersCount: 0,
-                        ordersList: [],
-                        resolvedCategory: 'Umum',
-                        isManualTagged: false,
-                        frequencyTier: 'no_order',
-                      };
-
-                      const cat = stats.resolvedCategory;
-                      const theme = getCategoryTheme(cat);
-                      const isReseller = cat === 'Reseller';
-                      const initials = getInitials(cust.nama);
-
-                      // Format WhatsApp Phone Number
-                      const cleanPhone = cust.noHp ? cust.noHp.replace(/[^0-9]/g, '') : '';
-                      const waNumber = cleanPhone.startsWith('0')
-                        ? '62' + cleanPhone.substring(1)
-                        : cleanPhone;
-
-                      return (
-                        <tr
-                          key={cust.id}
-                          className={`hover:bg-slate-900/60 transition-colors group relative ${
-                            selectedCustomerIds.has(cust.id) ? 'bg-amber-500/10' : ''
-                          }`}
-                        >
-                          {/* Checkbox Row Selection */}
-                          <td className="px-3.5 py-3.5 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleSelectRow(cust.id)}
-                              className="text-slate-500 hover:text-white cursor-pointer"
-                            >
-                              {selectedCustomerIds.has(cust.id) ? (
-                                <CheckSquare className="w-4 h-4 text-amber-400" />
-                              ) : (
-                                <Square className="w-4 h-4 text-slate-600 group-hover:text-slate-400" />
-                              )}
-                            </button>
-                          </td>
-
-                          {/* Customer Info with Initials Avatar */}
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`w-9 h-9 rounded-2xl flex items-center justify-center font-bold text-xs shrink-0 border ${theme.avatar}`}
-                              >
-                                <span>{initials}</span>
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-bold text-white flex items-center gap-1.5 text-sm truncate">
-                                  <span className="truncate">{cust.nama}</span>
-                                  {cust.kategoriManual && (
-                                    <span
-                                      title="Kategori ini ditetapkan secara manual oleh Admin"
-                                      className="text-[11px] text-slate-400 font-mono tracking-tight"
-                                    >
-                                      (Manual)
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-                                  {cleanPhone ? (
-                                    <a
-                                      href={`https://wa.me/${waNumber}`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="flex items-center gap-1 text-slate-400 hover:text-emerald-400 transition-colors font-mono"
-                                      title="Hubungi via WhatsApp"
-                                    >
-                                      <Phone className="w-3 h-3 text-emerald-500" />
-                                      <span>{cust.noHp}</span>
-                                      <ArrowUpRight className="w-2.5 h-2.5 opacity-60" />
-                                    </a>
-                                  ) : (
-                                    <span className="text-slate-600 font-mono">-</span>
-                                  )}
-                                  <span className="text-slate-600">·</span>
-                                  <span className="flex items-center gap-1 truncate text-slate-400">
-                                    <MapPin className="w-3 h-3 text-slate-500 shrink-0" />
-                                    <span className="truncate">{cust.kota || 'Jakarta'}</span>
-                                  </span>
-                                </div>
-                                {cust.catatan && (
-                                  <div className="text-[11px] text-slate-500 italic mt-0.5 truncate max-w-xs">
-                                    {cust.catatan}
-                                  </div>
-                                )}
-                              </div>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedCustomers.map((cust) => {
+                    const stats = customerStatsMap[cust.id];
+                    const selected = selectedCustomerIds.has(cust.id);
+                    return (
+                      <tr key={cust.id} className={`hover:bg-slate-50 ${selected ? 'bg-slate-50' : ''}`}>
+                        <td className="px-3 py-3 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSelectRow(cust.id)}
+                            aria-label={selected ? `Batal pilih ${cust.nama}` : `Pilih ${cust.nama}`}
+                            className="text-slate-400 hover:text-slate-900 cursor-pointer"
+                          >
+                            {selected ? <CheckSquare className="w-4 h-4 text-slate-900" /> : <Square className="w-4 h-4" />}
+                          </button>
+                        </td>
+                        <td className="px-3 py-3 min-w-[220px]">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-[11px] shrink-0">
+                              {getInitials(cust.nama)}
                             </div>
-                          </td>
-
-                          {/* Interactive Category Segmen with Quick Toggle Menu */}
-                          <td className="px-4 py-3.5 relative">
-                            <div className="relative inline-block">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setActiveTagDropdownId(
-                                    activeTagDropdownId === cust.id ? null : cust.id
-                                  )
-                                }
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-2xs ${theme.badge} hover:brightness-110`}
-                                title="Klik untuk mengubah segmen customer" aria-label="Klik untuk mengubah segmen customer"
-                              >
-                                <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
-                                <span>{cat}</span>
-                                <ChevronDown className="w-3 h-3 opacity-60" />
-                              </button>
-
-                              {/* Quick Tagging Popover Dropdown */}
-                              {activeTagDropdownId === cust.id && (
-                                <div className="absolute left-0 top-full mt-1.5 w-48 bg-[#0f141d] border border-slate-700/80 rounded-2xl p-1.5 z-40 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in-95 space-y-0.5">
-                                  <div className="text-[11px] font-bold text-slate-400 px-2 py-1 uppercase tracking-wider border-b border-slate-800">
-                                    Ubah Segmen:
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSetQuickTag(cust.id, 'Umum')}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs text-blue-300 hover:bg-blue-950/80 transition-colors text-left"
-                                  >
-                                    <ShoppingBag className="w-3.5 h-3.5 text-blue-400" />
-                                    <span>Umum (Retail)</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSetQuickTag(cust.id, 'Reseller')}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs text-amber-300 hover:bg-amber-950/80 transition-colors text-left"
-                                  >
-                                    <Store className="w-3.5 h-3.5 text-amber-400" />
-                                    <span>Reseller (Mitra)</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSetQuickTag(cust.id, 'Marketplace')}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs text-orange-300 hover:bg-orange-950/80 transition-colors text-left"
-                                  >
-                                    <Zap className="w-3.5 h-3.5 text-orange-400" />
-                                    <span>Marketplace</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSetQuickTag(cust.id, 'VIP')}
-                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs text-purple-300 hover:bg-purple-950/80 transition-colors text-left"
-                                  >
-                                    <Crown className="w-3.5 h-3.5 text-purple-400" />
-                                    <span>VIP & Loyal</span>
-                                  </button>
-                                  {cust.kategoriManual && (
-                                    <button
-                                      type="button"
-                                      onClick={() => handleResetToAutoTag(cust.id)}
-                                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs text-slate-400 hover:bg-slate-800 transition-colors text-left border-t border-slate-800 mt-1"
-                                    >
-                                      <Sparkles className="w-3 h-3 text-slate-400" />
-                                      <span>Reset ke Auto-Detect</span>
-                                    </button>
-                                  )}
-                                </div>
-                              )}
+                            <div className="min-w-0">
+                              <div className="font-semibold text-slate-900 text-sm truncate">{cust.nama}</div>
+                              {contactLine(cust)}
+                              {cust.catatan && <div className="text-[11px] text-slate-500 italic mt-0.5 truncate max-w-xs">{cust.catatan}</div>}
                             </div>
-
-                            {/* Quiet Unboxed Loyalty Tier Subtext */}
-                            <div className="text-xs text-slate-400 mt-1 flex items-center gap-1 font-medium">
-                              {stats.frequencyTier === 'loyal' && (
-                                <span className="text-amber-400">Loyal ({stats.totalOrders}x order)</span>
-                              )}
-                              {stats.frequencyTier === 'reguler' && (
-                                <span className="text-blue-400">Reguler ({stats.totalOrders}x order)</span>
-                              )}
-                              {stats.frequencyTier === 'baru' && (
-                                <span className="text-emerald-400">Pelanggan Baru (1x)</span>
-                              )}
-                              {stats.frequencyTier === 'no_order' && (
-                                <span className="text-slate-500">Belum ada order</span>
-                              )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <div className="relative inline-block">
+                            <SegmentBadge
+                              segment={stats.resolvedCategory}
+                              onClick={() => setActiveTagDropdownId(activeTagDropdownId === cust.id ? null : cust.id)}
+                            />
+                            {activeTagDropdownId === cust.id && segmentMenu(cust)}
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-1">
+                            {frequencyText(stats)}
+                            {stats.isManualTagged && cust.kategoriManual && ' · manual'}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-right font-mono whitespace-nowrap">
+                          <div className="font-semibold text-slate-900">{stats.totalOrders}x</div>
+                          <div className="text-[11px] text-slate-500">{stats.totalPcs} pcs</div>
+                        </td>
+                        <td className="px-3 py-3 text-right font-mono whitespace-nowrap">
+                          <div className="font-semibold text-slate-900">{formatRupiah(stats.totalSpent)}</div>
+                          {stats.totalOrders > 0 && (
+                            <div className="text-[11px] text-slate-500" title="Rata-rata belanja per order">
+                              {formatRupiah(stats.totalSpent / stats.totalOrders)}/order
                             </div>
-                          </td>
-
-                          {/* Sales Channels Used & Favorite Product */}
-                          <td className="px-4 py-3.5">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {stats.channelsUsed.size === 0 ? (
-                                <span className="text-slate-500 text-xs">-</span>
-                              ) : (
-                                Array.from(stats.channelsUsed).map((ch) => {
-                                  return (
-                                    <span
-                                      key={ch}
-                                      className="text-xs text-slate-300 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded-md font-medium"
-                                    >
-                                      {ch}
-                                    </span>
-                                  );
-                                })
-                              )}
-                            </div>
-                            {stats.topItem && (
-                              <div className="text-xs text-slate-400 mt-1 truncate max-w-[210px]">
-                                Top: <span className="text-slate-300 font-medium">{stats.topItem}</span>
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Repeat Buy & Total Qty */}
-                          <td className="px-4 py-3.5 text-center">
-                            {stats.totalOrders > 0 ? (
-                              <div>
-                                <span className="text-sm font-black text-white font-mono">
-                                  {stats.totalOrders}x
-                                </span>
-                                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                                  {stats.totalPcs} pcs
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-slate-600 text-xs font-mono">0x</span>
-                            )}
-                          </td>
-
-                          {/* Total Spending (LTV) */}
-                          <td className="px-4 py-3.5 text-right font-mono">
-                            {stats.totalSpent > 0 ? (
-                              <div>
-                                <div className="text-sm font-black text-emerald-400">
-                                  {formatRupiah(stats.totalSpent)}
-                                </div>
-                                <div className="text-[11px] text-slate-400 mt-0.5">
-                                  AOV: {formatRupiah(Math.round(stats.totalSpent / (stats.totalOrders || 1)))}
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-slate-600 text-xs font-mono">Rp 0</span>
-                            )}
-                          </td>
-
-                          {/* Order Terakhir */}
-                          <td className="px-4 py-3.5">
-                            {stats.lastOrderDate ? (
-                              <div>
-                                <div className="font-semibold text-slate-200 text-xs font-mono">
-                                  {stats.lastOrderDate}
-                                </div>
-                                <div className="text-[11px] text-slate-400 mt-0.5">
-                                  via {stats.lastChannel || 'Direct'}
-                                </div>
-                              </div>
-                            ) : (
-                              <span className="text-slate-600 text-xs">-</span>
-                            )}
-                          </td>
-
-                          {/* Actions: Jadikan Mitra / Histori / Edit */}
-                          <td className="px-4 py-3.5 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              {/* Button: Jadikan Mitra / Kelola Mitra */}
-                              {!isReseller ? (
-                                <button
-                                  onClick={() => handleOpenPromote(cust)}
-                                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-bold border border-amber-500/30 text-xs transition-all cursor-pointer shadow-2xs"
-                                  title="Tentukan customer ini sebagai Mitra / Reseller resmi" aria-label="Tentukan customer ini sebagai Mitra / Reseller resmi"
-                                >
-                                  <Store className="w-3.5 h-3.5" />
-                                  <span>+ Mitra</span>
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => setCurrentView('reseller')}
-                                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                                  title="Buka menu Reseller untuk toko ini" aria-label="Buka menu Reseller untuk toko ini"
-                                >
-                                  <Crown className="w-3.5 h-3.5 text-amber-400" />
-                                  <span>Kelola Mitra</span>
-                                </button>
-                              )}
-
-                              {/* Button: Lihat Histori Order */}
-                              <button
-                                onClick={() => setHistoryCustomerModal(cust)}
-                                className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 transition-colors cursor-pointer"
-                                title="Lihat Rincian Seluruh Riwayat Order Customer" aria-label="Lihat Rincian Seluruh Riwayat Order Customer"
-                              >
-                                <Receipt className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Button: Edit Customer Data */}
-                              <button
-                                onClick={() => setEditCustomerModal(cust)}
-                                className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors cursor-pointer"
-                                title="Edit Data Kontak & Catatan" aria-label="Edit Data Kontak & Catatan"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Button: Hapus Customer */}
-                              <button
-                                onClick={() => setDeleteConfirmCustomer(cust)}
-                                className="p-1.5 rounded-xl bg-slate-900 hover:bg-rose-950/70 text-slate-500 hover:text-rose-400 border border-slate-800 hover:border-rose-500/50 transition-colors cursor-pointer"
-                                title="Hapus customer ini dari database" aria-label="Hapus customer ini dari database"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
+                          )}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          {stats.lastOrderDate ? (
+                            <>
+                              <div className="font-mono text-slate-900">{stats.lastOrderDate}</div>
+                              <div className="text-[11px] text-slate-500">via {stats.lastChannel}</div>
+                            </>
+                          ) : (
+                            <span className="text-slate-400">–</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2">{rowActions(cust, stats)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            {/* Pagination Bar for Customers */}
-            {sortedCustomers.length > customerPageSize && (
-              <div className="px-5 py-3.5 bg-[#141924]/60 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs text-slate-400">
-                <div>
-                  Menampilkan <span className="font-semibold text-white">{(customerPage - 1) * customerPageSize + 1}</span> - <span className="font-semibold text-white">{Math.min(customerPage * customerPageSize, sortedCustomers.length)}</span> dari <span className="font-semibold text-white">{sortedCustomers.length}</span> customer
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setCustomerPage((p) => Math.max(1, p - 1))}
-                    disabled={customerPage === 1}
-                    className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800 cursor-pointer text-xs font-medium transition-colors"
-                  >
-                    &larr; Sebelumnya
-                  </button>
-                  <div className="px-2 font-mono text-white text-xs">
-                    {customerPage} / {totalCustomerPages}
+            {/* HP: kartu */}
+            <div className="md:hidden divide-y divide-slate-100">
+              <div className="px-4 py-2 flex items-center justify-between text-xs text-slate-500">
+                <button type="button" onClick={handleToggleSelectPage} className="inline-flex items-center gap-1.5 cursor-pointer">
+                  {allOnPageSelected ? <CheckSquare className="w-4 h-4 text-slate-900" /> : <Square className="w-4 h-4" />}
+                  Pilih halaman ini
+                </button>
+              </div>
+              {paginatedCustomers.map((cust) => {
+                const stats = customerStatsMap[cust.id];
+                const selected = selectedCustomerIds.has(cust.id);
+                return (
+                  <div key={cust.id} className={`p-4 space-y-2 ${selected ? 'bg-slate-50' : ''}`}>
+                    <div className="flex items-start gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSelectRow(cust.id)}
+                        aria-label={selected ? `Batal pilih ${cust.nama}` : `Pilih ${cust.nama}`}
+                        className="mt-0.5 text-slate-400 cursor-pointer"
+                      >
+                        {selected ? <CheckSquare className="w-4 h-4 text-slate-900" /> : <Square className="w-4 h-4" />}
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="font-semibold text-slate-900 text-sm">{cust.nama}</span>
+                          <span className="font-mono font-semibold text-slate-900 text-xs whitespace-nowrap">{formatRupiah(stats.totalSpent)}</span>
+                        </div>
+                        {contactLine(cust)}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pl-6 text-[11px] text-slate-500">
+                      <div className="relative">
+                        <SegmentBadge segment={stats.resolvedCategory} onClick={() => setActiveTagDropdownId(activeTagDropdownId === cust.id ? null : cust.id)} />
+                        {activeTagDropdownId === cust.id && segmentMenu(cust)}
+                      </div>
+                      <span>{frequencyText(stats)}</span>
+                      {stats.lastOrderDate && <span>Terakhir {stats.lastOrderDate}</span>}
+                    </div>
+                    <div className="pl-6">{rowActions(cust, stats)}</div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setCustomerPage((p) => Math.min(totalCustomerPages, p + 1))}
-                    disabled={customerPage >= totalCustomerPages}
-                    className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-800 cursor-pointer text-xs font-medium transition-colors"
-                  >
-                    Selanjutnya &rarr;
-                  </button>
-                </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {sortedCustomers.length > 0 && (
+          <div className="px-4 py-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+            <span>
+              {pageStart + 1}–{Math.min(pageStart + PAGE_SIZE, sortedCustomers.length)} dari {sortedCustomers.length} customer
+            </span>
+            {totalCustomerPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setCustomerPage(currentPage - 1)} disabled={currentPage === 1} className={`${OUTLINE_BUTTON} disabled:opacity-40 disabled:cursor-default`}>
+                  ← Sebelumnya
+                </button>
+                <span className="font-mono">
+                  {currentPage} / {totalCustomerPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCustomerPage(currentPage + 1)}
+                  disabled={currentPage >= totalCustomerPages}
+                  className={`${OUTLINE_BUTTON} disabled:opacity-40 disabled:cursor-default`}
+                >
+                  Selanjutnya →
+                </button>
               </div>
             )}
           </div>
-        </div>
+        )}
+      </div>
 
-      {/* ========================================================================= */}
-      {/* MODAL: Tentukan Jadi Mitra / Reseller */}
-      {/* ========================================================================= */}
+      {/* MODAL: Jadikan mitra */}
       {promoteCustomerModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121620] border border-amber-500/50 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
-                  <Store className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-base">
-                    Tentukan Customer Sebagai Mitra / Reseller
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    {promoteCustomerModal.nama} ({promoteCustomerModal.noHp})
-                  </p>
-                </div>
-              </div>
-              <button aria-label="Tutup" data-modal-close
-                onClick={() => setPromoteCustomerModal(null)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg text-sm cursor-pointer"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
+        <Modal
+          title="Jadikan Mitra Reseller"
+          subtitle={`${promoteCustomerModal.nama}${promoteCustomerModal.noHp ? ` · ${promoteCustomerModal.noHp}` : ''}`}
+          icon={<Store className="w-5 h-5 text-slate-500 mt-0.5" />}
+          onClose={() => setPromoteCustomerModal(null)}
+          size="lg"
+        >
+          <form onSubmit={handleConfirmPromote} className="space-y-4 text-xs">
+            <p className="text-slate-600 leading-relaxed">
+              Customer akan tercatat di menu Reseller & Konsinyasi: bisa dititipi barang lewat surat jalan, dapat harga khusus, dan piutang serta stok di tokonya
+              dipantau.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Level mitra">
+                <select value={mitraLevel} onChange={(e) => setMitraLevel(e.target.value as 'Platinum' | 'Gold' | 'Silver')} className={INPUT}>
+                  <option value="Platinum">Platinum (prioritas)</option>
+                  <option value="Gold">Gold (standar)</option>
+                  <option value="Silver">Silver (pemula)</option>
+                </select>
+              </Field>
+              <Field label="Diskon mitra (%)">
+                <input type="number" min="0" max="70" value={mitraDiskon} onChange={(e) => setMitraDiskon(Number(e.target.value))} className={`${INPUT} font-mono`} />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Plafon titipan (Rp)" hint={formatRupiah(mitraPlafon)}>
+                <input type="number" step="500000" min="0" value={mitraPlafon} onChange={(e) => setMitraPlafon(Number(e.target.value))} className={`${INPUT} font-mono`} />
+              </Field>
+              <Field label="Jadwal setoran & opname">
+                <select value={mitraJadwal} onChange={(e) => setMitraJadwal(e.target.value)} className={INPUT}>
+                  <option value="Setiap Hari Senin">Setiap hari Senin</option>
+                  <option value="Setiap Hari Jumat">Setiap hari Jumat</option>
+                  <option value="Tiap Tanggal 1 & 15">Tiap tanggal 1 & 15</option>
+                  <option value="Akhir Bulan">Akhir bulan</option>
+                </select>
+              </Field>
+            </div>
+            <Field label="Alamat toko / pengiriman">
+              <textarea rows={2} value={mitraAlamat} onChange={(e) => setMitraAlamat(e.target.value)} placeholder="Jalan, kecamatan, kota" className={INPUT} />
+            </Field>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setPromoteCustomerModal(null)} className={OUTLINE_BUTTON}>
+                Batal
+              </button>
+              <button type="submit" className={PRIMARY_BUTTON}>
+                Simpan sebagai mitra
               </button>
             </div>
-
-            <form onSubmit={handleConfirmPromote} className="space-y-4 text-xs">
-              <div className="bg-amber-950/40 border border-amber-800/60 p-3.5 rounded-xl text-amber-200 text-xs leading-relaxed">
-                <strong>Hak Akses Mitra Reseller:</strong> Customer akan resmi tercatat di modul <strong>CRM Mitra Reseller</strong> untuk pengiriman surat jalan titip konsinyasi, harga khusus reseller, serta monitoring piutang dan stok di toko mitra.
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">
-                    Tingkatan Level Mitra
-                  </label>
-                  <select
-                    value={mitraLevel}
-                    onChange={(e) => setMitraLevel(e.target.value as any)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500 cursor-pointer"
-                  >
-                    <option value="Platinum">Platinum (Prioritas Utama)</option>
-                    <option value="Gold">Gold (Standar Mitra)</option>
-                    <option value="Silver">Silver (Mitra Pemula)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">
-                    Diskon Khusus Mitra (%)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      min="0"
-                      max="70"
-                      value={mitraDiskon}
-                      onChange={(e) => setMitraDiskon(Number(e.target.value))}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white pr-8 focus:outline-none focus:border-amber-500 font-bold"
-                    />
-                    <span className="absolute right-3 top-2.5 text-slate-400 font-bold">%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">
-                    Plafon Maksimal Titipan (Rp)
-                  </label>
-                  <input
-                    type="number"
-                    step="500000"
-                    value={mitraPlafon}
-                    onChange={(e) => setMitraPlafon(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500 font-mono"
-                  />
-                  <span className="text-[11px] text-slate-500 mt-0.5 block">
-                    {formatRupiah(mitraPlafon)}
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">
-                    Jadwal Setoran & Opname
-                  </label>
-                  <select
-                    value={mitraJadwal}
-                    onChange={(e) => setMitraJadwal(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500 cursor-pointer"
-                  >
-                    <option value="Setiap Hari Senin">Setiap Hari Senin</option>
-                    <option value="Setiap Hari Jumat">Setiap Hari Jumat</option>
-                    <option value="Tiap Tanggal 1 & 15">Tiap Tanggal 1 & 15</option>
-                    <option value="Akhir Bulan">Akhir Bulan</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Alamat Lengkap Toko / Pengiriman Mitra
-                </label>
-                <textarea
-                  rows={2}
-                  value={mitraAlamat}
-                  onChange={(e) => setMitraAlamat(e.target.value)}
-                  placeholder="Jl. Nama Jalan No. XX, Kecamatan, Kota..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setPromoteCustomerModal(null)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex items-center gap-1.5 px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl shadow-lg transition-colors cursor-pointer"
-                >
-                  <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-                  <span>Simpan Status Mitra</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL: Histori Order Lengkap Customer */}
-      {/* ========================================================================= */}
-      {historyCustomerModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121620] border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-white text-base">
-                    Riwayat Transaksi: {historyCustomerModal.nama}
-                  </h3>
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                    {customerStatsMap[historyCustomerModal.id]?.resolvedCategory || 'Umum'}
-                  </span>
+      {/* MODAL: Riwayat order */}
+      {historyCustomerModal && historyStats && (
+        <Modal
+          title={`Riwayat Order: ${historyCustomerModal.nama}`}
+          subtitle={[SEGMENT_INFO[historyStats.resolvedCategory].label, historyCustomerModal.noHp, displayCity(historyCustomerModal.kota)].filter(Boolean).join(' · ')}
+          onClose={() => setHistoryCustomerModal(null)}
+          size="xl"
+        >
+          <div className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                ['Total belanja', formatRupiah(historyStats.totalSpent)],
+                ['Order', `${historyStats.totalOrders}x · ${historyStats.totalPcs} pcs`],
+                ['Channel', Array.from(historyStats.channelsUsed).join(', ') || '–'],
+                ['Produk favorit', historyStats.topItem || '–'],
+              ].map(([label, value]) => (
+                <div key={label} className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="text-slate-500">{label}</div>
+                  <div className="font-semibold text-slate-900 mt-0.5">{value}</div>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {historyCustomerModal.noHp} • {historyCustomerModal.kota}
-                </p>
-              </div>
-              <button aria-label="Tutup" data-modal-close
-                onClick={() => setHistoryCustomerModal(null)}
-                className="text-slate-400 hover:text-white p-1.5 rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
-              </button>
+              ))}
             </div>
-
-            <div className="p-5 overflow-y-auto space-y-4 flex-1">
-              {customerStatsMap[historyCustomerModal.id]?.ordersList.length === 0 ? (
-                <div className="text-center py-10 text-slate-500">
-                  <ShoppingBag className="w-10 h-10 mx-auto text-slate-600 mb-2 opacity-40" />
-                  <p className="font-semibold text-slate-400">Belum ada riwayat pesanan.</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Buat order baru menggunakan tombol di bawah.
-                  </p>
-                </div>
-              ) : (
-                customerStatsMap[historyCustomerModal.id]?.ordersList.map((ord) => (
-                  <div
-                    key={ord.id}
-                    className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/60 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-white text-sm">
-                          {ord.noOrder}
-                        </span>
-                        <span
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
-                            ord.channel === 'Shopee'
-                              ? 'bg-orange-950 text-orange-300 border-orange-800'
-                              : ord.channel === 'Umum'
-                              ? 'bg-blue-950 text-blue-300 border-blue-800'
-                              : ord.channel === 'Reseller'
-                              ? 'bg-amber-950 text-amber-300 border-amber-800'
-                              : 'bg-slate-800 text-slate-300 border-slate-700'
-                          }`}
-                        >
-                          {ord.channel}
-                        </span>
-                        <span className="text-slate-400 text-xs">{ord.tanggal}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded ${
-                            ord.statusBayar === 'lunas'
-                              ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                              : ord.statusBayar === 'piutang'
-                              ? 'bg-rose-950 text-rose-300 border border-rose-800'
-                              : 'bg-amber-950 text-amber-300 border border-amber-800'
-                          }`}
-                        >
-                          {ord.statusBayar.toUpperCase()}
-                        </span>
-                        <span className="text-xs font-bold text-emerald-400 font-mono">
-                          {formatRupiah(ord.totalTagihan)}
-                        </span>
-                      </div>
+            {historyStats.ordersList.length === 0 ? (
+              <p className="text-center py-8 text-slate-500">Belum ada riwayat order.</p>
+            ) : (
+              historyStats.ordersList.map((ord) => (
+                <div key={ord.id} className="p-3.5 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono font-bold text-slate-900">{ord.noOrder}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">{ord.channel}</span>
+                      <span className="text-slate-500">{ord.tanggal}</span>
                     </div>
-
-                    {/* Order Items */}
-                    <div className="space-y-1.5 text-xs text-slate-300">
-                      {ord.items.map((it, idx) => (
-                        <div key={idx} className="flex items-center justify-between">
-                          <span className="text-slate-200">
-                            • {it.namaProduk} <span className="text-amber-400 font-bold">x{it.qty}</span>
-                          </span>
-                          <span className="text-slate-400 font-mono">
-                            {formatRupiah(it.subtotal)}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2 py-0.5 rounded-full font-semibold ${
+                          ord.statusBayar === 'lunas' ? 'bg-slate-100 text-slate-700' : 'bg-rose-50 text-rose-700'
+                        }`}
+                      >
+                        {ord.statusBayar === 'lunas' ? 'Lunas' : ord.statusBayar === 'piutang' ? 'Piutang' : 'Bayar sebagian'}
+                      </span>
+                      <span className="font-mono font-bold text-slate-900">{formatRupiah(ord.totalTagihan)}</span>
                     </div>
-
-                    {ord.noResi && (
-                      <div className="text-xs text-slate-400 bg-slate-900 px-2.5 py-1 rounded-lg inline-block">
-                        No. Resi: <span className="text-white font-mono">{ord.noResi}</span>
-                      </div>
-                    )}
                   </div>
-                ))
-              )}
-            </div>
-
-            <div className="p-4 border-t border-slate-800 bg-[#0e1219] flex items-center justify-between">
-              <div className="text-xs text-slate-400">
-                Total Akumulasi:{' '}
-                <strong className="text-emerald-400 font-mono">
-                  {formatRupiah(customerStatsMap[historyCustomerModal.id]?.totalSpent || 0)}
-                </strong>
-              </div>
+                  <div className="space-y-1 text-slate-700">
+                    {ord.items.map((it, idx) => (
+                      <div key={idx} className="flex items-center justify-between gap-2">
+                        <span>
+                          {it.namaProduk} <span className="font-semibold">×{it.qty}</span>
+                        </span>
+                        <span className="font-mono text-slate-500">{formatRupiah(it.subtotal)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {ord.noResi && (
+                    <div className="text-slate-500">
+                      No. resi: <span className="font-mono text-slate-900">{ord.noResi}</span>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+            <div className="flex justify-end pt-1">
               <button
+                type="button"
                 onClick={() => {
                   setHistoryCustomerModal(null);
                   setQuickOrderModalOpen(true);
                 }}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                className={PRIMARY_BUTTON}
               >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>+ Buat Order untuk Customer Ini</span>
+                <Plus className="w-3.5 h-3.5" />
+                Buat order baru
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL: Tambah Customer Baru */}
-      {/* ========================================================================= */}
+      {/* MODAL: Tambah customer */}
       {isAddCustomerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121620] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-white text-base">Tambah Customer Baru</h3>
-              <button aria-label="Tutup" data-modal-close
-                onClick={() => setIsAddCustomerOpen(false)}
-                className="text-slate-400 hover:text-white p-1 cursor-pointer"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
+        <Modal title="Tambah Customer" onClose={() => setIsAddCustomerOpen(false)}>
+          <form onSubmit={handleSaveNewCustomer} className="space-y-3.5 text-xs">
+            <Field label="Nama customer / toko *">
+              <input type="text" required placeholder="Contoh: Budi Santoso" value={newCustNama} onChange={(e) => setNewCustNama(e.target.value)} className={INPUT} />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="No. WhatsApp / HP">
+                <input type="tel" placeholder="0812…" value={newCustHp} onChange={(e) => setNewCustHp(e.target.value)} className={INPUT} />
+              </Field>
+              <Field label="Kota">
+                <input type="text" placeholder="Contoh: Makassar" value={newCustKota} onChange={(e) => setNewCustKota(e.target.value)} className={INPUT} />
+              </Field>
+            </div>
+            <Field label="Segmen">
+              <select value={newCustCategory} onChange={(e) => setNewCustCategory(e.target.value as CustomerSegment)} className={INPUT}>
+                {SEGMENTS.map((segment) => (
+                  <option key={segment} value={segment}>
+                    {SEGMENT_INFO[segment].label} — {SEGMENT_INFO[segment].hint}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Alamat pengiriman (opsional)">
+              <textarea rows={2} value={newCustAlamat} onChange={(e) => setNewCustAlamat(e.target.value)} className={INPUT} />
+            </Field>
+            <Field label="Catatan (opsional)">
+              <input type="text" placeholder="Contoh: sering order lewat Shopee Live" value={newCustCatatan} onChange={(e) => setNewCustCatatan(e.target.value)} className={INPUT} />
+            </Field>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setIsAddCustomerOpen(false)} className={OUTLINE_BUTTON}>
+                Batal
+              </button>
+              <button type="submit" className={PRIMARY_BUTTON}>
+                Simpan customer
               </button>
             </div>
+          </form>
+        </Modal>
+      )}
 
-            <form onSubmit={handleSaveNewCustomer} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Nama Customer / Toko *
-                </label>
+      {/* MODAL: Edit customer */}
+      {editCustomerModal && (
+        <Modal title="Edit Customer" onClose={() => setEditCustomerModal(null)}>
+          <form onSubmit={handleSaveEditCustomer} className="space-y-3.5 text-xs">
+            <Field label="Nama customer">
+              <input
+                type="text"
+                required
+                value={editCustomerModal.nama}
+                onChange={(e) => setEditCustomerModal({ ...editCustomerModal, nama: e.target.value })}
+                className={INPUT}
+              />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="No. WhatsApp / HP">
+                <input type="tel" value={editCustomerModal.noHp} onChange={(e) => setEditCustomerModal({ ...editCustomerModal, noHp: e.target.value })} className={INPUT} />
+              </Field>
+              <Field label="Kota">
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. Budi Santoso / Distro Street Makassar"
-                  value={newCustNama}
-                  onChange={(e) => setNewCustNama(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
+                  value={displayCity(editCustomerModal.kota)}
+                  onChange={(e) => setEditCustomerModal({ ...editCustomerModal, kota: e.target.value })}
+                  className={INPUT}
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">
-                    Nomor WhatsApp / HP
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 081298765432"
-                    value={newCustHp}
-                    onChange={(e) => setNewCustHp(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">
-                    Kota Domisili
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Bandung, Jakarta"
-                    value={newCustKota}
-                    onChange={(e) => setNewCustKota(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Kategori Customer (Tagging)
-                </label>
-                <select
-                  value={newCustCategory}
-                  onChange={(e) => setNewCustCategory(e.target.value as any)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500 cursor-pointer"
-                >
-                  <option value="Umum">Umum (Retail / Direct Walk-in / WhatsApp)</option>
-                  <option value="Reseller">Reseller (Mitra Konsinyasi & Grosir)</option>
-                  <option value="Marketplace">Marketplace (Shopee / TikTok Shop)</option>
-                  <option value="VIP">VIP (Pelanggan Prioritas / Loyal)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Alamat Pengiriman (Opsional)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Alamat lengkap tujuan pengiriman ekspedisi..."
-                  value={newCustAlamat}
-                  onChange={(e) => setNewCustAlamat(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Catatan Customer (Opsional)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Sering order via Shopee Live, langganan 210 OV"
-                  value={newCustCatatan}
-                  onChange={(e) => setNewCustCatatan(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+              </Field>
+            </div>
+            <Field label="Segmen tetap (manual)" hint="Menimpa deteksi otomatis. Kosongkan lewat menu segmen di tabel.">
+              <select
+                value={editCustomerModal.kategoriManual || customerStatsMap[editCustomerModal.id]?.resolvedCategory || 'Umum'}
+                onChange={(e) => {
+                  const val = e.target.value as CustomerSegment;
+                  setEditCustomerModal({ ...editCustomerModal, tipe: val === 'Umum' ? 'Retail' : val, kategoriManual: val });
+                }}
+                className={INPUT}
+              >
+                {SEGMENTS.map((segment) => (
+                  <option key={segment} value={segment}>
+                    {SEGMENT_INFO[segment].label} — {SEGMENT_INFO[segment].hint}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Alamat">
+              <textarea rows={2} value={editCustomerModal.alamat || ''} onChange={(e) => setEditCustomerModal({ ...editCustomerModal, alamat: e.target.value })} className={INPUT} />
+            </Field>
+            <Field label="Catatan">
+              <input type="text" value={editCustomerModal.catatan || ''} onChange={(e) => setEditCustomerModal({ ...editCustomerModal, catatan: e.target.value })} className={INPUT} />
+            </Field>
+            <div className="flex items-center justify-between gap-2 pt-2">
+              {isOwner && (
                 <button
                   type="button"
-                  onClick={() => setIsAddCustomerOpen(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors cursor-pointer"
+                  onClick={() => {
+                    const target = editCustomerModal;
+                    setEditCustomerModal(null);
+                    setDeleteConfirmCustomer(target);
+                  }}
+                  className="text-rose-700 hover:underline text-xs inline-flex items-center gap-1 cursor-pointer"
                 >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Hapus customer
+                </button>
+              )}
+              <div className="flex items-center gap-2 ml-auto">
+                <button type="button" onClick={() => setEditCustomerModal(null)} className={OUTLINE_BUTTON}>
                   Batal
                 </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-colors cursor-pointer"
-                >
-                  Simpan Customer
+                <button type="submit" className={PRIMARY_BUTTON}>
+                  Simpan
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: Edit Customer Data & Manual Tag */}
-      {/* ========================================================================= */}
-      {editCustomerModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121620] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-bold text-white text-base">Edit Data & Tagging Customer</h3>
-              <button aria-label="Tutup" data-modal-close
-                onClick={() => setEditCustomerModal(null)}
-                className="text-slate-400 hover:text-white p-1 cursor-pointer"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
-              </button>
             </div>
-
-            <form onSubmit={handleSaveEditCustomer} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Nama Customer
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editCustomerModal.nama}
-                  onChange={(e) =>
-                    setEditCustomerModal({ ...editCustomerModal, nama: e.target.value })
-                  }
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">
-                    No. HP / WhatsApp
-                  </label>
-                  <input
-                    type="text"
-                    value={editCustomerModal.noHp}
-                    onChange={(e) =>
-                      setEditCustomerModal({ ...editCustomerModal, noHp: e.target.value })
-                    }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 font-semibold mb-1">
-                    Kota
-                  </label>
-                  <input
-                    type="text"
-                    value={editCustomerModal.kota}
-                    onChange={(e) =>
-                      setEditCustomerModal({ ...editCustomerModal, kota: e.target.value })
-                    }
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Kategori / Tagging Tetap (Manual Override)
-                </label>
-                <select
-                  value={
-                    editCustomerModal.kategoriManual ||
-                    (editCustomerModal.tipe === 'Retail' ? 'Umum' : editCustomerModal.tipe) ||
-                    'Umum'
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value as 'Umum' | 'Reseller' | 'Marketplace' | 'VIP';
-                    setEditCustomerModal({
-                      ...editCustomerModal,
-                      tipe: val === 'Umum' ? 'Retail' : val,
-                      kategoriManual: val,
-                    });
-                  }}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500 cursor-pointer font-semibold"
-                >
-                  <option value="Umum">Umum (Retail / Direct)</option>
-                  <option value="Reseller">Reseller (Mitra Konsinyasi & Grosir)</option>
-                  <option value="Marketplace">Marketplace (Shopee / TikTok Shop)</option>
-                  <option value="VIP">VIP (Pelanggan Prioritas)</option>
-                </select>
-                <span className="text-[11px] text-slate-500 mt-1 block">
-                  Menetapkan kategori ini akan menimpa deteksi otomatis sistem.
-                </span>
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Alamat Lengkap
-                </label>
-                <textarea
-                  rows={2}
-                  value={editCustomerModal.alamat || ''}
-                  onChange={(e) =>
-                    setEditCustomerModal({ ...editCustomerModal, alamat: e.target.value })
-                  }
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-semibold mb-1">
-                  Catatan
-                </label>
-                <input
-                  type="text"
-                  value={editCustomerModal.catatan || ''}
-                  onChange={(e) =>
-                    setEditCustomerModal({ ...editCustomerModal, catatan: e.target.value })
-                  }
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-                {isOwner && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const target = editCustomerModal;
-                      setEditCustomerModal(null);
-                      setDeleteConfirmCustomer(target);
-                    }}
-                    className="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1 cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Hapus Customer</span>
-                  </button>
-                )}
-
-                <div className="flex items-center gap-2 ml-auto">
-                  <button
-                    type="button"
-                    onClick={() => setEditCustomerModal(null)}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors cursor-pointer"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-colors cursor-pointer"
-                  >
-                    Simpan Perubahan
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL: Impor Kontak CSV / Excel */}
-      {/* ========================================================================= */}
+      {/* MODAL: Impor */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121620] border border-blue-500/50 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400">
-                  <Upload className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-base">
-                    Impor Kontak Customer (CSV / Excel)
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    Salin (copy-paste) data kontak langsung dari spreadsheet Anda
-                  </p>
-                </div>
+        <Modal
+          title="Impor Customer"
+          subtitle="Salin baris dari Excel atau CSV, lalu tempel di bawah."
+          icon={<Upload className="w-5 h-5 text-slate-500 mt-0.5" />}
+          onClose={() => setIsImportModalOpen(false)}
+          size="lg"
+        >
+          <div className="space-y-3 text-xs">
+            <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-700 space-y-1.5">
+              <div className="font-semibold">Urutan kolom (dipisah tab, koma, atau titik koma):</div>
+              <code className="block font-mono text-slate-900">Nama, No. HP, Kota, Segmen (Umum/Reseller/Marketplace/VIP), Alamat, Catatan</code>
+              <div className="text-slate-500">
+                Contoh: <code className="text-slate-700">Budi Santoso, 08123456789, Bandung, Reseller, Jl. Riau No 10, Toko distro</code>
               </div>
-              <button aria-label="Tutup" data-modal-close
-                onClick={() => setIsImportModalOpen(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg text-sm cursor-pointer"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
+            </div>
+            {importError && <div className="bg-rose-50 border border-rose-200 text-rose-800 p-2.5 rounded-xl">{importError}</div>}
+            <Field label="Data customer">
+              <textarea rows={7} value={importCsvText} onChange={(e) => setImportCsvText(e.target.value)} className={`${INPUT} font-mono`} />
+            </Field>
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setIsImportModalOpen(false)} className={OUTLINE_BUTTON}>
+                Batal
+              </button>
+              <button type="button" onClick={handleProcessImportCsv} className={PRIMARY_BUTTON}>
+                Impor & simpan
               </button>
             </div>
+          </div>
+        </Modal>
+      )}
 
-            <div className="space-y-3 text-xs">
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl text-slate-300 space-y-1.5">
-                <div className="font-bold text-amber-400 flex items-center gap-1.5">
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>Format Kolom (Bisa dipisahkan Koma atau Tab Excel):</span>
-                </div>
-                <code className="block bg-slate-950 p-2 rounded text-xs font-mono text-emerald-300">
-                  Nama, Nomor HP, Kota, Kategori (Umum/Reseller/Marketplace/VIP), Alamat, Catatan
-                </code>
-                <div className="text-xs text-slate-400">
-                  Contoh: <br />
-                  <code className="text-slate-300">
-                    Budi Santoso, 08123456789, Bandung, Reseller, Jl. Riau No 10, Toko Distro
-                  </code>
-                </div>
-              </div>
-
-              {importError && (
-                <div className="bg-rose-950/70 border border-rose-500/50 text-rose-300 p-2.5 rounded-xl text-xs">
-                  {importError}
+      {/* MODAL: Hapus satu customer */}
+      {deleteConfirmCustomer && (
+        <Modal title="Hapus customer?" icon={<AlertTriangle className="w-5 h-5 text-rose-700 mt-0.5" />} onClose={() => setDeleteConfirmCustomer(null)}>
+          <div className="space-y-3 text-xs text-slate-700">
+            <div className="p-3 rounded-xl border border-slate-200 space-y-1">
+              <div className="text-sm font-bold text-slate-900">{deleteConfirmCustomer.nama}</div>
+              <div className="text-slate-500">{[deleteConfirmCustomer.noHp || 'Tanpa no. HP', displayCity(deleteConfirmCustomer.kota)].filter(Boolean).join(' · ')}</div>
+              {deleteStats && (
+                <div className="text-slate-700">
+                  {deleteStats.totalOrders}x order · belanja {formatRupiah(deleteStats.totalSpent)}
                 </div>
               )}
-
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">
-                  Tempel (Paste) Baris Data Teks / CSV di Sini:
-                </label>
-                <textarea
-                  rows={7}
-                  placeholder={`Contoh tempel langsung dari Excel:\nDimas Setiawan\t081299887766\tJakarta\tUmum\tJl. Thamrin No 5\nKurnia Fashion\t085211223344\tSurabaya\tReseller\tPasar Turi Blok B`}
-                  value={importCsvText}
-                  onChange={(e) => setImportCsvText(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500 font-mono"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setIsImportModalOpen(false)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  onClick={handleProcessImportCsv}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors cursor-pointer shadow-lg shadow-blue-600/20"
-                >
-                  Proses & Simpan ke Database
-                </button>
-              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: Konfirmasi Hapus Single Customer */}
-      {/* ========================================================================= */}
-      {deleteConfirmCustomer && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121620] border border-rose-500/50 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
-              <div className="p-2.5 rounded-xl bg-rose-500/20 text-rose-400">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-base">Hapus Data Customer?</h3>
-                <p className="text-xs text-slate-400">Konfirmasi penghapusan data master customer</p>
-              </div>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <p className="text-slate-300 leading-relaxed">
-                Anda akan menghapus data customer berikut dari database sistem:
-              </p>
-
-              <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-1.5">
-                <div className="text-sm font-bold text-white flex items-center justify-between">
-                  <span>{deleteConfirmCustomer.nama}</span>
-                  <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
-                    {deleteConfirmCustomer.id}
-                  </span>
-                </div>
-                <div className="text-slate-400 text-xs flex items-center gap-2">
-                  <span>{deleteConfirmCustomer.noHp || 'Tidak ada no. HP'}</span>
-                  <span>•</span>
-                  <span>{deleteConfirmCustomer.kota || 'Jakarta'}</span>
-                </div>
-                {customerStatsMap[deleteConfirmCustomer.id] && (
-                  <div className="text-xs text-amber-400 pt-1 border-t border-slate-900 flex justify-between">
-                    <span>Total Order: {customerStatsMap[deleteConfirmCustomer.id].totalOrders}x</span>
-                    <span>Total Belanja: {formatRupiah(customerStatsMap[deleteConfirmCustomer.id].totalSpent)}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-rose-950/40 border border-rose-800/60 p-3 rounded-xl text-rose-200 text-xs leading-relaxed">
-                <strong>Catatan:</strong> Data customer ini akan dihapus dari daftar CRM master. Riwayat nota penjualan dan buku kas yang pernah tercatat sebelumnya tetap aman.
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmCustomer(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-              >
+            <p>Customer hilang dari daftar. Nota penjualan dan buku kas yang sudah tercatat tidak ikut terhapus.</p>
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setDeleteConfirmCustomer(null)} className={OUTLINE_BUTTON}>
                 Batal
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmSingleDelete}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-lg shadow-rose-600/30 flex items-center gap-1.5"
-              >
+              <button type="button" onClick={handleConfirmSingleDelete} className={DANGER_BUTTON}>
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Ya, Hapus Customer</span>
+                Hapus customer
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
-      {/* ========================================================================= */}
-      {/* MODAL: Konfirmasi Hapus Massal (Bulk Delete) */}
-      {/* ========================================================================= */}
+      {/* MODAL: Hapus banyak customer */}
       {isBulkDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#121620] border border-rose-500/50 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
-              <div className="p-2.5 rounded-xl bg-rose-500/20 text-rose-400">
-                <Trash className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-base">
-                  Hapus {selectedCustomerIds.size} Customer Terpilih?
-                </h3>
-                <p className="text-xs text-slate-400">Tindakan ini menghapus banyak data customer sekaligus</p>
-              </div>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <p className="text-slate-300 leading-relaxed">
-                Apakah Anda yakin ingin menghapus <strong className="text-white font-bold">{selectedCustomerIds.size} kontak customer</strong> yang Anda centang dari database?
-              </p>
-
-              <div className="bg-rose-950/40 border border-rose-800/60 p-3 rounded-xl text-rose-200 text-xs leading-relaxed">
-                Kontak yang dihapus tidak dapat dipulihkan secara otomatis kecuali diimpor ulang atau disinkronkan kembali dari transaksi order.
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-              <button
-                type="button"
-                onClick={() => setIsBulkDeleteModalOpen(false)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-              >
+        <Modal title={`Hapus ${selectedCustomerIds.size} customer?`} icon={<AlertTriangle className="w-5 h-5 text-rose-700 mt-0.5" />} onClose={() => setIsBulkDeleteModalOpen(false)}>
+          <div className="space-y-3 text-xs text-slate-700">
+            <p className="font-semibold text-slate-900">
+              {customers
+                .filter((c) => selectedCustomerIds.has(c.id))
+                .slice(0, 5)
+                .map((c) => c.nama)
+                .join(', ')}
+              {selectedCustomerIds.size > 5 && ` dan ${selectedCustomerIds.size - 5} lainnya`}
+            </p>
+            <p>Customer yang dihapus tidak bisa dipulihkan, kecuali diimpor ulang atau ditarik lagi dari order. Nota penjualan tetap ada.</p>
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setIsBulkDeleteModalOpen(false)} className={OUTLINE_BUTTON}>
                 Batal
               </button>
-              <button
-                type="button"
-                onClick={handleConfirmBulkDelete}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-lg shadow-rose-600/30 flex items-center gap-1.5"
-              >
+              <button type="button" onClick={handleConfirmBulkDelete} className={DANGER_BUTTON}>
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Hapus {selectedCustomerIds.size} Data Customer</span>
+                Hapus {selectedCustomerIds.size} customer
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

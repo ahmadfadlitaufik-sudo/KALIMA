@@ -76,7 +76,7 @@ export interface Customer {
   noHp: string;
   kota: string;
   tipe: CustomerCategory | 'Retail';
-  kategoriManual?: 'Umum' | 'Reseller' | 'Marketplace' | 'VIP';
+  kategoriManual?: 'Umum' | 'Reseller' | 'Marketplace' | 'VIP' | 'Internal';
   alamat?: string;
   email?: string;
   catatan?: string;

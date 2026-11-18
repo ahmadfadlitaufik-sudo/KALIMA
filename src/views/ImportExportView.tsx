@@ -462,7 +462,7 @@ export const ImportExportView: React.FC = () => {
           const channel = (getCol(firstRow, ['channel', 'sales_channel', 'kanal', 'marketplace']) || 'WhatsApp') as any;
           const customerNama = getCol(firstRow, ['customerNama', 'customer', 'nama_pelanggan', 'nama']) || 'Pelanggan Umum';
           const customerHp = getCol(firstRow, ['customerHp', 'no_hp', 'telepon', 'hp', 'wa', 'phone']) || '-';
-          const customerKota = getCol(firstRow, ['customerKota', 'kota', 'city']) || 'Kota Asal';
+          const customerKota = getCol(firstRow, ['customerKota', 'kota', 'city']) || '';
           const noResi = getCol(firstRow, ['noResi', 'resi', 'no_resi']) || '';
           const statusBayarRaw = (getCol(firstRow, ['statusBayar', 'status_bayar', 'pembayaran']) || 'lunas').toLowerCase();
           const statusBayar: PaymentStatus =
