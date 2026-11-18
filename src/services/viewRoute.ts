@@ -19,7 +19,8 @@ export const viewToPath = (view: AppView): string => VIEW_PATHS[view];
 
 export const pathToView = (path: string): AppView => {
   const normalized = path.length > 1 ? path.replace(/\/+$/, '') : path;
-  const match = (Object.keys(VIEW_PATHS) as AppView[]).find((view) => VIEW_PATHS[view] === normalized);
+  // Nama halaman dalam bahasa Inggris (mis. /inventory) juga diterima.
+  const match = (Object.keys(VIEW_PATHS) as AppView[]).find((view) => VIEW_PATHS[view] === normalized || `/${view}` === normalized);
   return match ?? 'dashboard';
 };
 

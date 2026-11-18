@@ -22,4 +22,10 @@ describe('view routes', () => {
     expect(pathToView('/tidak-ada')).toBe('dashboard');
     expect(pathToView('/penjualan/')).toBe('sales');
   });
+
+  it('also opens a page from its English name, such as /inventory', () => {
+    expect(pathToView('/inventory')).toBe('inventory');
+    expect(pathToView('/customers')).toBe('customers');
+    expect(pathToView('/products/')).toBe('products');
+  });
 });
