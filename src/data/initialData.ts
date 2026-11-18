@@ -33,7 +33,7 @@ export const INITIAL_SERIES: ProductSeries[] = [
     description: 'Kaos oversize silhouette relaxed-drop shoulder dengan material combed 210 GSM kokoh & adem.',
     baseCost: 48000,
     defaultPrice: 129000,
-    image: '/src/assets/images/kalima_210gsm_oversize_1790230532230.jpg',
+    image: '/products/kalima_210gsm_oversize_1790230532230.jpg',
   },
   {
     id: 'ser-290ov',
@@ -44,7 +44,7 @@ export const INITIAL_SERIES: ProductSeries[] = [
     description: 'Koleksi luxury heavy knit 290 GSM boxy cut dengan tekstur vintage wash premium.',
     baseCost: 65000,
     defaultPrice: 169000,
-    image: '/src/assets/images/kalima_290gsm_heavyweight_1790230547194.jpg',
+    image: '/products/kalima_290gsm_heavyweight_1790230547194.jpg',
   },
   {
     id: 'ser-185rg',
@@ -55,7 +55,7 @@ export const INITIAL_SERIES: ProductSeries[] = [
     description: 'Essential crewneck daily fit 185 GSM super soft breathable cotton untuk pemakaian harian.',
     baseCost: 36000,
     defaultPrice: 99000,
-    image: '/src/assets/images/kalima_185gsm_regular_1790230560267.jpg',
+    image: '/products/kalima_185gsm_regular_1790230560267.jpg',
   },
 ];
 
