@@ -70,6 +70,8 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
   isOwner,
 }) => {
   const [chartType, setChartType] = useState<ChartViewType>('revenue_profit');
+  /** Di HP tren dilipat dulu supaya ringkasan utama tidak tertutup. */
+  const [open, setOpen] = useState(() => typeof window === 'undefined' || window.innerWidth >= 768);
   const [timeRange, setTimeRange] = useState<TimeRangeType>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [hoveredMonthIndex, setHoveredMonthIndex] = useState<number | null>(null);
@@ -491,7 +493,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
   };
 
   return (
-    <div className="bg-white rounded-[20px] border border-slate-200 p-6 space-y-5">
+    <div className="bg-white rounded-[20px] border border-slate-200 p-4 sm:p-6 space-y-5">
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
@@ -499,19 +501,24 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
             <div className="p-2 rounded-xl bg-white text-slate-700 border border-slate-200">
               <BarChart3 className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight">
-              Ringkasan & Tren Performa Penjualan Bulanan
-            </h3>
+            <h3 className="text-sm font-bold text-slate-900 tracking-tight">Tren penjualan bulanan</h3>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Visualisasi analitik komprehensif omzet, volume produk, kontribusi saluran, dan pertumbuhan bulanan (MoM).
-          </p>
+          <p className="text-xs text-slate-500 mt-1">Omzet, volume, channel, dan pertumbuhan per bulan.</p>
         </div>
 
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="md:hidden w-full py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+        >
+          {open ? 'Sembunyikan tren' : 'Tampilkan tren bulanan'}
+        </button>
+
         {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className={`${open ? 'flex' : 'hidden md:flex'} flex-wrap items-center gap-2`}>
           {/* Chart View Selector */}
-          <div className="segmented-pill-bar flex items-center gap-1 bg-slate-100/80">
+          <div className="segmented-pill-bar flex flex-wrap items-center gap-1 bg-slate-100/80">
             <button
               onClick={() => setChartType('revenue_profit')}
               className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -535,7 +542,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
               title="Komposisi Channel Penjualan" aria-label="Komposisi Channel Penjualan"
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Saluran (Channel)</span>
+              <span>Channel</span>
             </button>
 
             <button
@@ -548,7 +555,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
               title="Volume Penjualan (Pcs) & Transaksi" aria-label="Volume Penjualan (Pcs) & Transaksi"
             >
               <Package className="w-3.5 h-3.5" />
-              <span>Volume & Qty</span>
+              <span>Volume</span>
             </button>
 
             <button
@@ -605,7 +612,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
       </div>
 
       {/* KPI Cards Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className={`${open ? 'grid' : 'hidden md:grid'} grid-cols-2 sm:grid-cols-4 gap-3`}>
         {/* Rata-rata Bulanan */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
           <div className="text-xs text-slate-500 font-bold uppercase tracking-wider flex items-center justify-between">
@@ -671,17 +678,18 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
       </div>
 
       {/* Main Recharts Visualization Canvas */}
-      <div className="h-72 w-full pt-2">
+      <div className={`${open ? 'block' : 'hidden md:block'} h-72 w-full pt-2`}>
         <ResponsiveContainer width="100%" height="100%">
           {chartType === 'revenue_profit' ? (
             <BarChart
               data={monthlyData}
-              margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
               onMouseLeave={() => setHoveredMonthIndex(null)}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#F5F1E6" vertical={false} />
               <XAxis dataKey="monthLabel" tick={{ fill: '#6E6B6C', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis
+                width={78}
                 tick={{ fill: '#6E6B6C', fontSize: 11 }}
                 tickFormatter={(val) => formatShortRupiah(val)}
                 axisLine={false}
@@ -698,13 +706,13 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                 {monthlyData.map((month, index) => (
                   <Cell
                     key={month.monthLabel + month.year}
-                    fill={index === (hoveredMonthIndex ?? monthlyData.length - 1) ? '#0E6E48' : '#C2DACB'}
+                    fill={index === (hoveredMonthIndex ?? monthlyData.length - 1) ? '#0E6E48' : '#8DB9A0'}
                   />
                 ))}
               </Bar>
             </BarChart>
           ) : chartType === 'channel_composition' ? (
-            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
                 dataKey="monthLabel"
@@ -713,6 +721,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                 axisLine={{ stroke: '#e2e8f0' }}
               />
               <YAxis
+                width={78}
                 stroke="#cbd5e1"
                 tick={{ fill: '#64748b', fontSize: 10 }}
                 tickFormatter={(val) => formatShortRupiah(val)}
@@ -737,7 +746,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
               ))}
             </BarChart>
           ) : chartType === 'volume_orders' ? (
-            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
                 dataKey="monthLabel"
@@ -786,7 +795,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
               />
             </BarChart>
           ) : (
-            <LineChart data={monthlyData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+            <LineChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
                 dataKey="monthLabel"
@@ -795,6 +804,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                 axisLine={{ stroke: '#e2e8f0' }}
               />
               <YAxis
+                width={78}
                 stroke="#cbd5e1"
                 tick={{ fill: '#64748b', fontSize: 10 }}
                 tickFormatter={(val) => formatShortRupiah(val)}
@@ -831,7 +841,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
       </div>
 
       {/* Monthly Breakdown Table Accordion / Data Grid Summary */}
-      <div className="border-t border-slate-800/80 pt-4">
+      <div className={`${open ? 'block' : 'hidden md:block'} border-t border-slate-200 pt-4`}>
         <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-2.5">
           <span className="flex items-center gap-1.5">
             <span>Rincian Data Performa Tiap Bulan</span>
@@ -871,7 +881,7 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
               ) : (
                 monthlyData.slice().reverse().map((m) => (
                   <tr key={m.yearMonth} className="hover:bg-slate-900/50 transition-colors">
-                    <td className="px-3 py-2 font-sans font-medium text-white flex items-center gap-1.5">
+                    <td className="whitespace-nowrap px-3 py-2 font-sans font-medium text-white flex items-center gap-1.5">
                       <span>{m.fullLabel}</span>
                       {kpiStats.bestMonth?.yearMonth === m.yearMonth && (
                         <span className="text-[11px] px-1.5 py-0.2 rounded bg-amber-500/15 text-slate-900 border border-amber-500/30 font-sans font-semibold">
@@ -879,29 +889,29 @@ export const MonthlySalesPerformanceChart: React.FC<MonthlySalesPerformanceChart
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right font-bold text-slate-900">
+                    <td className="whitespace-nowrap px-3 py-2 text-right font-bold text-slate-900">
                       Rp {m.omzet.toLocaleString('id-ID')}
                     </td>
                     {isOwner && (
-                      <td className="px-3 py-2 text-right text-indigo-700 font-semibold">
+                      <td className="whitespace-nowrap px-3 py-2 text-right text-indigo-700 font-semibold">
                         Rp {m.labaKotor.toLocaleString('id-ID')}
                       </td>
                     )}
                     {isOwner && (
-                      <td className="px-3 py-2 text-right text-slate-300 font-medium">
+                      <td className="whitespace-nowrap px-3 py-2 text-right text-slate-300 font-medium">
                         {m.profitMargin}%
                       </td>
                     )}
-                    <td className="px-3 py-2 text-right text-slate-200">
+                    <td className="whitespace-nowrap px-3 py-2 text-right text-slate-200">
                       {m.totalQty.toLocaleString('id-ID')} pcs
                     </td>
-                    <td className="px-3 py-2 text-right text-slate-300">
+                    <td className="whitespace-nowrap px-3 py-2 text-right text-slate-300">
                       {m.totalOrders} order
                     </td>
-                    <td className="px-3 py-2 text-right text-slate-400 text-xs">
+                    <td className="whitespace-nowrap px-3 py-2 text-right text-slate-400 text-xs">
                       Rp {m.aov.toLocaleString('id-ID')}
                     </td>
-                    <td className="px-3 py-2 text-right font-semibold text-xs">
+                    <td className="whitespace-nowrap px-3 py-2 text-right font-semibold text-xs">
                       {m.momGrowth > 0 ? (
                         <span className="text-indigo-700">+{m.momGrowth}%</span>
                       ) : m.momGrowth < 0 ? (

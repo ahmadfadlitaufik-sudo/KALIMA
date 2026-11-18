@@ -105,6 +105,8 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
 
   // Search SKU
   const [skuSearchQuery, setSkuSearchQuery] = useState('');
+  const [skuLimit, setSkuLimit] = useState(24);
+  const [customerQuery, setCustomerQuery] = useState('');
   const [selectedSizeFilter, setSelectedSizeFilter] = useState<string>('ALL');
 
   // Order Totals & Adjustments
@@ -171,6 +173,8 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
     setNewCustHp('');
     setNewCustKota('Jakarta');
     setSkuSearchQuery('');
+    setSkuLimit(24);
+    setCustomerQuery('');
     setSelectedSizeFilter('ALL');
     setDiskon(0);
     setOngkir(0);
@@ -195,6 +199,15 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
     });
     return Array.from(setSizes);
   }, [skus]);
+
+  const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
+  const customerMatches = useMemo(() => {
+    const q = normalizeSearchText(customerQuery);
+    if (!q) {
+      return [];
+    }
+    return customers.filter((c) => normalizeSearchText(`${c.nama} ${c.kota || ''} ${c.noHp || ''}`).includes(q)).slice(0, 8);
+  }, [customers, customerQuery]);
 
   // Filtered SKUs for selection with flexible multi-field token matching
   const filteredSkus = useMemo(() => {
@@ -462,22 +475,13 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto animate-fade-in">
-      <div className="relative w-full max-w-3xl bg-white border border-slate-200/90 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-900/40" role="dialog" aria-modal="true">
+      <div className="relative w-full max-w-3xl bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94vh] sm:max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/80 bg-slate-50/80">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-              +
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                Input Penjualan Cepat (Target &lt; 60 dtk)
-              </h2>
-              <p className="text-xs text-slate-500">
-                Otomatis mengurangi stok gudang & mencatat piutang bila belum lunas
-              </p>
-            </div>
+        <div className="flex items-center justify-between gap-3 px-5 sm:px-6 py-4 border-b border-slate-200/80">
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">Order baru</h2>
+            <p className="text-xs text-slate-500">Stok berkurang otomatis; piutang tercatat bila belum lunas.</p>
           </div>
           <button aria-label="Tutup" data-modal-close
             onClick={handleClose}
@@ -506,7 +510,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
               }
             }
           }}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5"
+          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
         >
           {errorMessage && (
             <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 flex items-start gap-2.5">
@@ -515,99 +519,47 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
             </div>
           )}
 
-          {/* 1. Tanggal Transaksi Penjualan */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                <span>1. Tanggal Transaksi Penjualan</span>
-              </label>
-
-              {/* Preset Buttons */}
-              <div className="flex items-center gap-1.5">
+          {/* Tanggal */}
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-slate-700">Tanggal penjualan</label>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                required
+                value={orderDate}
+                onChange={(e) => setOrderDate(e.target.value)}
+                className="bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-mono focus:outline-none focus:border-slate-500"
+              />
+              {([
+                [todayStr, 'Hari ini'],
+                [yesterdayStr, 'Kemarin'],
+                [h2Str, 'H-2'],
+                [h3Str, 'H-3'],
+              ] as const).map(([value, label]) => (
                 <button
+                  key={label}
                   type="button"
-                  onClick={() => setOrderDate(todayStr)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    orderDate === todayStr
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                  onClick={() => setOrderDate(value)}
+                  aria-pressed={orderDate === value}
+                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold cursor-pointer ${
+                    orderDate === value ? 'segmented-pill-active' : 'bg-white text-slate-600 border border-slate-300 hover:bg-slate-50'
                   }`}
                 >
-                  Hari Ini
+                  {label}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setOrderDate(yesterdayStr)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    orderDate === yesterdayStr
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  Kemarin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOrderDate(h2Str)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    orderDate === h2Str
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  H-2
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOrderDate(h3Str)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    orderDate === h3Str
-                      ? 'bg-slate-900 text-white shadow-xs'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  H-3
-                </button>
-              </div>
+              ))}
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-              <div>
-                <input
-                  type="date"
-                  required
-                  value={orderDate}
-                  onChange={(e) => setOrderDate(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 font-bold focus:outline-none focus:border-slate-900 shadow-2xs font-mono cursor-pointer"
-                />
-              </div>
-
-              <div>
-                {orderDate === todayStr ? (
-                  <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs font-semibold text-emerald-800">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span className="truncate">Hari Ini ({formatDisplayDate(orderDate)})</span>
-                  </div>
-                ) : orderDate < todayStr ? (
-                  <div className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs font-semibold text-amber-900">
-                    <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span className="truncate">Penjualan Lampau: {formatDisplayDate(orderDate)}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 border border-blue-200 rounded-xl text-xs font-semibold text-blue-900">
-                    <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span className="truncate">Pre-Order / Mendatang: {formatDisplayDate(orderDate)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
+            {orderDate !== todayStr && (
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                {orderDate < todayStr ? 'Penjualan lampau' : 'Pre-order / mendatang'}: {formatDisplayDate(orderDate)}
+              </p>
+            )}
           </div>
 
           {/* 2. Channel Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-              2. Pilih Sales Channel
+            <label className="block text-xs font-semibold text-slate-700 mb-2">
+              Channel penjualan
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
               {channels.map((ch) => {
@@ -617,90 +569,119 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                     key={ch.id}
                     type="button"
                     onClick={() => setSelectedChannel(ch.name)}
-                    className={`p-2.5 rounded-2xl text-center border transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl text-center border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-slate-900 text-white font-bold border-slate-900 shadow-sm'
+                        ? 'segmented-pill-active font-bold border-transparent shadow-sm'
                         : 'bg-slate-50 text-slate-700 border-slate-200/80 hover:bg-slate-100'
                     }`}
                   >
                     <div className="text-xs font-semibold">{ch.name}</div>
-                    <div
-                      className={`text-[11px] mt-0.5 ${
-                        isSelected ? 'text-slate-300 font-medium' : 'text-slate-500'
-                      }`}
-                    >
-                      {ch.adminFeePercent > 0 ? `Biaya ${ch.adminFeePercent}%` : 'Biaya 0%'}
-                    </div>
+                    {ch.adminFeePercent > 0 && (
+                      <div className={`text-[11px] mt-0.5 ${isSelected ? 'text-slate-300 font-medium' : 'text-slate-500'}`}>Biaya {ch.adminFeePercent}%</div>
+                    )}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 3. Customer Information */}
-          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-            <div className="flex items-center justify-between mb-2.5">
-              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                3. Pelanggan
-              </label>
-              <div className="flex items-center gap-1.5 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setCustomerMode('existing')}
-                  className={`px-3 py-1 rounded-xl font-medium cursor-pointer transition-colors ${
-                    customerMode === 'existing'
-                      ? 'bg-white text-slate-900 font-bold border border-slate-200/90 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  Pelanggan Lama
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCustomerMode('new')}
-                  className={`px-3 py-1 rounded-xl font-medium cursor-pointer transition-colors ${
-                    customerMode === 'new'
-                      ? 'bg-white text-slate-900 font-bold border border-slate-200/90 shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  + Pelanggan Baru
-                </button>
+          {/* Pelanggan */}
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="text-xs font-semibold text-slate-700">Pelanggan</label>
+              <div className="flex items-center gap-1 text-xs">
+                {([
+                  ['existing', 'Pelanggan lama'],
+                  ['new', 'Pelanggan baru'],
+                ] as const).map(([mode, label]) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    aria-pressed={customerMode === mode}
+                    onClick={() => setCustomerMode(mode)}
+                    className={`px-3 py-2 rounded-xl font-semibold cursor-pointer ${
+                      customerMode === mode ? 'bg-white text-slate-900 border border-slate-300' : 'text-slate-500 hover:text-slate-900'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
 
             {customerMode === 'existing' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <select
-                  value={selectedCustomerId}
-                  onChange={(e) => setSelectedCustomerId(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 font-medium focus:outline-none focus:border-slate-900 cursor-pointer"
-                >
-                  <option value="" disabled>
-                    — Pilih pelanggan —
-                  </option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nama} - {c.kota} ({c.noHp})
-                    </option>
-                  ))}
-                </select>
+              <div className="space-y-2.5">
+                {selectedCustomer ? (
+                  <div className="flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-slate-900 truncate">{selectedCustomer.nama}</div>
+                      <div className="text-slate-500 truncate">{[selectedCustomer.kota, selectedCustomer.noHp].filter((v) => v && v !== '-').join(' · ')}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCustomerId('');
+                        setCustomerQuery('');
+                      }}
+                      className="px-2 py-1.5 font-semibold text-slate-700 underline cursor-pointer shrink-0"
+                    >
+                      Ganti
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" aria-hidden="true" />
+                      <input
+                        type="text"
+                        aria-label="Cari pelanggan"
+                        placeholder="Cari nama, HP, atau kota pelanggan…"
+                        value={customerQuery}
+                        onChange={(e) => setCustomerQuery(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-slate-500"
+                      />
+                    </div>
+                    {customerQuery.trim() && (
+                      <ul className="mt-1.5 bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
+                        {customerMatches.length === 0 ? (
+                          <li className="px-3 py-3 text-xs text-slate-500">Tidak ada pelanggan yang cocok. Pakai tab "Pelanggan baru" untuk menambahkan.</li>
+                        ) : (
+                          customerMatches.map((c) => (
+                            <li key={c.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCustomerId(c.id);
+                                  setCustomerQuery('');
+                                }}
+                                className="w-full text-left px-3 py-2.5 text-xs hover:bg-slate-50 cursor-pointer"
+                              >
+                                <span className="font-semibold text-slate-900">{c.nama}</span>
+                                <span className="block text-slate-500">{[c.kota, c.noHp].filter((v) => v && v !== '-').join(' · ')}</span>
+                              </button>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
                 <input
                   type="text"
-                  placeholder="No. Resi Pengiriman (Opsional)"
+                  placeholder="No. resi pengiriman (opsional)"
                   value={noResi}
                   onChange={(e) => setNoResi(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-900 font-mono"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-slate-500 font-mono"
                 />
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <input
                   type="text"
-                  placeholder="Nama Lengkap *"
+                  placeholder="Nama lengkap *"
                   value={newCustNama}
                   onChange={(e) => setNewCustNama(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-900"
+                  className="bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-slate-500"
                   required
                 />
                 <input
@@ -708,14 +689,14 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                   placeholder="No. WhatsApp / HP"
                   value={newCustHp}
                   onChange={(e) => setNewCustHp(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-900 font-mono"
+                  className="bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-slate-500 font-mono"
                 />
                 <input
                   type="text"
-                  placeholder="Kota / Daerah"
+                  placeholder="Kota / daerah"
                   value={newCustKota}
                   onChange={(e) => setNewCustKota(e.target.value)}
-                  className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-slate-900"
+                  className="bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-slate-500"
                 />
               </div>
             )}
@@ -723,20 +704,23 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
 
           {/* 4. Fast SKU Search & Add */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                4. Tambah Produk / Kaos
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+              <label className="text-xs font-semibold text-slate-700">
+                Tambah produk
               </label>
               {/* Quick Size Filter Pills */}
-              <div className="flex items-center gap-1 text-xs overflow-x-auto pb-0.5">
+              <div className="flex flex-wrap items-center gap-1 text-xs">
                 {['ALL', ...Array.from(new Set(['S', 'M', 'L', 'XL', '2XL', ...availableSizes]))].map((sz) => (
                   <button
                     key={sz}
                     type="button"
-                    onClick={() => setSelectedSizeFilter(sz)}
-                    className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                    onClick={() => {
+                      setSelectedSizeFilter(sz);
+                      setSkuLimit(24);
+                    }}
+                    className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                       selectedSizeFilter === sz
-                        ? 'bg-slate-900 text-white'
+                        ? 'segmented-pill-active'
                         : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
                     }`}
                   >
@@ -748,14 +732,17 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
 
             {/* Search Input */}
             <div className="relative mb-2.5">
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 name="skuSearch"
-                placeholder="Cari SKU / Warna / Seri (contoh: pastel green, 210 hitam, oversize, regular)..."
+                placeholder="Cari SKU, warna, atau seri"
                 value={skuSearchQuery}
-                onChange={(e) => setSkuSearchQuery(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 pl-9 pr-4 py-2 rounded-xl text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-slate-900"
+                onChange={(e) => {
+                  setSkuSearchQuery(e.target.value);
+                  setSkuLimit(24);
+                }}
+                className="w-full bg-slate-50 border border-slate-200 pl-9 pr-4 py-2.5 rounded-xl text-xs text-slate-800 focus:outline-none focus:bg-white focus:border-slate-900"
               />
             </div>
 
@@ -776,7 +763,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
             )}
 
             {/* Quick SKU Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-56 overflow-y-auto p-1.5 bg-slate-50 rounded-2xl border border-slate-200/80">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 p-1.5 bg-slate-50 rounded-2xl border border-slate-200/80">
               {filteredSkus.length === 0 ? (
                 <div className="col-span-full py-8 px-4 text-center space-y-2 bg-white rounded-xl border border-slate-200/70">
                   <AlertCircle className="w-5 h-5 text-amber-500 mx-auto" />
@@ -797,7 +784,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                   )}
                 </div>
               ) : (
-                filteredSkus.slice(0, 60).map((sku) => {
+                filteredSkus.slice(0, skuLimit).map((sku) => {
                   const stockGudang = calculateStock(sku.sku, 'Gudang Utama');
                   const isOutOfStock = stockGudang <= 0;
                   const inCart = cartItems.find((c) => c.sku === sku.sku);
@@ -829,7 +816,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                                 : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             }`}
                           >
-                            {stockGudang} pcs
+                            {stockGudang < 0 ? 'Minus' : stockGudang === 0 ? 'Habis' : `${stockGudang} pcs`}
                           </span>
                         </div>
                         <div className="text-slate-800 text-xs font-medium line-clamp-2 leading-snug">
@@ -866,13 +853,22 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                 })
               )}
             </div>
+            {filteredSkus.length > skuLimit && (
+              <button
+                type="button"
+                onClick={() => setSkuLimit((n) => n + 24)}
+                className="mt-2 w-full py-2.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                Tampilkan lebih banyak ({filteredSkus.length - skuLimit} lagi)
+              </button>
+            )}
           </div>
 
           {/* 5. Cart Items Table */}
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
             <div className="flex items-center justify-between mb-2.5">
-              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                5. Daftar Item ({cartItems.reduce((a, b) => a + b.qty, 0)} pcs)
+              <label className="text-xs font-semibold text-slate-700">
+                Daftar item ({cartItems.reduce((a, b) => a + b.qty, 0)} pcs)
               </label>
               {cartItems.length > 0 && (
                 <button
@@ -887,7 +883,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
 
             {cartItems.length === 0 ? (
               <div className="text-center py-6 text-slate-400 text-xs">
-                Belum ada produk dipilih. Klik "+ Tambah" pada daftar produk di atas untuk memasukkan ke keranjang.
+                Belum ada produk. Ketuk produk di atas untuk menambahkannya.
               </div>
             ) : (
               <div className="space-y-2">
@@ -1057,7 +1053,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
           {/* 6. Discounts, Ongkir & Payments */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
                 Diskon / Potongan (Rp)
               </label>
               <div className="relative">
@@ -1071,13 +1067,13 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                     setDiskon(raw === '' ? 0 : Math.max(0, parseFloat(raw) || 0));
                   }}
                   placeholder="0"
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-slate-900"
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-mono focus:border-slate-900"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
                 Ongkos Kirim (Rp)
               </label>
               <input
@@ -1090,12 +1086,12 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                   setOngkir(raw === '' ? 0 : Math.max(0, parseFloat(raw) || 0));
                 }}
                 placeholder="0"
-                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-slate-900"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-mono focus:border-slate-900"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
                 Status Pembayaran
               </label>
               <select
@@ -1112,7 +1108,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
             {statusBayar !== 'lunas' && (
               <>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Jumlah Terbayar (DP) Rp
                   </label>
                   <input
@@ -1126,12 +1122,12 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                       setTotalTerbayar(raw === '' ? 0 : Math.max(0, parseFloat(raw) || 0));
                     }}
                     placeholder="0"
-                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 font-mono focus:border-slate-900"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 font-mono focus:border-slate-900"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Sisa Piutang
                   </label>
                   <div className="bg-white border border-rose-200 rounded-xl px-3 py-2 text-xs text-rose-700 font-mono font-bold">
@@ -1140,7 +1136,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
                     Jatuh Tempo Pembayaran *
                   </label>
                   <input
@@ -1156,7 +1152,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
 
             {statusBayar !== 'piutang' && (
               <div>
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
                   Masuk ke Akun Kas/Bank
                 </label>
                 <select
@@ -1236,7 +1232,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
         </form>
 
         {/* Footer Summary & Submit */}
-        <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-200/80 flex flex-col gap-3">
+        <div className="px-5 sm:px-6 py-3 sm:py-4 bg-white border-t border-slate-200/80 flex flex-col gap-3">
           {/* Prominent Footer Error Message */}
           {errorMessage && (
             <div className="p-3 bg-rose-50 border border-rose-300 rounded-2xl text-xs text-rose-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 animate-in fade-in">
@@ -1262,7 +1258,9 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-4">
               <div>
-                <div className="text-xs text-slate-500 font-medium">Total Tagihan</div>
+                <div className="text-xs text-slate-500 font-medium">
+                  Total · {cartItems.length} item · {cartItems.reduce((a, b) => a + b.qty, 0)} pcs
+                </div>
                 <div className="text-xl font-black text-slate-900 font-mono">
                   Rp {totalTagihan.toLocaleString('id-ID')}
                 </div>
@@ -1278,7 +1276,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
               <button
                 type="button"
                 onClick={handleClose}
-                className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shadow-2xs"
+                className="flex-1 sm:flex-none px-4 py-3 rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Batal
               </button>
@@ -1286,7 +1284,7 @@ export const QuickOrderModal = React.memo<QuickOrderModalProps>(function QuickOr
                 type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-sm hover:shadow transition-all cursor-pointer"
+                className="flex-1 sm:flex-none segmented-pill-active flex items-center justify-center gap-2 disabled:opacity-50 font-bold px-6 py-3 rounded-xl text-xs cursor-pointer"
               >
                 {isSubmitting ? (
                   <span>Menyimpan Order...</span>

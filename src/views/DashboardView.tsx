@@ -88,26 +88,28 @@ const KpiCard: React.FC<{
   linkLabel: string;
   onClick: () => void;
   highlight?: boolean;
+  /** Lebar penuh di HP (2 kolom), selebihnya setengah lebar. */
+  wide?: boolean;
   children?: React.ReactNode;
-}> = ({ icon: Icon, label, value, linkLabel, onClick, highlight = false, children }) => (
+}> = ({ icon: Icon, label, value, linkLabel, onClick, highlight = false, wide = false, children }) => (
   <button
     type="button"
     onClick={onClick}
     className={`${
       highlight ? 'card-hero' : 'bg-white border-slate-200 hover:border-slate-300'
-    } group flex flex-col rounded-[20px] border text-left w-full cursor-pointer transition-colors`}
+    } ${wide ? 'col-span-2 xl:col-span-1' : ''} group flex flex-col rounded-[20px] border text-left w-full cursor-pointer transition-colors`}
   >
-    <span className="flex-1 w-full p-5 space-y-3">
+    <span className="flex-1 w-full p-4 sm:p-5 space-y-2 sm:space-y-3">
       <span className="flex items-center gap-2.5">
         <span className={`hero-chip p-2 rounded-xl border ${highlight ? 'border-transparent' : 'bg-white border-slate-200 text-slate-700'}`}>
           <Icon className="w-4 h-4" aria-hidden="true" />
         </span>
         <span className="text-sm font-semibold text-slate-900">{label}</span>
       </span>
-      <span className="block text-2xl font-bold text-slate-900 tabular-nums whitespace-nowrap">{value}</span>
+      <span className="block text-xl sm:text-2xl font-bold text-slate-900 tabular-nums whitespace-nowrap">{value}</span>
       <span className="block space-y-1.5">{children}</span>
     </span>
-    <span className="hero-divider w-full flex items-center justify-between px-5 py-3 border-t border-slate-200 text-xs font-semibold text-slate-700">
+    <span className="hero-divider w-full hidden sm:flex items-center justify-between px-5 py-3 border-t border-slate-200 text-xs font-semibold text-slate-700">
       {linkLabel}
       <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
     </span>
@@ -216,8 +218,8 @@ export const DashboardView: React.FC = () => {
       </div>
 
       {/* 4 angka utama */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <KpiCard icon={TrendingUp} label="Omzet" value={rupiah(current.omzet)} linkLabel="Lihat penjualan" onClick={() => setCurrentView('sales')} highlight>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+        <KpiCard icon={TrendingUp} label="Omzet" value={rupiah(current.omzet)} linkLabel="Lihat penjualan" onClick={() => setCurrentView('sales')} highlight wide>
           <ChangeBadge change={percentChange(current.omzet, previous.omzet)} previousLabel={labels.previous} />
           <span className="hero-muted block text-xs text-slate-500">{current.count} order</span>
         </KpiCard>
@@ -231,7 +233,7 @@ export const DashboardView: React.FC = () => {
                 {labels.previous}: <span className={previousNetProfit < 0 ? 'text-rose-700 font-semibold' : ''}>{previousNetProfit < 0 ? '−' : ''}{rupiah(Math.abs(previousNetProfit))}</span>
               </span>
             )}
-            <span className="block text-xs text-slate-500">
+            <span className="hidden sm:block text-xs text-slate-500">
               Laba kotor {rupiah(current.laba)} (margin {margin === null ? '–' : `${margin}%`}) − OPEX {rupiah(currentOpex)}
             </span>
           </KpiCard>
@@ -262,7 +264,7 @@ export const DashboardView: React.FC = () => {
           )}
         </KpiCard>
 
-        <KpiCard icon={Wallet} label="Total Kas & Bank" value={rupiah(totalCash)} linkLabel="Lihat kas & bank" onClick={() => setCurrentView('finance')}>
+        <KpiCard icon={Wallet} label="Total Kas & Bank" value={rupiah(totalCash)} linkLabel="Lihat kas & bank" onClick={() => setCurrentView('finance')} wide>
           <span className="block text-xs text-slate-500">
             {cashAccounts.length} rekening ·{' '}
             {monthCashFlow.count === 0 ? (
