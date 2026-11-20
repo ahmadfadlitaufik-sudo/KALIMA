@@ -415,11 +415,11 @@ export const CashBankSection: React.FC = () => {
               <Building2 className="w-4.5 h-4.5" />
             </div>
             <h2 className="text-base font-bold text-slate-900 tracking-tight">
-              Manajemen Kas & Rekening Bank
+              Kas & rekening bank
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Pantau saldo kas tunai toko, rekening bank operasional, mutasi buku kas, dan pemindahan saldo real-time.
+            Saldo tiap akun, buku kas, dan pemindahan saldo antar akun.
           </p>
         </div>
 
@@ -510,12 +510,10 @@ export const CashBankSection: React.FC = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <span>Daftar Akun Kas & Bank Aktif</span>
+              <span>Akun</span>
               <span className="text-xs font-semibold text-slate-500">· {cashAccounts.length} akun</span>
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Saldo masing-masing akun ter-update secara real-time dari seluruh transaksi penjualan, pelunasan, dan beban operasional.
-            </p>
+            <p className="text-xs text-slate-500 mt-0.5">Saldo ikut berubah dari penjualan, pelunasan, dan biaya yang dicatat.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -541,7 +539,7 @@ export const CashBankSection: React.FC = () => {
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
               >
-                Kartu Visual
+                Kartu
               </button>
               <button
                 type="button"
@@ -552,7 +550,7 @@ export const CashBankSection: React.FC = () => {
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
                 }`}
               >
-                Tabel Rincian
+                Tabel
               </button>
             </div>
 
@@ -568,7 +566,7 @@ export const CashBankSection: React.FC = () => {
         </div>
 
         {/* Visual Cards View */}
-        {accountViewMode !== 'table' && (
+        <div className={accountViewMode === 'table' ? 'md:hidden' : ''}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {cashAccounts.map((acc) => {
               const theme = getAccountTheme(acc.warna, acc.tipe);
@@ -656,7 +654,7 @@ export const CashBankSection: React.FC = () => {
                   {/* Card Balance */}
                   <div className="mb-4">
                     <div className="text-[11px] text-slate-400 uppercase font-semibold">
-                      Saldo Real-Time
+                      Saldo
                     </div>
                     <div className="text-2xl font-black font-mono text-white tracking-tight mt-0.5">
                       Rp {acc.saldo.toLocaleString('id-ID')}
@@ -713,15 +711,15 @@ export const CashBankSection: React.FC = () => {
               );
             })}
           </div>
-        )}
+        </div>
 
-        {/* Real-Time Balance Details Table */}
+        {/* Tabel saldo per akun: hanya laptop */}
         {accountViewMode !== 'cards' && (
-          <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80 space-y-3">
+          <div className="hidden md:block bg-[#121620] p-4 rounded-2xl border border-slate-800/80 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                 <CreditCard className="w-3.5 h-3.5 text-slate-900" />
-                <span>Rincian Saldo Real-Time Seluruh Rekening & Kas Tunai</span>
+                <span>Saldo per akun</span>
               </h4>
               <span className="text-xs text-slate-400 font-mono">
                 Total Likuiditas: <strong className="text-slate-900 font-bold">Rp {totalLikuiditas.toLocaleString('id-ID')}</strong>
@@ -815,7 +813,7 @@ export const CashBankSection: React.FC = () => {
           <div>
             <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4 text-slate-900" />
-              Buku Kas & Riwayat Mutasi Rekening
+              Buku kas
             </h3>
             <p className="text-xs text-slate-400">
               Menampilkan {filteredMutations.length} catatan mutasi kas masuk, keluar, dan transfer
@@ -873,8 +871,33 @@ export const CashBankSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Table of Mutations */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+        {/* HP: daftar kartu */}
+        <div className="md:hidden divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
+          {filteredMutations.length === 0 ? (
+            <p className="py-8 text-center text-slate-500 text-xs">Tidak ada transaksi yang sesuai filter.</p>
+          ) : (
+            filteredMutations.slice(0, visibleMutationCount).map((m) => {
+              const sign = m.tipe === 'masuk' ? '+' : m.tipe === 'keluar' ? '−' : '';
+              return (
+                <div key={m.id} className="p-3 text-xs space-y-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 font-medium text-slate-900">{m.deskripsi}</div>
+                    <div className={`font-mono font-bold whitespace-nowrap ${m.tipe === 'masuk' ? 'text-slate-900' : m.tipe === 'keluar' ? 'text-rose-700' : 'text-slate-900'}`}>
+                      {sign} Rp {Math.round(m.jumlah).toLocaleString('id-ID')}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500">
+                    <span>{m.tanggal} · {m.accountNama}</span>
+                    <span className="font-mono">saldo Rp {Math.round(m.saldoSetelah).toLocaleString('id-ID')}</span>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Laptop: tabel */}
+        <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-800/80">
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[11px]">
               <tr>
@@ -918,7 +941,7 @@ export const CashBankSection: React.FC = () => {
                       </td>
                       <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         <div className={`font-bold tabular-nums ${isMasuk ? 'text-indigo-700' : isKeluar ? 'text-rose-700' : 'text-slate-900'}`}>
-                          {isMasuk ? '+' : isKeluar ? '−' : ''} Rp {m.jumlah.toLocaleString('id-ID')}
+                          {isMasuk ? '+' : isKeluar ? '−' : ''} Rp {Math.round(m.jumlah).toLocaleString('id-ID')}
                         </div>
                         <div className="inline-flex items-center gap-0.5 text-[11px] text-slate-500">
                           {isMasuk && <><ArrowDownRight className="w-3 h-3" aria-hidden="true" /> Masuk</>}
@@ -927,7 +950,7 @@ export const CashBankSection: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-right text-slate-700 tabular-nums whitespace-nowrap">
-                        Rp {m.saldoSetelah.toLocaleString('id-ID')}
+                        Rp {Math.round(m.saldoSetelah).toLocaleString('id-ID')}
                       </td>
                     </tr>
                   );

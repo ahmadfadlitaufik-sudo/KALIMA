@@ -302,14 +302,9 @@ export const MonthlyPnLChart: React.FC<MonthlyPnLChartProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                <span>Tren Laporan Laba Rugi Bulanan</span>
-                <span className="text-[11px] font-mono font-semibold bg-emerald-500/20 text-indigo-700 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                  Recharts Visual
-                </span>
+                <span>Tren laba rugi per bulan</span>
               </h3>
-              <p className="text-xs text-slate-400">
-                Komparasi pendapatan bersih, harga pokok penjualan (HPP), biaya operasional (OPEX), dan laba bersih per bulan
-              </p>
+              <p className="text-xs text-slate-400">Penjualan bersih, HPP, biaya operasional, dan laba bersih tiap bulan.</p>
             </div>
           </div>
         </div>

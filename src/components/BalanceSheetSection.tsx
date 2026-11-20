@@ -488,7 +488,7 @@ export const BalanceSheetSection: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                    Laporan Neraca Keuangan (Balance Sheet)
+                    Neraca
                   </h2>
                   <span
                     className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
@@ -619,7 +619,7 @@ export const BalanceSheetSection: React.FC = () => {
         {/* 4. Current Ratio */}
         <div className="bg-[#121620] p-4 rounded-2xl border border-slate-850 border-t-2 border-t-purple-400 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-1.5">
-            <span className="font-semibold tracking-wider text-xs">CURRENT RATIO</span>
+            <span className="font-semibold tracking-wider text-xs">RASIO LANCAR</span>
             <span className="p-1.5 rounded-lg bg-purple-500/10 text-slate-900">
               <Percent className="w-4 h-4" />
             </span>
@@ -645,7 +645,7 @@ export const BalanceSheetSection: React.FC = () => {
             Rp {ratios.workingCapital.toLocaleString('id-ID')}
           </div>
           <div className="text-xs text-slate-400 mt-1 flex items-center justify-between">
-            <span>Net Working Capital</span>
+            <span>Aset lancar dikurangi utang</span>
             <span className="text-indigo-700 font-medium font-mono">Positif</span>
           </div>
         </div>
@@ -707,7 +707,7 @@ export const BalanceSheetSection: React.FC = () => {
             }`}
           >
             <Scale className="w-3.5 h-3.5" />
-            <span>Neraca Keuangan (Aktiva vs Pasiva)</span>
+            <span>Neraca (Aktiva dan Pasiva)</span>
           </button>
 
           <button
@@ -720,7 +720,7 @@ export const BalanceSheetSection: React.FC = () => {
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
-            <span>Buku Jurnal Umum (General Journal)</span>
+            <span>Buku Jurnal</span>
             <span
               className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${
                 activeSubView === 'jurnal'
@@ -742,7 +742,7 @@ export const BalanceSheetSection: React.FC = () => {
             }`}
           >
             <CreditCard className="w-3.5 h-3.5" />
-            <span>Buku Besar Utang Dagang (A/P Ledger)</span>
+            <span>Utang Dagang</span>
             <span
               className={`px-1.5 py-0.5 rounded text-[11px] font-mono font-bold ${
                 activeSubView === 'buku_besar'
@@ -1059,7 +1059,7 @@ export const BalanceSheetSection: React.FC = () => {
                 <div className="flex items-center justify-between text-slate-300">
                   <div className="flex items-center gap-1">
                     <span>Laba Bersih Periode Berjalan</span>
-                    <span className="text-[11px] text-slate-500">(Laba Rugi Real-Time)</span>
+                    <span className="text-[11px] text-slate-500">(dari Laba Rugi)</span>
                   </div>
                   <span className={`font-mono font-bold ${equitySummary.labaPeriodeBerjalan >= 0 ? 'text-indigo-700' : 'text-rose-700'}`}>
                     Rp {equitySummary.labaPeriodeBerjalan.toLocaleString('id-ID')}
@@ -1222,7 +1222,7 @@ export const BalanceSheetSection: React.FC = () => {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-white text-sm">
-                    Buku Jurnal Umum (General Journal) - Penjurnalan Akuntansi Berpasangan
+                    Buku Jurnal
                   </h3>
                   <span className="bg-emerald-500/10 text-indigo-700 border border-emerald-500/20 px-2 py-0.5 rounded font-mono font-bold text-[11px]">
                     Double-Entry System

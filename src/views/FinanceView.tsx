@@ -1,5 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { receivableAging, sortNewestFirst } from '../services/financeLedger';
+import { missingHppSkus, monthLabelId, oldestFirst, receivableReminder } from '../services/financeChecks';
+import { latestOrderMonth } from '../services/salesPeriod';
+import { showNotice } from '../services/dialogStore';
 import {
   DollarSign,
   TrendingUp,
@@ -35,6 +38,7 @@ const LIST_PAGE_SIZE = 25;
 export const FinanceView: React.FC = () => {
   const {
     isOwner,
+    skus,
     orders,
     biayaOperasional,
     addBiayaOperasional,
@@ -58,8 +62,19 @@ export const FinanceView: React.FC = () => {
   const currentMonthStr = todayStr.substring(0, 7);
 
   // Active filter type: 'month' | 'custom' | 'all'
-  const [filterType, setFilterType] = useState<'month' | 'custom' | 'all'>('all');
-  const [selectedMonth, setSelectedMonth] = useState('2026-09');
+  const [filterType, setFilterType] = useState<'month' | 'custom' | 'all'>('month');
+  const [selectedMonth, setSelectedMonthState] = useState(() => latestOrderMonth(orders, currentMonthStr));
+  /** Setelah pengguna memilih bulan sendiri, bulan tidak lagi berpindah otomatis saat data dimuat ulang. */
+  const monthChosenRef = React.useRef(false);
+  const setSelectedMonth = (month: string) => {
+    monthChosenRef.current = true;
+    setSelectedMonthState(month);
+  };
+  React.useEffect(() => {
+    if (!monthChosenRef.current) {
+      setSelectedMonthState(latestOrderMonth(orders, currentMonthStr));
+    }
+  }, [orders, currentMonthStr]);
   const [customStartDate, setCustomStartDate] = useState('2026-03-01');
   const [customEndDate, setCustomEndDate] = useState(todayStr);
 
@@ -75,8 +90,10 @@ export const FinanceView: React.FC = () => {
     biayaOperasional.forEach((b) => {
       if (b.tanggal && b.tanggal.length >= 7) monthSet.add(b.tanggal.substring(0, 7));
     });
+    monthSet.add(currentMonthStr);
+    monthSet.add(selectedMonth);
     return Array.from(monthSet).sort().reverse();
-  }, [orders, biayaOperasional]);
+  }, [orders, biayaOperasional, currentMonthStr, selectedMonth]);
 
   const { customOpexCategories: customCategoryList, setCustomOpexCategories: setCustomCategoryList } = useApp();
 
@@ -245,6 +262,7 @@ export const FinanceView: React.FC = () => {
   }, [monthOrders]);
 
   const grossProfit = netSales - totalHpp - totalAdminFees;
+  const skusWithoutHpp = useMemo(() => missingHppSkus(monthOrders, skus), [monthOrders, skus]);
 
   const totalOpex = useMemo(() => {
     return monthOpex.reduce((sum, b) => sum + b.jumlah, 0);
@@ -255,7 +273,7 @@ export const FinanceView: React.FC = () => {
   /** Nama periode yang sedang difilter, untuk judul rincian laba rugi. */
   const plPeriodLabel =
     filterType === 'month'
-      ? selectedMonth
+      ? monthLabelId(selectedMonth)
       : filterType === 'custom'
         ? `${customStartDate || 'awal'} s.d. ${customEndDate || 'sekarang'}`
         : 'Semua periode';
@@ -303,7 +321,7 @@ export const FinanceView: React.FC = () => {
 
   // Receivables (Piutang)
   const allReceivableOrders = useMemo(() => {
-    return orders.filter((o) => o.sisaPiutang > 0 && o.statusOrder !== 'batal');
+    return oldestFirst(orders.filter((o) => o.sisaPiutang > 0 && o.statusOrder !== 'batal'));
   }, [orders]);
 
   const totalAllPiutang = useMemo(() => {
@@ -340,6 +358,16 @@ export const FinanceView: React.FC = () => {
     setOpexCustomCategory('');
   };
 
+  /** Salin pesan tagihan ke clipboard untuk ditempel ke WhatsApp. */
+  const copyReminder = async (ord: Order) => {
+    try {
+      await navigator.clipboard.writeText(receivableReminder(ord));
+      void showNotice(`Pesan tagihan untuk ${ord.customerNama} sudah disalin. Tempel ke WhatsApp.`, 'Pesan disalin');
+    } catch {
+      void showNotice('Pesan tidak bisa disalin otomatis di browser ini.', 'Gagal menyalin');
+    }
+  };
+
   const handleSaveSettle = (e: React.FormEvent) => {
     e.preventDefault();
     if (!settleOrder || settleAmount <= 0) return;
@@ -356,86 +384,34 @@ export const FinanceView: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Navigation Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-3xl border border-slate-200/80 shadow-sm">
-        <div className="segmented-pill-bar flex flex-wrap items-center gap-1 w-full sm:w-auto bg-slate-100/70">
-          <button
-            type="button"
-            onClick={() => setActiveTab('kas_bank')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'kas_bank'
-                ? 'segmented-pill-active'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <Building2 className="w-4 h-4" />
-            <span>Akun Kas & Bank</span>
-            <span
-              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold ${
-                activeTab === 'kas_bank'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-slate-200 text-slate-700'
-              }`}
-            >
-              {cashAccounts.length}
-            </span>
-          </button>
-
-          {isOwner && (
+      {/* Tab */}
+      <div className="flex flex-wrap gap-1.5" role="tablist">
+        {(
+          [
+            ['kas_bank', 'Kas & Bank', String(cashAccounts.length), false],
+            ['pl_opex', 'Laba Rugi & Biaya', '', !isOwner],
+            ['piutang', 'Piutang', allReceivableOrders.length > 0 ? String(allReceivableOrders.length) : '', false],
+            ['neraca', 'Neraca', '', !isOwner],
+          ] as const
+        )
+          .filter(([, , , hidden]) => !hidden)
+          .map(([id, label, badge]) => (
             <button
+              key={id}
               type="button"
-              onClick={() => setActiveTab('pl_opex')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'pl_opex'
-                  ? 'segmented-pill-active'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              role="tab"
+              aria-selected={activeTab === id}
+              onClick={() => setActiveTab(id)}
+              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold whitespace-nowrap cursor-pointer ${
+                activeTab === id ? 'segmented-pill-active' : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'
               }`}
             >
-              <TrendingUp className="w-4 h-4" />
-              <span>Laba Rugi (P&L) & OPEX</span>
+              <span>{label}</span>
+              {badge && (
+                <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-mono font-bold ${id === 'piutang' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-700'}`}>{badge}</span>
+              )}
             </button>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('piutang')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'piutang'
-                ? 'segmented-pill-active'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>Monitoring Piutang</span>
-            {allReceivableOrders.length > 0 && (
-              <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold ${
-                  activeTab === 'piutang'
-                    ? 'bg-rose-500 text-white'
-                    : 'bg-rose-100 text-rose-700'
-                }`}
-              >
-                {allReceivableOrders.length}
-              </span>
-            )}
-          </button>
-
-          {isOwner && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('neraca')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'neraca'
-                  ? 'segmented-pill-active'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <Scale className="w-4 h-4" />
-              <span>Neraca Keuangan (Balance Sheet)</span>
-            </button>
-          )}
-        </div>
-
+          ))}
       </div>
 
       {/* Role notice for Admin */}
@@ -448,7 +424,7 @@ export const FinanceView: React.FC = () => {
             </span>
           </div>
           <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">
-            Monitoring Piutang
+            Piutang
           </span>
         </div>
       )}
@@ -463,15 +439,15 @@ export const FinanceView: React.FC = () => {
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
             <div>
               <h2 className="text-base font-bold text-white tracking-tight">
-                Laporan Laba Rugi Real-Time (P&L Kalima)
+                Laporan Laba Rugi
               </h2>
               <p className="text-xs text-slate-400">
-                Otomatis dihitung dari order, HPP per SKU, biaya admin marketplace, dan OPEX
+                Dihitung otomatis dari order, HPP per SKU, biaya admin marketplace, dan biaya operasional.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-slate-400">Filter:</span>
+              <span className="text-xs text-slate-400">Periode:</span>
               
               {/* Filter Type Buttons */}
               <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
@@ -517,7 +493,7 @@ export const FinanceView: React.FC = () => {
                   >
                     {availableMonths.map((m) => (
                       <option key={m} value={m}>
-                        Bulan {m}
+                        {monthLabelId(m)}
                       </option>
                     ))}
                   </select>
@@ -560,25 +536,34 @@ export const FinanceView: React.FC = () => {
                 className="flex items-center gap-1.5 segmented-pill-active hover:opacity-90 font-bold px-3 py-1.5 rounded-xl text-xs shadow-sm cursor-pointer ml-auto sm:ml-0"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Catat OPEX</span>
+                <span>Catat biaya</span>
               </button>
             </div>
           </div>
 
+          {skusWithoutHpp.length > 0 && (
+            <div role="note" className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>
+                HPP belum diisi untuk <strong>{skusWithoutHpp.length} SKU</strong> yang terjual di periode ini, jadi aplikasi memakai HPP perkiraan dan laba kotor belum akurat. Isi HPP-nya di Master SKU.
+              </span>
+            </div>
+          )}
+
           {/* 4 Financial Tiles */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
-              <div className="text-xs text-slate-400 mb-1">Penjualan Bersih (Nett)</div>
+              <div className="text-xs text-slate-400 mb-1">Penjualan bersih</div>
               <div className="text-lg sm:text-2xl font-black text-white font-mono">
                 Rp {netSales.toLocaleString('id-ID')}
               </div>
               <div className="text-[11px] text-slate-400 mt-1">
-                Gross: Rp {grossSales.toLocaleString('id-ID')} (Diskon: Rp {totalDiskon.toLocaleString('id-ID')})
+                Sebelum diskon Rp {grossSales.toLocaleString('id-ID')} (diskon Rp {totalDiskon.toLocaleString('id-ID')})
               </div>
             </div>
 
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
-              <div className="text-xs text-slate-400 mb-1">Laba Kotor (Gross Profit)</div>
+              <div className="text-xs text-slate-400 mb-1">Laba kotor</div>
               <div className="text-lg sm:text-2xl font-black text-indigo-700 font-mono">
                 Rp {grossProfit.toLocaleString('id-ID')}
               </div>
@@ -588,7 +573,7 @@ export const FinanceView: React.FC = () => {
             </div>
 
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
-              <div className="text-xs text-slate-400 mb-1">Biaya Operasional (OPEX)</div>
+              <div className="text-xs text-slate-400 mb-1">Biaya operasional</div>
               <div className="text-lg sm:text-2xl font-black text-slate-900 font-mono">
                 Rp {totalOpex.toLocaleString('id-ID')}
               </div>
@@ -598,7 +583,7 @@ export const FinanceView: React.FC = () => {
             </div>
 
             <div className="bg-[#121620] p-4 rounded-2xl border border-slate-800/80">
-              <div className="text-xs text-slate-400 mb-1">Estimasi Laba Bersih (Nett)</div>
+              <div className="text-xs text-slate-400 mb-1">Laba bersih</div>
               <div
                 className={`text-lg sm:text-2xl font-black font-mono ${
                   netProfit >= 0 ? 'text-indigo-700' : 'text-rose-700'
@@ -607,7 +592,7 @@ export const FinanceView: React.FC = () => {
                 Rp {netProfit.toLocaleString('id-ID')}
               </div>
               <div className="text-[11px] text-slate-400 mt-1">
-                Nett Margin: {netSales > 0 ? ((netProfit / netSales) * 100).toFixed(1) : 0}%
+                Margin bersih: {netSales > 0 ? ((netProfit / netSales) * 100).toFixed(1) : 0}%
               </div>
             </div>
           </div>
@@ -633,43 +618,43 @@ export const FinanceView: React.FC = () => {
                   <span>Rincian Laba Rugi · {plPeriodLabel}</span>
                 </h3>
                 <span className="text-[11px] text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                  Basis: Real-Time Accrual
+                  Dihitung otomatis
                 </span>
               </div>
 
               <div className="space-y-2 text-xs font-mono">
                 <div className="flex justify-between text-slate-200">
-                  <span>(+) Penjualan Kotor (Gross Sales)</span>
+                  <span>(+) Penjualan sebelum diskon</span>
                   <span>Rp {grossSales.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-rose-700">
-                  <span>(-) Potongan & Diskon Penjualan</span>
+                  <span>(-) Diskon penjualan</span>
                   <span>- Rp {totalDiskon.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-white font-bold pt-1 border-t border-slate-800">
-                  <span>(=) PENJUALAN BERSIH (NET SALES)</span>
+                  <span>(=) PENJUALAN BERSIH</span>
                   <span>Rp {netSales.toLocaleString('id-ID')}</span>
                 </div>
 
                 <div className="flex justify-between text-rose-700 pt-2">
-                  <span>(-) Beban Pokok Penjualan (Total HPP)</span>
+                  <span>(-) Harga pokok penjualan (HPP)</span>
                   <span>- Rp {totalHpp.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-rose-700">
-                  <span>(-) Biaya Admin Marketplace & Channel</span>
+                  <span>(-) Biaya admin marketplace & channel</span>
                   <span>- Rp {totalAdminFees.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-indigo-700 font-bold pt-1 border-t border-slate-800">
-                  <span>(=) LABA KOTOR (GROSS PROFIT)</span>
+                  <span>(=) LABA KOTOR</span>
                   <span>Rp {grossProfit.toLocaleString('id-ID')}</span>
                 </div>
 
                 <div className="flex justify-between text-slate-900 pt-2">
-                  <span>(-) Total Biaya Operasional (OPEX)</span>
+                  <span>(-) Biaya operasional</span>
                   <span>- Rp {totalOpex.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-base font-black text-indigo-700 pt-2 border-t-2 border-slate-700">
-                  <span>(=) LABA BERSIH (NET INCOME)</span>
+                  <span>(=) LABA BERSIH</span>
                   <span>Rp {netProfit.toLocaleString('id-ID')}</span>
                 </div>
               </div>
@@ -1027,10 +1012,10 @@ export const FinanceView: React.FC = () => {
               <div>
                 <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
                   <Clock className="w-5 h-5 text-rose-700" />
-                  Monitoring Piutang & Jatuh Tempo Pelanggan
+                  Piutang pelanggan
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Total piutang beredar: <strong className="text-rose-700 font-mono">Rp {totalAllPiutang.toLocaleString('id-ID')}</strong> ({allReceivableOrders.length} order tertunggak)
+                  Total belum dibayar: <strong className="text-rose-700 font-mono">Rp {totalAllPiutang.toLocaleString('id-ID')}</strong> dari {allReceivableOrders.length} order, yang paling lama di atas.
                 </p>
               </div>
             </div>
@@ -1059,8 +1044,38 @@ export const FinanceView: React.FC = () => {
               })}
             </div>
 
-            {/* Table of Receivables */}
-            <div className="overflow-x-auto rounded-xl border border-slate-800">
+            {/* HP: daftar kartu */}
+            <div className="md:hidden space-y-2">
+              {allReceivableOrders.length === 0 ? (
+                <p className="py-8 text-center text-xs font-medium text-slate-600">Semua piutang telah lunas.</p>
+              ) : (
+                allReceivableOrders.slice(0, visibleReceivableCount).map((ord) => {
+                  const isOverdue = ord.jatuhTempo && ord.jatuhTempo < todayStr;
+                  return (
+                    <div key={ord.id} className="border border-slate-200 rounded-2xl p-3 space-y-2 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-slate-900">{ord.customerNama}</div>
+                          <div className="font-mono text-[11px] text-slate-500">{ord.noOrder} · {ord.tanggal}</div>
+                        </div>
+                        <div className="text-right font-mono font-bold text-rose-700 whitespace-nowrap">Rp {ord.sisaPiutang.toLocaleString('id-ID')}</div>
+                      </div>
+                      <div className="text-slate-500">
+                        Tagihan Rp {ord.totalTagihan.toLocaleString('id-ID')} · terbayar Rp {ord.totalTerbayar.toLocaleString('id-ID')}
+                        {ord.jatuhTempo && <span className={isOverdue ? 'text-rose-700 font-semibold' : ''}> · tempo {ord.jatuhTempo}{isOverdue ? ' (lewat)' : ''}</span>}
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => { setSettleOrder(ord); setSettleAmount(ord.sisaPiutang); }} className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 bg-white font-semibold text-slate-800 cursor-pointer">Catat bayar</button>
+                        <button type="button" onClick={() => copyReminder(ord)} className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 bg-white font-semibold text-slate-800 cursor-pointer">Salin tagihan</button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Laptop: tabel */}
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-200">
               <table className="w-full text-left text-xs text-slate-300">
                 <thead className="bg-[#161c28] border-b border-slate-800 text-slate-400 uppercase text-[11px]">
                   <tr>
@@ -1070,7 +1085,7 @@ export const FinanceView: React.FC = () => {
                     <th className="py-2.5 px-3 text-right">Total Tagihan</th>
                     <th className="py-2.5 px-3 text-right">Terbayar</th>
                     <th className="py-2.5 px-3 text-right">Sisa Piutang</th>
-                    <th className="py-2.5 px-3 text-center">Aksi Pelunasan</th>
+                    <th className="py-2.5 px-3 text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-sans">
@@ -1117,7 +1132,7 @@ export const FinanceView: React.FC = () => {
                           <td className="py-2.5 px-3 text-right tabular-nums whitespace-nowrap font-bold text-rose-700">
                             Rp {ord.sisaPiutang.toLocaleString('id-ID')}
                           </td>
-                          <td className="py-2.5 px-3 text-center">
+                          <td className="py-2.5 px-3 text-center whitespace-nowrap">
                             <button
                               onClick={() => {
                                 setSettleOrder(ord);
@@ -1125,7 +1140,14 @@ export const FinanceView: React.FC = () => {
                               }}
                               className="px-3 py-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-900 font-semibold rounded-lg text-xs whitespace-nowrap cursor-pointer"
                             >
-                              Catat Bayar
+                              Catat bayar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => copyReminder(ord)}
+                              className="ml-1.5 px-3 py-1.5 bg-white border border-slate-300 hover:border-slate-900 text-slate-900 font-semibold rounded-lg text-xs whitespace-nowrap cursor-pointer"
+                            >
+                              Salin tagihan
                             </button>
                           </td>
                         </tr>
